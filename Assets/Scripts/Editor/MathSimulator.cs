@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using LustHouse.Slots;
 using UnityEditor;
 using UnityEngine;
@@ -44,7 +45,9 @@ namespace LustHouse.EditorTools
             var report = new SimulationReport
             {
                 gameId = def != null ? def.id : "(null)",
-                spins = spins,
+                // 0 until the loop actually runs. Echoing the requested count here made
+                // a null definition report "100 spins, 0 RTP" when it simulated nothing.
+                spins = 0,
                 biggestWin = 0
             };
 
@@ -82,6 +85,7 @@ namespace LustHouse.EditorTools
 
             report.totalBet = totalBet;
             report.totalWin = totalWin;
+            report.spins = spins;   // actual spins simulated, not the requested count
             report.rtp = totalBet > 0 ? totalWin / (double)totalBet : 0.0;
             report.hitRate = hits / (double)spins;
             report.biggestWin = biggest;
@@ -138,11 +142,113 @@ namespace LustHouse.EditorTools
                 secondsElapsed = (DateTime.UtcNow - started).TotalSeconds
             };
         }
+    /// <summary>
+        /// Exact RTP, by enumerating symbol combinations rather than sampling.
+        ///
+        /// Monte Carlo cannot resolve the §3.6 ±0.5% gate on a high-variance game. On
+        /// Velvet Room (max win 1500x) a 2,000,000-spin run still swings between 0.956
+        /// and 0.973 depending on the seed -- wider than the tolerance it is supposed to
+        /// police. The expectation is linear in the outcome, so enumerating symbol types
+        /// per reel gives the true RTP deterministically and instantly.
+        ///
+        /// This is the number the ship gate must use. Simulation stays useful for hit
+        /// rate, variance and max-win behaviour, which have no closed form here.
+        /// </summary>
+        public static double ExactRtp(SlotMachineDefinition def)
+        {
+            if (def == null || def.reelCount <= 0) return 0.0;
+            if (def.paylines == null || def.paylines.Count == 0) return 0.0;
+            if (def.reelStrips == null || def.reelStrips.Count != def.reelCount) return 0.0;
+
+            var probs = new Dictionary<int, double>[def.reelCount];
+            for (int r = 0; r < def.reelCount; r++)
+            {
+                var strip = def.reelStrips[r]?.symbols;
+                if (strip == null || strip.Count == 0) return 0.0;
+
+                var counts = new Dictionary<int, int>();
+                foreach (int id in strip)
+                    counts[id] = counts.TryGetValue(id, out int c) ? c + 1 : 1;
+
+                probs[r] = new Dictionary<int, double>();
+                foreach (var kv in counts)
+                    probs[r][kv.Key] = (double)kv.Value / strip.Count;
+            }
+
+            // Every (reel, row) cell is uniform over that reel's multiset, so the row a
+            // payline visits does not change its expectation: all lines share one value.
+            int width = def.paylines[0].rows?.Length ?? def.reelCount;
+            var ids = new int[width];
+            return def.paylines.Count * SumLine(def, probs, 0, width, ids, 1.0);
+        }
+
+        private static double SumLine(SlotMachineDefinition def, Dictionary<int, double>[] probs,
+                                      int depth, int width, int[] ids, double weight)
+        {
+            if (depth == width) return weight * LineWin(def, ids);
+
+            double total = 0.0;
+            foreach (var kv in probs[depth])
+            {
+                ids[depth] = kv.Key;
+                total += SumLine(def, probs, depth + 1, width, ids, weight * kv.Value);
+            }
+            return total;
+        }
+
+        /// <summary>Mirrors PaylineEvaluator.EvaluateLine for one concrete line.</summary>
+        private static double LineWin(SlotMachineDefinition def, int[] ids)
+        {
+            var baseDef = def.SymbolById(ids[0]);
+            if (baseDef == null || baseDef.isScatter) return 0.0;
+
+            bool sawWild = baseDef.isWild;
+            int matched = 1;
+
+            for (int r = 1; r < ids.Length; r++)
+            {
+                var other = def.SymbolById(ids[r]);
+                if (other == null) break;
+                if (ids[r] == ids[0]) { matched++; continue; }
+                if (other.isWild) { matched++; sawWild = true; continue; }
+                break;
+            }
+
+            if (matched < 3) return 0.0;
+
+            int payId = baseDef.id;
+            if (sawWild)
+            {
+                payId = -1;
+                for (int r = 0; r < ids.Length; r++)
+                {
+                    var s = def.SymbolById(ids[r]);
+                    if (s == null || s.isWild || s.isScatter) continue;
+                    payId = s.id;
+                    break;
+                }
+
+                // All-wild line: fall back to the wild's own payout.
+                if (payId < 0)
+                    for (int i = 0; i < def.symbols.Count; i++)
+                        if (def.symbols[i] != null && def.symbols[i].isWild)
+                        {
+                            payId = def.symbols[i].id;
+                            break;
+                        }
+            }
+
+            var payDef = def.SymbolById(payId);
+            return payDef == null ? 0.0 : (double)payDef.PayoutForMatch(matched);
+        }
     }
 
     /// <summary>
-    /// Editor window for the ship gate (plan §3.6): run 100,000 spins and confirm RTP is
-    /// within ±0.5% of target before a game ships.
+    /// Editor window for the ship gate (plan §3.6): confirm RTP is within ±0.5% of
+    /// target before a game ships.
+    ///
+    /// The headline number is <see cref="SimulationEngine.ExactRtp"/>; the simulation
+    /// runs alongside it for hit rate, variance and max win, which have no closed form.
     /// </summary>
     public class MathSimulatorWindow : EditorWindow
     {

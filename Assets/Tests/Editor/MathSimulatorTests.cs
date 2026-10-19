@@ -131,11 +131,11 @@ namespace LustHouse.Tests
                 new SymbolDefinition { id = 3, symbolName = "C", payoutsByMatch = new long[] { 2, 8, 24 } }
             };
 
-            def.reelStrips = new int[][]
+            def.reelStrips = new System.Collections.Generic.List<ReelStrip>
             {
-                new[] { 1, 2, 3, 1, 3, 2, 1, 3 },
-                new[] { 1, 3, 2, 1, 2, 3, 3, 1 },
-                new[] { 2, 1, 3, 3, 1, 2, 1, 3 }
+                new ReelStrip { symbols = new System.Collections.Generic.List<int> { 1, 2, 3, 1, 3, 2, 1, 3 } },
+                new ReelStrip { symbols = new System.Collections.Generic.List<int> { 1, 3, 2, 1, 2, 3, 3, 1 } },
+                new ReelStrip { symbols = new System.Collections.Generic.List<int> { 2, 1, 3, 3, 1, 2, 1, 3 } }
             };
 
             def.paylines = new System.Collections.Generic.List<PaylineDefinition>

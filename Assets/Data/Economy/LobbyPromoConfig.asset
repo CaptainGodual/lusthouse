@@ -1,0 +1,50 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 20c5c576328152a4db707ab89a713aaf, type: 3}
+  m_Name: LobbyPromoConfig
+  m_EditorClassIdentifier: 
+  maxFeaturedTiles: 4
+  featured:
+  - gameId: velvet_room
+    headline: VELVET ROOM
+    subline: 
+    order: 0
+  - gameId: neon_nights
+    headline: NEON NIGHTS
+    subline: 
+    order: 1
+  - gameId: midnight_masquerade
+    headline: MIDNIGHT MASQUERADE
+    subline: 
+    order: 2
+  - gameId: diamond_hold
+    headline: DIAMOND HOLD
+    subline: 
+    order: 3
+  - gameId: house_edge
+    headline: HOUSE EDGE
+    subline: 
+    order: 4
+  slides:
+  - kind: 0
+    gameId: 
+    headline: D A I L Y   B O N U S
+    subline: Claim your free Coins every day
+    ctaLabel: CLAIM
+    accent: {r: 1, g: 0.23921569, b: 0.54509807, a: 1}
+  carouselDwellSeconds: 8
+  pauseCarouselOnHover: 1
+  respectReducedMotion: 1
+  newWindowDays: 14
+  remoteOverrideEnabled: 0
+  remoteConfigUrl: 
+  remoteTimeoutSeconds: 3

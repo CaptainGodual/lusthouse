@@ -383,13 +383,13 @@ namespace LustHouse.EditorTools
         /// Generic per-reel strips. Reel 0 is the cheapest so it decides the base symbol
         /// more often; the last reel carries the premium symbol sparingly.
         /// </summary>
-        private static int[][] BuildReelStrips(int reels)
+        private static List<ReelStrip> BuildReelStrips(int reels)
         {
-            var strips = new int[reels][];
+            var strips = new List<ReelStrip>();
 
             for (int r = 0; r < reels; r++)
             {
-                var strip = new List<int>();
+                var symbols = new List<int>();
                 for (int i = 0; i < 16; i++)
                 {
                     int symbol;
@@ -397,9 +397,9 @@ namespace LustHouse.EditorTools
                     else if (r == reels - 1) symbol = (i == 3 || i == 11) ? 16 : 11 + (i % 5);
                     else symbol = 11 + (i % 6);
 
-                    strip.Add(symbol);
+                    symbols.Add(symbol);
                 }
-                strips[r] = strip.ToArray();
+                strips.Add(new ReelStrip { symbols = symbols });
             }
 
             return strips;
@@ -410,13 +410,16 @@ namespace LustHouse.EditorTools
         /// base symbol), reels 2 and 3 are richer — standard practice so the RTP lands
         /// where the paytable says it does.
         /// </summary>
-        private static int[][] BuildReelStrips()
+        private static List<ReelStrip> BuildReelStrips()
         {
-            return new int[][]
+            ReelStrip Reel(params int[] ids) =>
+                new ReelStrip { symbols = new List<int>(ids) };
+
+            return new List<ReelStrip>
             {
-                new[] { 13, 14, 15, 15, 14, 13, 16, 15, 14, 13, 15, 14, 16, 13, 15, 14 },
-                new[] { 12, 13, 14, 15, 12, 13, 16, 14, 13, 12, 16, 15, 14, 13, 12, 16 },
-                new[] { 11, 12, 13, 14, 15, 10, 16, 12, 13, 16, 11, 14, 12, 16, 13, 10 }
+                Reel(13, 14, 15, 15, 14, 13, 16, 15, 14, 13, 15, 14, 16, 13, 15, 14),
+                Reel(12, 13, 14, 15, 12, 13, 16, 14, 13, 12, 16, 15, 14, 13, 12, 16),
+                Reel(11, 12, 13, 14, 15, 10, 16, 12, 13, 16, 11, 14, 12, 16, 13, 10)
             };
         }
     }

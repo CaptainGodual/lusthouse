@@ -37,6 +37,13 @@ namespace LustHouse.Slots
         }
     }
 
+    /// <summary>One reel's strip: symbol ids in stop order.</summary>
+    [Serializable]
+    public class ReelStrip
+    {
+        public List<int> symbols = new List<int>();
+    }
+
     /// <summary>One payline: a row index per reel.</summary>
     [Serializable]
     public class PaylineDefinition
@@ -73,7 +80,12 @@ namespace LustHouse.Slots
 
         [Header("Reel strips")]
         [Tooltip("One entry per reel. Each is a list of symbol ids in stop order.")]
-        public int[][] reelStrips = new int[0][];
+        // ReelStrip wrapper, not int[][] and not List<List<int>>. Unity's serializer
+        // supports neither jagged arrays nor nested generic containers: both are silently
+        // dropped on save, so the field never reaches the asset and always reads back
+        // empty. ReelEngine.Stop then indexes a zero-length list and throws on every
+        // spin. This cost a full milestone to find -- do not "simplify" it back.
+        public List<ReelStrip> reelStrips = new List<ReelStrip>();
 
         [Header("Paylines")]
         public PayType payType = PayType.Lines;
@@ -163,9 +175,9 @@ namespace LustHouse.Slots
 
             if (string.IsNullOrWhiteSpace(id)) { error = "id is required (it is the save-data key)."; return false; }
             if (symbols == null || symbols.Count == 0) { error = "No symbols in paytable."; return false; }
-            if (reelStrips == null || reelStrips.Length != reelCount)
+            if (reelStrips == null || reelStrips.Count != reelCount)
             {
-                error = $"reelStrips has {reelStrips?.Length ?? 0} entries but reelCount is {reelCount}.";
+                error = $"reelStrips has {reelStrips?.Count ?? 0} entries but reelCount is {reelCount}.";
                 return false;
             }
             if (minBet <= 0 || maxBet < minBet)
@@ -181,13 +193,14 @@ namespace LustHouse.Slots
 
             for (int r = 0; r < reelCount; r++)
             {
-                var strip = reelStrips[r];
-                if (strip == null || strip.Length == 0)
+                var reel = reelStrips[r];
+                var strip = reel?.symbols;
+                if (strip == null || strip.Count == 0)
                 {
                     error = $"Reel {r} has an empty strip.";
                     return false;
                 }
-                for (int i = 0; i < strip.Length; i++)
+                for (int i = 0; i < strip.Count; i++)
                 {
                     if (SymbolById(strip[i]) == null)
                     {

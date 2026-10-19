@@ -106,8 +106,8 @@ namespace LustHouse.Slots
             var stops = new int[def.reelCount];
             for (int r = 0; r < def.reelCount; r++)
             {
-                var strip = def.reelStrips[r];
-                stops[r] = strip.Length <= 1 ? 0 : rng.NextInt(strip.Length);
+                var strip = def.reelStrips[r]?.symbols;
+                stops[r] = strip == null || strip.Count <= 1 ? 0 : rng.NextInt(strip.Count);
             }
             return stops;
         }
@@ -118,10 +118,10 @@ namespace LustHouse.Slots
             var grid = new int[def.reelCount][];
             for (int r = 0; r < def.reelCount; r++)
             {
-                var strip = def.reelStrips[r];
+                var strip = def.reelStrips[r].symbols;
                 grid[r] = new int[def.rowCount];
                 for (int row = 0; row < def.rowCount; row++)
-                    grid[r][row] = strip[(stops[r] + row) % strip.Length];
+                    grid[r][row] = strip[(stops[r] + row) % strip.Count];
             }
             return grid;
         }

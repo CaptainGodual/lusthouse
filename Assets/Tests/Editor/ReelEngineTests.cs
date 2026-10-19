@@ -41,11 +41,11 @@ namespace LustHouse.Tests
                 new SymbolDefinition { id = 2, symbolName = "B", payoutsByMatch = new long[] { 3, 10, 30 } }
             };
 
-            def.reelStrips = new int[][]
+            def.reelStrips = new List<ReelStrip>
             {
-                new[] { 1, 2, 1, 2 },
-                new[] { 1, 2, 1, 2 },
-                new[] { 1, 2, 1, 2 }
+                new ReelStrip { symbols = new List<int> { 1, 2, 1, 2 } },
+                new ReelStrip { symbols = new List<int> { 1, 2, 1, 2 } },
+                new ReelStrip { symbols = new List<int> { 1, 2, 1, 2 } }
             };
 
             def.paylines = new List<PaylineDefinition>
@@ -61,7 +61,14 @@ namespace LustHouse.Tests
         [TearDown]
         public void TearDown()
         {
-            if (_def != null) Object.DestroyImmediate(_def);
+            // _def comes from AssetDatabase in SetUp, so it is a project asset. Destroying
+            // an asset is not permitted; Unity logs an error, and an unexpected error log
+            // fails the test -- which made every test in this fixture fail regardless of
+            // what it asserted. BuildFixture() results are in-memory and still need
+            // destroying.
+            if (_def == null) return;
+            if (!EditorUtility.IsPersistent(_def)) Object.DestroyImmediate(_def);
+            _def = null;
         }
 
         [Test]
@@ -75,7 +82,7 @@ namespace LustHouse.Tests
         public void Definition_ValidationCatchesBrokenStrips()
         {
             var def = BuildFixture();
-            def.reelStrips = new int[][] { new[] { 1, 2 } }; // wrong reel count
+            def.reelStrips = new List<ReelStrip> { new ReelStrip { symbols = new List<int> { 1, 2 } } }; // wrong reel count
 
             Assert.IsFalse(def.IsValid(out var error));
             Assert.IsNotNull(error);
@@ -85,9 +92,11 @@ namespace LustHouse.Tests
         public void Definition_ValidationCatchesUnknownSymbolIds()
         {
             var def = BuildFixture();
-            def.reelStrips = new int[][]
+            def.reelStrips = new List<ReelStrip>
             {
-                new[] { 1, 99, 2 }, new[] { 1, 2, 1 }, new[] { 1, 2, 2 }
+                new ReelStrip { symbols = new List<int> { 1, 99, 2 } },
+                new ReelStrip { symbols = new List<int> { 1, 2, 1 } },
+                new ReelStrip { symbols = new List<int> { 1, 2, 2 } }
             };
 
             Assert.IsFalse(def.IsValid(out var error));
@@ -136,7 +145,7 @@ namespace LustHouse.Tests
                     for (int row = 0; row < def.rowCount; row++)
                     {
                         int symbol = result.grid[reel][row];
-                        int expected = def.reelStrips[reel][(result.stops[reel] + row) % def.reelStrips[reel].Length];
+                        int expected = def.reelStrips[reel].symbols[(result.stops[reel] + row) % def.reelStrips[reel].symbols.Count];
                         Assert.AreEqual(expected, symbol, $"grid[{reel}][{row}] is off-strip.");
                     }
                 }
@@ -149,9 +158,9 @@ namespace LustHouse.Tests
             var def = BuildFixture();
             var grid = new[]
             {
-                new[] { 2, 2, 2 },
-                new[] { 2, 1, 1 },
-                new[] { 2, 1, 2 }
+                new[] { 2, 2, 2 },   // payline[0] is row 1 on every reel
+                new[] { 1, 2, 1 },
+                new[] { 1, 2, 1 }
             };
 
             long win = PaylineEvaluator.EvaluateLine(def, grid, def.paylines[0], out int symbolId, out int count);
@@ -167,9 +176,9 @@ namespace LustHouse.Tests
             var def = BuildFixture();
             var grid = new[]
             {
-                new[] { 1, 2, 2 },
-                new[] { 0, 1, 1 },  // wild on the line
-                new[] { 2, 1, 2 }
+                new[] { 2, 1, 1 },   // reel 0 row 1 is A
+                new[] { 2, 0, 1 },   // wild on the line
+                new[] { 2, 1, 1 }
             };
 
             long win = PaylineEvaluator.EvaluateLine(def, grid, def.paylines[0], out int symbolId, out int count);
@@ -185,9 +194,9 @@ namespace LustHouse.Tests
             var def = BuildFixture();
             var grid = new[]
             {
-                new[] { 1, 2, 2 },
-                new[] { 2, 1, 1 },
-                new[] { 1, 1, 2 }
+                new[] { 2, 2, 1 },
+                new[] { 1, 2, 1 },
+                new[] { 1, 1, 1 }
             };
 
             long win = PaylineEvaluator.EvaluateLine(def, grid, def.paylines[0], out _, out int count);

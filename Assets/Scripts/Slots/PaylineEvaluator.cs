@@ -89,11 +89,18 @@ namespace LustHouse.Slots
                 break;
             }
 
+            // Report the run length even when the line does not pay, so a near miss is
+            // distinguishable from no match at all. Harmless to payout maths: callers
+            // gate on win > 0, and symbolId stays -1 when nothing pays.
+            count = matched;
             if (matched < 3) return 0;
 
-            // A wild-only line pays as the highest-value symbol it could substitute for.
-            symbolId = sawWild ? HighestPayingSymbol(def) : baseSymbol;
-            count = matched;
+            // A wild pays as the symbol it stands in for -- the first real symbol on the
+            // line -- not as the most expensive symbol in the game. Paying the priciest
+            // symbol turned every wild into a Filigree, which put the RTP floor for this
+            // paytable at 579% and made the declared target unreachable at all. An
+            // all-wild line falls back to the Wild's own payoutsByMatch.
+            symbolId = sawWild ? SubstituteSymbol(def, grid, line) : baseSymbol;
 
             var payDef = def.SymbolById(symbolId);
             if (payDef == null) return 0;
@@ -101,25 +108,26 @@ namespace LustHouse.Slots
             return payDef.PayoutForMatch(matched);
         }
 
-        private static int HighestPayingSymbol(SlotMachineDefinition def)
+        /// <summary>
+        /// The symbol a wild-assisted line pays as: the first non-wild, non-scatter symbol
+        /// the wild covers, or the wild itself when the line is entirely wilds.
+        /// </summary>
+        private static int SubstituteSymbol(SlotMachineDefinition def, int[][] grid,
+                                            PaylineDefinition line)
         {
-            int best = -1;
-            long bestPayout = -1;
-
-            for (int i = 0; i < def.symbols.Count; i++)
+            for (int r = 0; r < line.rows.Length; r++)
             {
-                var s = def.symbols[i];
-                if (s == null || s.isScatter) continue;
-
-                long five = s.PayoutForMatch(5);
-                if (five > bestPayout)
-                {
-                    bestPayout = five;
-                    best = s.id;
-                }
+                int id = grid[r][line.rows[r]];
+                var symbol = def.SymbolById(id);
+                if (symbol == null || symbol.isWild || symbol.isScatter) continue;
+                return id;
             }
 
-            return best;
+            for (int i = 0; i < def.symbols.Count; i++)
+                if (def.symbols[i] != null && def.symbols[i].isWild)
+                    return def.symbols[i].id;
+
+            return -1;
         }
     }
 

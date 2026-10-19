@@ -36,8 +36,16 @@ namespace LustHouse.Slots
                 return;
             }
 
+            // An invalid definition is unusable, not merely suspect: ReelEngine.Stop indexes
+            // reelStrips[r] unguarded, so continuing here turns every spin into an
+            // IndexOutOfRangeException. Log, then bail rather than enter a broken game.
             if (!_definition.IsValid(out var error))
-                LustLog.Error($"[LustHouse] Invalid definition '{_definition.id}': {error}", _definition);
+            {
+                LustLog.Error($"[LustHouse] Invalid definition '{_definition.id}': {error} " +
+                              "— returning to lobby.", _definition);
+                UnityEngine.SceneManagement.SceneManager.LoadScene("Lobby");
+                return;
+            }
 
             if (reelEngine != null) reelEngine.Seed(sessionSeed);
 

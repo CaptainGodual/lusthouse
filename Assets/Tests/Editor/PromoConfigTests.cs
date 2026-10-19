@@ -229,7 +229,9 @@ namespace LustHouse.Tests
         {
             var entry = new GameCatalog.Entry();
             entry.releasedAtUtc = "not a date";
-            Assert.AreEqual(default, entry.ReleasedUtc, "Unparseable dates must not throw.");
+            // default(DateTime) explicitly: a bare `default` binds to object/null here, which
+            // made this compare null against a DateTime and always fail.
+            Assert.AreEqual(default(DateTime), entry.ReleasedUtc, "Unparseable dates must not throw.");
         }
     }
 }
