@@ -258,6 +258,22 @@ namespace LustHouse.Lobby
                            : new Color(0.18f, 0.14f, 0.20f, 0.45f));
             tile.raycastTarget = true;
 
+            // Key art, when the catalog entry has one. Image.color multiplies the sprite,
+            // so the affordable/unaffordable tinting below still dims the art rather than
+            // being thrown away by having art present.
+            var art = ResolveKeyArt(entry);
+            if (art != null)
+            {
+                tile.sprite = art;
+                tile.preserveAspect = true;
+                tile.type = Image.Type.Simple;
+
+                // Opaque dim rather than the flat-tile 0.45 alpha used above. Multiplying
+                // key art by a near-black translucent colour reads as "no art at all"
+                // against the velvet background, which defeats the point of the art.
+                tile.color = affordable ? Color.white : new Color(0.45f, 0.40f, 0.48f, 1f);
+            }
+
             UiFactory.PlaceTopLeft(tile.rectTransform, position.x, -position.y,
                 tileWidth, tileHeight);
 
@@ -329,6 +345,18 @@ namespace LustHouse.Lobby
 
         /// <summary>Raised when a locked tile is tapped, so the lobby can show a sheet.</summary>
         public event Action<string> RaiseLockNotice;
+
+        /// <summary>
+        /// Key art for a tile, falling back to the slot definition's own art so a game can be
+        /// arted from either asset. Returns null when neither is set, which is the normal
+        /// case today — the tile then falls back to the flat theme-tint quad.
+        /// </summary>
+        private static Sprite ResolveKeyArt(GameCatalog.Entry entry)
+        {
+            if (entry == null) return null;
+            if (entry.keyArt != null) return entry.keyArt;
+            return entry.definition != null ? entry.definition.keyArt : null;
+        }
 
         private bool IsAffordable(GameCatalog.Entry entry)
         {

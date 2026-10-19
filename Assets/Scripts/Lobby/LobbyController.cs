@@ -44,6 +44,13 @@ namespace LustHouse.Lobby
         /// </summary>
         private void EnsurePresenter()
         {
+            // A null catalog builds an empty grid that looks identical to "no games exist"
+            // — the tabs render, the empty state renders, and nothing says why. The scene
+            // shipped with this null, so say so loudly rather than failing quietly.
+            if (catalog == null)
+                LustLog.Warn("[LustHouse] LobbyController.catalog is not assigned; the game " +
+                             "grid will render empty. Assign GameCatalog in the inspector.");
+
             var existing = GetComponent<LobbyPresenter>();
             if (existing == null) existing = gameObject.AddComponent<LobbyPresenter>();
             if (existing.controller == null) existing.controller = this;
@@ -55,6 +62,14 @@ namespace LustHouse.Lobby
             if (grid == null) grid = gameObject.AddComponent<LobbyGrid>();
             grid.controller = this;
             grid.catalog = catalog;
+
+            // Adding LobbyPresenter above runs its OnEnable -> Build() -> RebuildGrid()
+            // *before* we get a chance to assign the catalog, so that first pass renders
+            // an empty grid. Rebuild now that the content reference is in place; nothing
+            // else reliably re-triggered it except an incidental WalletChanged event, which
+            // left the grid blank. RebuildGrid early-outs when the grid area has not been
+            // built yet, so this is safe whether or not the presenter ran.
+            grid.RebuildGrid();
         }
 
         // ---- tile tap routing -------------------------------------------------

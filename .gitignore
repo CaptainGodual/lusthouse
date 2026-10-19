@@ -33,3 +33,5 @@ Assets/GeneratedTiles/
 # Local
 .env
 *.log
+__pycache__/
+*.pyc

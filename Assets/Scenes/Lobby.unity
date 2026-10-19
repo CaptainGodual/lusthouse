@@ -480,7 +480,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 47af6a630e1038b4bacfa5cf3e6f8fb4, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  catalog: {fileID: 0}
+  catalog: {fileID: 11400000, guid: f9f4977886f2f644f9202a689432304b, type: 2}
   slotSceneName: Slot
   offline: 0
   showCatalogWarning: 0
