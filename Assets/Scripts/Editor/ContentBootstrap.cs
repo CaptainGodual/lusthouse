@@ -1,6 +1,7 @@
 #if UNITY_EDITOR
 using System.Collections.Generic;
 using LustHouse.Catalog;
+using LustHouse.Core;
 using LustHouse.Slots;
 using UnityEditor;
 using UnityEngine;
@@ -35,6 +36,7 @@ namespace LustHouse.EditorTools
         public static void CreateStarterContent()
         {
             var velvet = CreateVelvetRoom();
+            CreatePlaceholderGames();
 
             if (_catalog == null)
             {
@@ -53,15 +55,116 @@ namespace LustHouse.EditorTools
                     id = "velvet_room",
                     definition = velvet,
                     category = GameCategory.Slots,
+                    displayTitle = "Velvet Room",
                     blurb = "The house tutorial game. Art deco, suits, gold filigree.",
                     locked = false,
                     entryCostGems = 0
                 });
-                EditorUtility.SetDirty(_catalog);
             }
 
+            RegisterPlaceholderGames();
+            EditorUtility.SetDirty(_catalog);
             AssetDatabase.SaveAssets();
-            Debug.Log($"[LustHouse] Starter content ready ({(velvet != null ? "Velvet Room" : "existing assets reused")}).");
+            LustLog.Info($"[LustHouse] Starter content ready ({_catalog.games.Count} game(s)).");
+        }
+
+        /// <summary>
+        /// One placeholder definition per remaining mechanic template (B, C, D, E) from
+        /// plan §3.2, so the lobby grid and category tabs have real content and the
+        /// simulator has models to exercise.
+        ///
+        /// These are PLACEHOLDERS. Their RTP targets are plan band midpoints and have not
+        /// been tuned or verified — each must pass a 100k-spin simulation within ±0.5%
+        /// (plan §3.6) before it could ship. Do not read the target as an achieved value.
+        /// </summary>
+        private static void CreatePlaceholderGames()
+        {
+            Create("Neon Nights", "neon_nights", SlotTemplate.Video5, Volatility.Medium, 0.955f, 2500, 5, 3, 20);
+            Create("Midnight Masquerade", "midnight_masquerade", SlotTemplate.Cascade, Volatility.High, 0.945f, 10000, 5, 3, 20);
+            Create("Diamond Hold", "diamond_hold", SlotTemplate.HoldAndSpin, Volatility.Medium, 0.955f, 2500, 5, 3, 20);
+            Create("House Edge", "house_edge", SlotTemplate.Progressive, Volatility.High, 0.945f, 10000, 5, 3, 20);
+        }
+
+        private static SlotMachineDefinition Create(string title, string id, SlotTemplate template,
+            Volatility volatility, float targetRtp, int maxWin, int reels, int rows, int paylines)
+        {
+            string path = $"{SlotFolder}/Slot_{id}.asset";
+            if (AssetDatabase.LoadAssetAtPath<SlotMachineDefinition>(path) != null) return null;
+
+            var def = ScriptableObject.CreateInstance<SlotMachineDefinition>();
+            def.id = id;
+            def.title = title;
+            def.template = template;
+            def.volatility = volatility;
+            def.themeTint = PlaceholderTint(id);
+
+            def.reelCount = reels;
+            def.rowCount = rows;
+            def.payType = PayType.Lines;
+
+            def.minBet = 100;
+            def.maxBet = 5000;
+            def.betLevels = 6;
+            def.targetRtp = targetRtp;
+            def.maxWinMultiplier = maxWin;
+
+            def.hasFreeSpins = template != SlotTemplate.Cascade;
+            def.hasCascade = template == SlotTemplate.Cascade;
+            def.hasHoldAndSpin = template == SlotTemplate.HoldAndSpin;
+            def.progressive = template == SlotTemplate.Progressive;
+            def.progressiveSeed = 250000;
+
+            def.symbols = BuildSymbols();
+            def.paylines = BuildPaylines(reels, rows);
+            def.reelStrips = BuildReelStrips(reels);
+
+            AssetDatabase.CreateAsset(def, path);
+            AssetDatabase.SaveAssets();
+
+            if (!def.IsValid(out var error))
+                LustLog.Error($"[LustHouse] Generated {id} is invalid: {error}", def);
+
+            return def;
+        }
+
+        private static Color PlaceholderTint(string id)
+        {
+            switch (id)
+            {
+                case "neon_nights": return new Color32(0x37, 0xE0, 0xD8, 0xFF);
+                case "midnight_masquerade": return new Color32(0x8B, 0x3A, 0xF0, 0xFF);
+                case "diamond_hold": return new Color32(0x4A, 0x6C, 0xFF, 0xFF);
+                default: return new Color32(0xFF, 0x3D, 0x8B, 0xFF);
+            }
+        }
+
+        private static void RegisterPlaceholderGames()
+        {
+            var specs = new (string id, string title, GameCategory category)[]
+            {
+                ("neon_nights", "Neon Nights", GameCategory.Slots),
+                ("midnight_masquerade", "Midnight Masquerade", GameCategory.Slots),
+                ("diamond_hold", "Diamond Hold", GameCategory.Slots),
+                ("house_edge", "House Edge", GameCategory.Jackpots)
+            };
+
+            foreach (var spec in specs)
+            {
+                if (_catalog.Find(spec.id) != null) continue;
+
+                var def = AssetDatabase.LoadAssetAtPath<SlotMachineDefinition>($"{SlotFolder}/Slot_{spec.id}.asset");
+                if (def == null) continue;
+
+                _catalog.games.Add(new GameCatalog.Entry
+                {
+                    id = spec.id,
+                    definition = def,
+                    category = spec.category,
+                    displayTitle = spec.title,
+                    locked = false,
+                    entryCostGems = 0
+                });
+            }
         }
 
         /// <summary>
@@ -182,6 +285,59 @@ namespace LustHouse.EditorTools
 
         private static PaylineDefinition Line(string name, int r0, int r1, int r2) =>
             new PaylineDefinition { lineName = name, rows = new[] { r0, r1, r2 } };
+
+        /// <summary>
+        /// Builds a generic set of paylines covering horizontal, V, and diagonal shapes for
+        /// any reel count. Placeholder geometry only — real games get hand-authored lines.
+        /// </summary>
+        private static List<PaylineDefinition> BuildPaylines(int reels, int rows)
+        {
+            var lines = new List<PaylineDefinition>();
+
+            for (int row = 0; row < rows; row++)
+            {
+                var indices = new int[reels];
+                for (int r = 0; r < reels; r++) indices[r] = row;
+                lines.Add(new PaylineDefinition { lineName = $"H{row}", rows = indices });
+            }
+
+            // Zig-zag down then back up, and the reverse.
+            var down = new int[reels];
+            for (int r = 0; r < reels; r++) down[r] = r % rows;
+            lines.Add(new PaylineDefinition { lineName = "V-down", rows = down });
+
+            var up = new int[reels];
+            for (int r = 0; r < reels; r++) up[r] = (reels - 1 - r) % rows;
+            lines.Add(new PaylineDefinition { lineName = "V-up", rows = up });
+
+            return lines;
+        }
+
+        /// <summary>
+        /// Generic per-reel strips. Reel 0 is the cheapest so it decides the base symbol
+        /// more often; the last reel carries the premium symbol sparingly.
+        /// </summary>
+        private static int[][] BuildReelStrips(int reels)
+        {
+            var strips = new int[reels][];
+
+            for (int r = 0; r < reels; r++)
+            {
+                var strip = new List<int>();
+                for (int i = 0; i < 16; i++)
+                {
+                    int symbol;
+                    if (r == 0) symbol = 12 + (i % 4);              // J, 10, 9, Filigree-lite
+                    else if (r == reels - 1) symbol = (i == 3 || i == 11) ? 16 : 11 + (i % 5);
+                    else symbol = 11 + (i % 6);
+
+                    strip.Add(symbol);
+                }
+                strips[r] = strip.ToArray();
+            }
+
+            return strips;
+        }
 
         /// <summary>
         /// Per-reel strips. Reel 1 is the cheap strip (it is the one that decides the

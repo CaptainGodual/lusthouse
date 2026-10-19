@@ -48,6 +48,13 @@ namespace LustHouse.Lobby
             if (existing == null) existing = gameObject.AddComponent<LobbyPresenter>();
             if (existing.controller == null) existing.controller = this;
             if (existing.catalog == null) existing.catalog = catalog;
+
+            // The grid is a separate component so it can own filtering, the tab bar, and
+            // tile state without bloating the presenter.
+            var grid = GetComponent<LobbyGrid>();
+            if (grid == null) grid = gameObject.AddComponent<LobbyGrid>();
+            grid.controller = this;
+            grid.catalog = catalog;
         }
 
         // ---- tile tap routing -------------------------------------------------
