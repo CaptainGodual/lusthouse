@@ -33,11 +33,21 @@ namespace LustHouse.Core
         [Tooltip("Id of the fallback Base item (plan §5.4: base_ivory).")]
         public string fallbackBaseId = "base_ivory";
 
+        [Header("First run (plan §2.12)")]
+        [Tooltip("Granted once, ever, on a brand-new profile. Never re-granted.")]
+        public long FirstRunCoins = 5000;
+
+        public long FirstRunGems = 25;
+
+        /// <summary>Ledger note that marks the once-ever first-run grant.</summary>
+        public const string FirstRunPackNote = "first-run pack";
+
         [Header("Autosave")]
         public bool autosave = true;
         public float autosaveDelaySeconds = 2f;
 
         public SaveSystem Save { get; private set; }
+        public static ServicesBootstrap Instance { get; private set; }
         public bool LoadedFromCorruptSave { get; private set; }
         public string LoadWarning { get; private set; }
 
@@ -47,7 +57,6 @@ namespace LustHouse.Core
 
         private void Awake()
         {
-            // Build the persistent services *before* anything can ask for them.
             _root = new GameObject("~LustHouseServices");
             DontDestroyOnLoad(_root);
 
@@ -64,11 +73,65 @@ namespace LustHouse.Core
 
             Save = SaveSystem.Default;
             LoadProgress();
+            GrantFirstRunPack();
+
+            Instance = this;
 
             inventory.GrantStarterSet(cosmeticCatalog);
 
             if (!string.IsNullOrEmpty(LoadWarning))
                 EventBus.Publish(new SaveRecovered { warning = LoadWarning });
+        }
+
+        private void OnDestroy()
+        {
+            if (Instance == this) Instance = null;
+        }
+
+        /// <summary>
+        /// Creates the services if they are not already alive.
+        ///
+        /// Services live in <c>BootLoader.unity</c> and persist across scene loads, but
+        /// opening <c>Lobby</c> or <c>Slot</c> directly for QA must not produce a null
+        /// <c>WalletService.Instance</c> and a cascade of silent no-ops.
+        /// </summary>
+        public static ServicesBootstrap EnsureExists()
+        {
+            if (Instance != null) return Instance;
+
+            var existing = FindFirstObjectByType<ServicesBootstrap>();
+            if (existing != null)
+            {
+                Instance = existing;
+                return existing;
+            }
+
+            var host = new GameObject("Services");
+            return host.AddComponent<ServicesBootstrap>();
+        }
+
+        /// <summary>
+        /// Grants the first-run pack (plan §2.12: "FREE 5,000 COINS + 25 GEMS").
+        ///
+        /// Written straight to the ledger with <see cref="LedgerReason.DailyGift"/> so it
+        /// is auditable and cannot be re-claimed. This is what makes guardrail 1 true — a
+        /// fresh player can bet immediately without any purchase.
+        /// </summary>
+        private void GrantFirstRunPack()
+        {
+            var wallet = WalletService.Instance;
+            if (wallet == null) return;
+
+            // Once ever, ever. Derived from the ledger rather than a saved boolean, so it
+            // cannot drift out of sync and cannot be re-claimed by editing a flag.
+            var gems = wallet.Account(Currency.Gems);
+            if (gems != null && gems.ContainsEntry(LedgerReason.DailyGift, FirstRunPackNote)) return;
+
+            wallet.TryGrant(Currency.Coins, FirstRunCoins, LedgerReason.DailyGift, FirstRunPackNote);
+            wallet.TryGrant(Currency.Gems, FirstRunGems, LedgerReason.DailyGift, FirstRunPackNote);
+
+            MarkDirty();
+            SaveNow();
         }
 
         private void LoadProgress()

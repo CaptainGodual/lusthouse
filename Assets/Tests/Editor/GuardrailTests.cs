@@ -1,3 +1,4 @@
+using System;
 using LustHouse.Core;
 using NUnit.Framework;
 
@@ -94,6 +95,49 @@ namespace LustHouse.Tests
                 string name = m.Name.ToLowerInvariant();
                 Assert.IsFalse(name.Contains("cointogem"),
                     "A Coins→Gems conversion would violate plan §4.3 rule 2.");
+            }
+        }
+
+        [Test]
+        public void FirstRunPack_IsDerivedFromTheLedgerNotAnInMemoryFlag()
+        {
+            // An in-memory "already granted" bool would re-grant on every launch.
+            // The guard has to live in the persisted ledger.
+            var gems = new CurrencyAccount(Currency.Gems);
+
+            Assert.IsFalse(gems.ContainsEntry(LedgerReason.DailyGift, "first-run pack"),
+                "A fresh account has not been granted the pack.");
+
+            gems.Apply(25, LedgerReason.DailyGift, "first-run pack");
+
+            Assert.IsTrue(gems.ContainsEntry(LedgerReason.DailyGift, "first-run pack"),
+                "After the grant the ledger must record it, so it cannot be re-claimed.");
+        }
+
+        [Test]
+        public void ContainsEntry_DistinguishesReasonAndNote()
+        {
+            var account = new CurrencyAccount(Currency.Coins);
+
+            account.Apply(100, LedgerReason.DailyGift, "daily gift day 3");
+            account.Apply(50, LedgerReason.Spin, "velvet_room");
+
+            Assert.IsTrue(account.ContainsEntry(LedgerReason.DailyGift, "daily gift day 3"));
+            Assert.IsTrue(account.ContainsEntry(LedgerReason.Spin));
+            Assert.IsFalse(account.ContainsEntry(LedgerReason.DailyGift, "first-run pack"),
+                "A different note must not match.");
+            Assert.IsFalse(account.ContainsEntry(LedgerReason.PvpGift),
+                "A reason that was never written must not match.");
+        }
+
+        [Test]
+        public void EveryCurrencyAccount_RespectsItsSpendableFlag()
+        {
+            foreach (Currency c in Enum.GetValues(typeof(Currency)))
+            {
+                var account = new CurrencyAccount(c);
+                Assert.AreEqual(CurrencyRules.IsSpendable(c), account.spendable,
+                    $"Account spendable flag disagrees with CurrencyRules for {c}.");
             }
         }
 

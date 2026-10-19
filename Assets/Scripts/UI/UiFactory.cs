@@ -1,0 +1,197 @@
+using UnityEngine;
+using UnityEngine.EventSystems;
+using UnityEngine.UI;
+
+namespace LustHouse.UI
+{
+    /// <summary>
+    /// Shared uGUI construction helpers.
+    ///
+    /// All runtime UI in this project is built in code rather than authored into scenes.
+    /// Scene-authored UI fails *silently* when a reference does not resolve — a missing
+    /// script reference on a Text simply renders nothing, which is how the first greybox
+    /// looked like a black screen with no way forward. Building in code means the failure
+    /// mode is a loud exception, not a blank screen.
+    /// </summary>
+    public static class UiFactory
+    {
+        private static Font _font;
+        private static Sprite _solid;
+
+        // ---- shared assets ----------------------------------------------------
+
+        public static Font Font
+        {
+            get
+            {
+                if (_font != null) return _font;
+
+                // Unity renamed the built-in font; try the modern name first.
+                _font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
+                if (_font == null) _font = Resources.GetBuiltinResource<Font>("Arial.ttf");
+                if (_font == null)
+                    Core.LustLog.Warn("[LustHouse] No built-in font available; runtime text will not render.");
+
+                return _font;
+            }
+        }
+
+        /// <summary>A 4x4 white sprite so Images render a solid colour with no asset.</summary>
+        public static Sprite Solid
+        {
+            get
+            {
+                if (_solid != null) return _solid;
+
+                var tex = new Texture2D(4, 4, TextureFormat.RGBA32, false)
+                {
+                    name = "LustHouseSolid",
+                    hideFlags = HideFlags.HideAndDontSave,
+                    filterMode = FilterMode.Bilinear,
+                    wrapMode = TextureWrapMode.Clamp
+                };
+
+                var pixels = new Color32[16];
+                for (int i = 0; i < pixels.Length; i++) pixels[i] = new Color32(255, 255, 255, 255);
+                tex.SetPixels32(pixels);
+                tex.Apply();
+
+                _solid = Sprite.Create(tex, new Rect(0, 0, 4, 4), new Vector2(0.5f, 0.5f), 100f);
+                _solid.name = "LustHouseSolid";
+                return _solid;
+            }
+        }
+
+        // ---- palette (plan §2.1) ---------------------------------------------
+
+        public static readonly Color VelvetBase = new Color32(0x14, 0x0A, 0x14, 0xFF);
+        public static readonly Color VelvetPanel = new Color32(0x1E, 0x10, 0x20, 0xFF);
+        public static readonly Color VelvetRaised = new Color32(0x2A, 0x17, 0x30, 0xFF);
+        public static readonly Color GoldPrimary = new Color32(0xE8, 0xC3, 0x6B, 0xFF);
+        public static readonly Color GoldGlow = new Color32(0xFF, 0xD9, 0x8A, 0xFF);
+        public static readonly Color NeonMagenta = new Color32(0xFF, 0x3D, 0x8B, 0xFF);
+        public static readonly Color NeonCyan = new Color32(0x37, 0xE0, 0xD8, 0xFF);
+        public static readonly Color TextPrimary = new Color32(0xF5, 0xE9, 0xF2, 0xFF);
+        public static readonly Color TextSecondary = new Color32(0xB7, 0x9B, 0xB4, 0xFF);
+        public static readonly Color TextDisabled = new Color32(0x6E, 0x5A, 0x6D, 0xFF);
+        public static readonly Color StateSuccess = new Color32(0x5B, 0xD9, 0x8C, 0xFF);
+        public static readonly Color StateWarn = new Color32(0xFF, 0xC4, 0x4D, 0xFF);
+        public static readonly Color StateDanger = new Color32(0xFF, 0x5C, 0x5C, 0xFF);
+
+        // ---- construction -----------------------------------------------------
+
+        public static void EnsureEventSystem()
+        {
+            if (Object.FindFirstObjectByType<EventSystem>() != null) return;
+            new GameObject("EventSystem", typeof(EventSystem), typeof(StandaloneInputModule));
+        }
+
+        public static Canvas CreateCanvas(Transform parent, string name, int sortingOrder = 0)
+        {
+            var go = new GameObject(name, typeof(RectTransform));
+            if (parent != null) go.transform.SetParent(parent, false);
+
+            var canvas = go.AddComponent<Canvas>();
+            canvas.renderMode = RenderMode.ScreenSpaceOverlay;
+            canvas.sortingOrder = sortingOrder;
+
+            var scaler = go.AddComponent<CanvasScaler>();
+            scaler.uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize;
+            scaler.referenceResolution = new Vector2(1920, 1080);   // plan §2.1
+            scaler.screenMatchMode = CanvasScaler.ScreenMatchMode.MatchWidthOrHeight;
+            scaler.matchWidthOrHeight = 0.5f;
+
+            go.AddComponent<GraphicRaycaster>();
+            return canvas;
+        }
+
+        public static void Stretch(RectTransform rt, float inset = 0f)
+        {
+            rt.anchorMin = Vector2.zero;
+            rt.anchorMax = Vector2.one;
+            rt.offsetMin = new Vector2(inset, inset);
+            rt.offsetMax = new Vector2(-inset, -inset);
+        }
+
+        public static Image NewImage(string name, Transform parent, Color color)
+        {
+            var go = new GameObject(name, typeof(RectTransform));
+            if (parent != null) go.transform.SetParent(parent, false);
+
+            var image = go.AddComponent<Image>();
+            image.sprite = Solid;
+            image.color = color;
+            image.raycastTarget = false;
+            return image;
+        }
+
+        public static Text NewText(string name, Transform parent, string content,
+                                   int size, FontStyle style, Color color, TextAnchor anchor = TextAnchor.MiddleCenter)
+        {
+            var go = new GameObject(name, typeof(RectTransform));
+            if (parent != null) go.transform.SetParent(parent, false);
+
+            var text = go.AddComponent<Text>();
+            text.font = Font;
+            text.text = content;
+            text.fontSize = size;
+            text.fontStyle = style;
+            text.color = color;
+            text.alignment = anchor;
+            text.horizontalOverflow = HorizontalWrapMode.Overflow;
+            text.verticalOverflow = VerticalWrapMode.Overflow;
+            text.raycastTarget = false;
+            return text;
+        }
+
+        public static void Place(RectTransform rt, Vector2 anchor, Vector2 size, Vector2 anchoredPosition)
+        {
+            rt.anchorMin = anchor;
+            rt.anchorMax = anchor;
+            rt.sizeDelta = size;
+            rt.anchoredPosition = anchoredPosition;
+        }
+
+        /// <summary>
+        /// A button with a visible label. Returns the Button; the label is a child so the
+        /// caller can restyle it without re-plumbing the click handler.
+        /// </summary>
+        public static Button NewButton(string name, Transform parent, string label,
+                                       int fontSize, Color textColor, out Text labelText)
+        {
+            var go = new GameObject(name, typeof(RectTransform));
+            if (parent != null) go.transform.SetParent(parent, false);
+
+            var image = go.AddComponent<Image>();
+            image.sprite = Solid;
+            image.color = VelvetRaised;
+            image.raycastTarget = true;
+
+            var button = go.AddComponent<Button>();
+            button.targetGraphic = image;
+
+            // Legible on the default raised panel colour.
+            var colors = button.colors;
+            colors.normalColor = Color.white;
+            colors.highlightedColor = new Color(1.15f, 1.15f, 1.15f, 1f);
+            colors.pressedColor = new Color(0.8f, 0.8f, 0.8f, 1f);
+            colors.disabledColor = new Color(0.5f, 0.5f, 0.5f, 0.6f);
+            colors.fadeDuration = 0.12f;      // micro interaction, plan §2.1
+            button.colors = colors;
+
+            labelText = NewText("Label", go.transform, label, fontSize, FontStyle.Bold, textColor);
+            Stretch(labelText.rectTransform);
+
+            return button;
+        }
+
+        /// <summary>Formats a coin-style amount, abbreviating past a million (plan §2.5).</summary>
+        public static string FormatAmount(long value)
+        {
+            if (value < 0) return "-" + FormatAmount(-value);
+            if (value >= 1_000_000) return (value / 1_000_000.0).ToString("0.#") + "M";
+            if (value >= 100_000) return (value / 1000.0).ToString("0.#") + "K";
+            return value.ToString("N0");
+        }
+    }
+}

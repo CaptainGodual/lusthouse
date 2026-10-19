@@ -75,6 +75,23 @@ namespace LustHouse.Core
         }
 
         /// <summary>
+        /// True if this account already has a ledger entry with the given reason and note.
+        ///
+        /// Used for once-ever grants (the first-run pack) so the flag lives in the ledger
+        /// rather than in a separate persisted boolean that could drift out of sync.
+        /// </summary>
+        public bool ContainsEntry(LedgerReason reason, string note = null)
+        {
+            for (int i = 0; i < ledger.Count; i++)
+            {
+                if (ledger[i].reason != reason) continue;
+                if (note != null && ledger[i].note != note) continue;
+                return true;
+            }
+            return false;
+        }
+
+        /// <summary>
         /// Re-derives the balance by replaying the ledger. Used by tests and the
         /// save-integrity check; proves §4.5's "balance is derived from the ledger".
         /// </summary>

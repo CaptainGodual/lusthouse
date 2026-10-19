@@ -24,6 +24,8 @@ namespace LustHouse.Slots
 
         private void Start()
         {
+            EnsurePresenter();
+
             _definition = SlotLaunchPayload.Payload;
             SlotLaunchPayload.Payload = null;
 
@@ -45,6 +47,9 @@ namespace LustHouse.Slots
                 runner.reelEngine = reelEngine;
                 runner.InsufficientFunds += OnInsufficientFunds;
             }
+
+            // The presenter's OnEnable ran before the definition arrived, so refresh it now.
+            GetComponent<SlotPresenter>()?.Refresh();
         }
 
         private void OnDestroy()
@@ -52,11 +57,22 @@ namespace LustHouse.Slots
             if (runner != null) runner.InsufficientFunds -= OnInsufficientFunds;
         }
 
+        /// <summary>
+        /// Adds the greybox slot UI if absent. A slot scene with no presenter shows a camera
+        /// and nothing else, so the loop would look like it hung.
+        /// </summary>
+        private void EnsurePresenter()
+        {
+            var existing = GetComponent<SlotPresenter>();
+            if (existing == null) existing = gameObject.AddComponent<SlotPresenter>();
+            if (existing.controller == null) existing.controller = this;
+        }
+
         /// <summary>Never a dead end — opens the shortfall sheet with the exact amount.</summary>
         private void OnInsufficientFunds(long bet)
         {
             long have = WalletService.Instance != null ? WalletService.Instance.Balance(Currency.Coins) : 0;
-            LustLog.Info($"[LustHouse] Insufficient Coins: have {have}, need {bet}. Open top-up sheet.");
+            LustLog.Warn($"[LustHouse] Insufficient Coins: have {have}, need {bet}.");
         }
     }
 }

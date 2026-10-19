@@ -32,6 +32,22 @@ namespace LustHouse.Lobby
         private void Awake()
         {
             Services = FindFirstObjectByType<ServicesBootstrap>();
+            EnsurePresenter();
+        }
+
+        /// <summary>
+        /// Adds the greybox lobby UI if the scene does not already carry it.
+        ///
+        /// Lobby.unity was generated before <see cref="LobbyPresenter"/> existed, and a
+        /// scene with no presenter is just a black screen — which is exactly what that
+        /// generated scene was. Self-healing here means a stale scene still shows a lobby.
+        /// </summary>
+        private void EnsurePresenter()
+        {
+            var existing = GetComponent<LobbyPresenter>();
+            if (existing == null) existing = gameObject.AddComponent<LobbyPresenter>();
+            if (existing.controller == null) existing.controller = this;
+            if (existing.catalog == null) existing.catalog = catalog;
         }
 
         // ---- tile tap routing -------------------------------------------------

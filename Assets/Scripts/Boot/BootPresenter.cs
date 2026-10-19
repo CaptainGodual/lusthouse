@@ -23,13 +23,13 @@ namespace LustHouse.Boot
         public BootSequence sequence;
 
         [Header("Palette (plan §2.1)")]
-        public Color velvetBase = new Color32(0x14, 0x0A, 0x14, 0xFF);
-        public Color velvetRaised = new Color32(0x2A, 0x17, 0x30, 0xFF);
-        public Color goldPrimary = new Color32(0xE8, 0xC3, 0x6B, 0xFF);
-        public Color goldGlow = new Color32(0xFF, 0xD9, 0x8A, 0xFF);
-        public Color neonMagenta = new Color32(0xFF, 0x3D, 0x8B, 0xFF);
-        public Color textPrimary = new Color32(0xF5, 0xE9, 0xF2, 0xFF);
-        public Color textSecondary = new Color32(0xB7, 0x9B, 0xB4, 0xFF);
+        public Color velvetBase = UI.UiFactory.VelvetBase;
+        public Color velvetRaised = UI.UiFactory.VelvetRaised;
+        public Color goldPrimary = UI.UiFactory.GoldPrimary;
+        public Color goldGlow = UI.UiFactory.GoldGlow;
+        public Color neonMagenta = UI.UiFactory.NeonMagenta;
+        public Color textPrimary = UI.UiFactory.TextPrimary;
+        public Color textSecondary = UI.UiFactory.TextSecondary;
 
         [Header("Timing")]
         [Tooltip("Soft-pulse period for the TAP TO ENTER prompt, seconds.")]
@@ -51,8 +51,9 @@ namespace LustHouse.Boot
         {
             if (sequence == null) sequence = GetComponent<BootSequence>();
 
-            EnsureEventSystem();
-            _canvas = BuildCanvas();
+            UI.UiFactory.EnsureEventSystem();
+            _canvas = GetComponentInChildren<Canvas>();
+            if (_canvas == null) _canvas = UI.UiFactory.CreateCanvas(transform, "BootCanvas", 100);
             BuildUI();
         }
 
@@ -75,53 +76,24 @@ namespace LustHouse.Boot
             sequence.Ready -= OnReady;
         }
 
-        private static void EnsureEventSystem()
-        {
-            if (FindFirstObjectByType<EventSystem>() != null) return;
-            var go = new GameObject("EventSystem", typeof(EventSystem), typeof(StandaloneInputModule));
-            go.transform.SetParent(null);
-        }
 
-        private Canvas BuildCanvas()
-        {
-            var existing = GetComponentInChildren<Canvas>();
-            if (existing != null) return existing;
-
-            var go = new GameObject("BootCanvas", typeof(RectTransform));
-            go.transform.SetParent(transform, false);
-
-            var canvas = go.AddComponent<Canvas>();
-            canvas.renderMode = RenderMode.ScreenSpaceOverlay;
-            canvas.sortingOrder = 100;
-
-            var scaler = go.AddComponent<CanvasScaler>();
-            scaler.uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize;
-            scaler.referenceResolution = new Vector2(1920, 1080);
-            scaler.screenMatchMode = CanvasScaler.ScreenMatchMode.MatchWidthOrHeight;
-            scaler.matchWidthOrHeight = 0.5f;
-
-            go.AddComponent<GraphicRaycaster>();
-            return canvas;
-        }
 
         private void BuildUI()
         {
-            var font = LoadFont();
             var root = _canvas.transform as RectTransform;
-            Sprite white = SolidSprite();
 
             // Backdrop.
-            var bg = NewImage("Backdrop", root, white, velvetBase);
-            Stretch(bg.rectTransform);
+            var bg = UI.UiFactory.NewImage("Backdrop", root, velvetBase);
+            UI.UiFactory.Stretch(bg.rectTransform);
 
             // A soft magenta bloom behind the wordmark (plan §1.2, neon ignition).
-            var bloom = NewImage("NeonBloom", root, white, new Color(neonMagenta.r, neonMagenta.g, neonMagenta.b, 0.18f));
+            var bloom = UI.UiFactory.NewImage("NeonBloom", root, new Color(neonMagenta.r, neonMagenta.g, neonMagenta.b, 0.18f));
             var bloomRect = bloom.rectTransform;
             bloomRect.anchorMin = new Vector2(0.5f, 0.62f);
             bloomRect.anchorMax = new Vector2(0.5f, 0.62f);
             bloomRect.sizeDelta = new Vector2(900, 220);
 
-            _title = NewText("Title", root, font, "L U S T   H O U S E", 64, FontStyle.Bold, textPrimary);
+            _title = UI.UiFactory.NewText("Title", root, "L U S T   H O U S E", 64, FontStyle.Bold, textPrimary);
             var titleRect = _title.rectTransform;
             titleRect.anchorMin = new Vector2(0.5f, 0.62f);
             titleRect.anchorMax = new Vector2(0.5f, 0.62f);
@@ -129,7 +101,7 @@ namespace LustHouse.Boot
             // +4% tracking on display type (§2.1).
             _title.supportRichText = false;
 
-            _subtitle = NewText("Subtitle", root, font, "Play money only.  18+", 20, FontStyle.Normal, textSecondary);
+            _subtitle = UI.UiFactory.NewText("Subtitle", root, "Play money only.  18+", 20, FontStyle.Normal, textSecondary);
             var subRect = _subtitle.rectTransform;
             subRect.anchorMin = new Vector2(0.5f, 0.53f);
             subRect.anchorMax = new Vector2(0.5f, 0.53f);
@@ -140,7 +112,7 @@ namespace LustHouse.Boot
             const float barHeight = 8f;
             const float barY = 180f;
 
-            var track = NewImage("ProgressTrack", root, white, velvetRaised);
+            var track = UI.UiFactory.NewImage("ProgressTrack", root, velvetRaised);
             var trackRect = track.rectTransform;
             trackRect.anchorMin = new Vector2(0.5f, 0f);
             trackRect.anchorMax = new Vector2(0.5f, 0f);
@@ -148,14 +120,14 @@ namespace LustHouse.Boot
             trackRect.anchoredPosition = new Vector2(0, barY);
             trackRect.sizeDelta = new Vector2(barWidth, barHeight);
 
-            _fillImage = NewImage("ProgressFill", trackRect, white, goldPrimary);
-            Stretch(_fillImage.rectTransform, 2f);
+            _fillImage = UI.UiFactory.NewImage("ProgressFill", trackRect, goldPrimary);
+            UI.UiFactory.Stretch(_fillImage.rectTransform, 2f);
             _fillImage.type = Image.Type.Filled;
             _fillImage.fillMethod = Image.FillMethod.Horizontal;
             _fillImage.fillOrigin = (int)Image.OriginHorizontal.Left;
             _fillImage.fillAmount = 0f;
 
-            _stageLabel = NewText("StageLabel", root, font, "Starting…", 18, FontStyle.Normal, textSecondary);
+            _stageLabel = UI.UiFactory.NewText("StageLabel", root, "Starting…", 18, FontStyle.Normal, textSecondary);
             var stageRect = _stageLabel.rectTransform;
             stageRect.anchorMin = new Vector2(0.5f, 0f);
             stageRect.anchorMax = new Vector2(0.5f, 0f);
@@ -167,7 +139,7 @@ namespace LustHouse.Boot
             var enterGo = new GameObject("TapToEnter", typeof(RectTransform));
             enterGo.transform.SetParent(root, false);
             var enterRect = (RectTransform)enterGo.transform;
-            Stretch(enterRect);
+            UI.UiFactory.Stretch(enterRect);
 
             _enterGroup = enterGo.AddComponent<CanvasGroup>();
             _enterGroup.alpha = 0f;
@@ -177,7 +149,7 @@ namespace LustHouse.Boot
             // Full-screen transparent button: a tap anywhere advances, so the greybox
             // never dead-ends. The visible prompt is a child of it.
             var buttonImage = enterGo.AddComponent<Image>();
-            buttonImage.sprite = white;
+            buttonImage.sprite = UI.UiFactory.Solid;
             buttonImage.color = new Color(0f, 0f, 0f, 0f);   // invisible hit area
             buttonImage.raycastTarget = true;
 
@@ -185,7 +157,7 @@ namespace LustHouse.Boot
             _enterButton.targetGraphic = buttonImage;
             _enterButton.onClick.AddListener(OnEnterClicked);
 
-            var prompt = NewText("Prompt", enterRect, font, "T A P   T O   E N T E R", 40, FontStyle.Bold, goldGlow);
+            var prompt = UI.UiFactory.NewText("Prompt", enterRect, "T A P   T O   E N T E R", 40, FontStyle.Bold, goldGlow);
             var promptRect = prompt.rectTransform;
             promptRect.anchorMin = new Vector2(0.5f, 0.5f);
             promptRect.anchorMax = new Vector2(0.5f, 0.5f);
@@ -250,68 +222,9 @@ namespace LustHouse.Boot
 
         // ---- helpers ----------------------------------------------------------
 
-        private static Font LoadFont()
-        {
-            // Unity renamed the built-in font; try the modern name first, then the old one.
-            Font font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
-            if (font == null) font = Resources.GetBuiltinResource<Font>("Arial.ttf");
-            if (font == null) LustHouse.Core.LustLog.Warn("[LustHouse] No built-in font; boot text will not render.");
-            return font;
-        }
 
-        private static Sprite SolidSprite()
-        {
-            var tex = new Texture2D(4, 4, TextureFormat.RGBA32, false)
-            {
-                name = "LustHouseSolid",
-                hideFlags = HideFlags.HideAndDontSave,
-                filterMode = FilterMode.Bilinear,
-                wrapMode = TextureWrapMode.Clamp
-            };
 
-            var pixels = new Color32[16];
-            for (int i = 0; i < pixels.Length; i++) pixels[i] = new Color32(255, 255, 255, 255);
-            tex.SetPixels32(pixels);
-            tex.Apply();
 
-            return Sprite.Create(tex, new Rect(0, 0, 4, 4), new Vector2(0.5f, 0.5f), 100f);
-        }
 
-        private static void Stretch(RectTransform rt, float inset = 0f)
-        {
-            rt.anchorMin = Vector2.zero;
-            rt.anchorMax = Vector2.one;
-            rt.offsetMin = new Vector2(inset, inset);
-            rt.offsetMax = new Vector2(-inset, -inset);
-        }
-
-        private static Image NewImage(string name, Transform parent, Sprite sprite, Color color)
-        {
-            var go = new GameObject(name, typeof(RectTransform));
-            go.transform.SetParent(parent, false);
-            var image = go.AddComponent<Image>();
-            image.sprite = sprite;
-            image.color = color;
-            image.raycastTarget = false;
-            return image;
-        }
-
-        private static Text NewText(string name, Transform parent, Font font, string content,
-                                    int size, FontStyle style, Color color)
-        {
-            var go = new GameObject(name, typeof(RectTransform));
-            go.transform.SetParent(parent, false);
-            var text = go.AddComponent<Text>();
-            text.font = font;
-            text.text = content;
-            text.fontSize = size;
-            text.fontStyle = style;
-            text.color = color;
-            text.alignment = TextAnchor.MiddleCenter;
-            text.horizontalOverflow = HorizontalWrapMode.Overflow;
-            text.verticalOverflow = VerticalWrapMode.Overflow;
-            text.raycastTarget = false;
-            return text;
-        }
     }
 }
