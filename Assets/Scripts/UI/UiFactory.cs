@@ -152,6 +152,79 @@ namespace LustHouse.UI
             rt.anchoredPosition = anchoredPosition;
         }
 
+        // ---- layout convention -------------------------------------------------
+        //
+        // Every rect is positioned by its TOP-LEFT corner in reference pixels, measured
+        // from the top-left of its parent. The previous greybox placed things by centre
+        // with mixed pivots, which pushed the featured row off the left edge and dropped
+        // the first tab bar label outside its own strip.
+        //
+        //   anchor (0,1) + pivot (0,1) -> anchoredPosition (x, -y) == "x from left, y from top"
+        //
+        // Use these helpers rather than computing anchors by hand.
+
+        /// <summary>Top-left corner at (x, y) from the parent's top-left.</summary>
+        public static void PlaceTopLeft(RectTransform rt, float x, float y, float width, float height)
+        {
+            rt.anchorMin = new Vector2(0f, 1f);
+            rt.anchorMax = new Vector2(0f, 1f);
+            rt.pivot = new Vector2(0f, 1f);
+            rt.sizeDelta = new Vector2(width, height);
+            rt.anchoredPosition = new Vector2(x, -y);
+        }
+
+        /// <summary>Top edge centred horizontally, y from the parent's top.</summary>
+        public static void PlaceTopCentre(RectTransform rt, float y, float width, float height,
+                                          float xOffset = 0f)
+        {
+            rt.anchorMin = new Vector2(0.5f, 1f);
+            rt.anchorMax = new Vector2(0.5f, 1f);
+            rt.pivot = new Vector2(0.5f, 1f);
+            rt.sizeDelta = new Vector2(width, height);
+            rt.anchoredPosition = new Vector2(xOffset, -y);
+        }
+
+        /// <summary>Full-width strip at the top, y from the parent's top.</summary>
+        public static void PlaceTopStrip(RectTransform rt, float y, float height)
+        {
+            rt.anchorMin = new Vector2(0f, 1f);
+            rt.anchorMax = new Vector2(1f, 1f);
+            rt.pivot = new Vector2(0f, 1f);
+            rt.sizeDelta = new Vector2(0f, height);
+            rt.anchoredPosition = new Vector2(0f, -y);
+        }
+
+        /// <summary>Left edge, vertically centred in a band. Used for tab bar labels.</summary>
+        public static void PlaceLeftMid(RectTransform rt, float x, float width, float height, float y = 0f)
+        {
+            rt.anchorMin = new Vector2(0f, 0.5f);
+            rt.anchorMax = new Vector2(0f, 0.5f);
+            rt.pivot = new Vector2(0f, 0.5f);
+            rt.sizeDelta = new Vector2(width, height);
+            rt.anchoredPosition = new Vector2(x, y);
+        }
+
+        /// <summary>Left edge at the bottom, y measured up from the parent's bottom edge.</summary>
+        public static void PlaceBottomLeft(RectTransform rt, float x, float y, float width, float height)
+        {
+            rt.anchorMin = new Vector2(0f, 0f);
+            rt.anchorMax = new Vector2(0f, 0f);
+            rt.pivot = new Vector2(0f, 0f);
+            rt.sizeDelta = new Vector2(width, height);
+            rt.anchoredPosition = new Vector2(x, y);
+        }
+
+        /// <summary>Bottom-centre, y measured up from the parent's bottom edge.</summary>
+        public static void PlaceBottomCentre(RectTransform rt, float y, float width, float height,
+                                              float xOffset = 0f)
+        {
+            rt.anchorMin = new Vector2(0.5f, 0f);
+            rt.anchorMax = new Vector2(0.5f, 0f);
+            rt.pivot = new Vector2(0.5f, 0f);
+            rt.sizeDelta = new Vector2(width, height);
+            rt.anchoredPosition = new Vector2(xOffset, y);
+        }
+
         /// <summary>
         /// A button with a visible label. Returns the Button; the label is a child so the
         /// caller can restyle it without re-plumbing the click handler.

@@ -22,3 +22,39 @@ MonoBehaviour:
     locked: 0
     lockedMessage: 
     entryCostGems: 0
+  - id: neon_nights
+    displayTitle: Neon Nights
+    definition: {fileID: 11400000, guid: 3789e83d6fc667a40ac6485cceea4620, type: 2}
+    category: 1
+    keyArt: {fileID: 0}
+    blurb: 
+    locked: 0
+    lockedMessage: 
+    entryCostGems: 0
+  - id: midnight_masquerade
+    displayTitle: Midnight Masquerade
+    definition: {fileID: 11400000, guid: fa490708121a4324cbe2be0a2c30be7a, type: 2}
+    category: 1
+    keyArt: {fileID: 0}
+    blurb: 
+    locked: 0
+    lockedMessage: 
+    entryCostGems: 0
+  - id: diamond_hold
+    displayTitle: Diamond Hold
+    definition: {fileID: 11400000, guid: 9f883db26826a5b4ab6b767909a79725, type: 2}
+    category: 1
+    keyArt: {fileID: 0}
+    blurb: 
+    locked: 0
+    lockedMessage: 
+    entryCostGems: 0
+  - id: house_edge
+    displayTitle: House Edge
+    definition: {fileID: 11400000, guid: 3a07d5d5f9b16294b8880a654df8eecf, type: 2}
+    category: 2
+    keyArt: {fileID: 0}
+    blurb: 
+    locked: 0
+    lockedMessage: 
+    entryCostGems: 0

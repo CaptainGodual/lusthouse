@@ -32,6 +32,7 @@ namespace LustHouse.Lobby
 
         private GameCategory _active = GameCategory.All;
         private readonly HashSet<string> _favourites = new HashSet<string>();
+        private float _gridWidth;
 
         private RectTransform _tabStrip;
         private RectTransform _tabUnderline;
@@ -53,11 +54,11 @@ namespace LustHouse.Lobby
             go.transform.SetParent(parent, false);
 
             _tabStrip = (RectTransform)go.transform;
-            _tabStrip.anchorMin = new Vector2(0f, 1f);
-            _tabStrip.anchorMax = new Vector2(0f, 1f);
-            _tabStrip.pivot = new Vector2(0f, 1f);
-            _tabStrip.anchoredPosition = new Vector2(0f, 0f);
-            _tabStrip.sizeDelta = new Vector2(1400f, 48f);
+            UiFactory.PlaceTopLeft(_tabStrip, 0f, 40f, 1920f, 48f);
+
+            const float tabW = 170f;
+            const float step = 186f;
+            const float underlineW = 120f;
 
             float x = 0f;
             foreach (var category in categories)
@@ -67,38 +68,39 @@ namespace LustHouse.Lobby
 
                 var text = UiFactory.NewText("Tab_" + category, _tabStrip, label, 16,
                     FontStyle.Bold, UiFactory.TextSecondary, TextAnchor.MiddleLeft);
-                UiFactory.Place(text.rectTransform, new Vector2(0f, 0.5f), new Vector2(180f, 48f), new Vector2(x, 0f));
+                // Left-anchored with a left pivot, so x really is the left edge. The
+                // previous centred pivot pushed the first label outside the strip.
+                UiFactory.PlaceLeftMid(text.rectTransform, x, tabW, 48f);
 
                 var hit = text.gameObject.AddComponent<Button>();
                 var captured = category;
                 hit.onClick.AddListener(() => SelectCategory(captured));
 
                 _tabLabels[category] = text;
-                _tabCentres[category] = x + 60f;
+                _tabCentres[category] = x + (tabW - underlineW) / 2f;
 
-                x += 190f;
+                x += step;
             }
 
             _tabUnderline = UiFactory.NewImage("ActiveUnderline", _tabStrip, UiFactory.GoldPrimary).rectTransform;
-            _tabUnderline.anchorMin = new Vector2(0f, 0f);
-            _tabUnderline.anchorMax = new Vector2(0f, 0f);
-            _tabUnderline.pivot = new Vector2(0f, 0f);
-            _tabUnderline.sizeDelta = new Vector2(150f, 4f);
+            UiFactory.PlaceLeftMid(_tabUnderline, 0f, underlineW, 4f, -26f);
 
             SelectCategory(categories[0], instant: true);
         }
 
         private void Update()
         {
-            // The underline slides between tabs, 200ms (§2.1 panel transition).
             if (_tabUnderline == null) return;
 
+            // The underline slides between tabs (§2.1 panel transition, 200ms).
+            float k = 1f - Mathf.Exp(-12f * Time.unscaledDeltaTime);
+
             var size = _tabUnderline.sizeDelta;
-            size.x = Mathf.Lerp(size.x, _underlineTargetWidth, Time.unscaledDeltaTime * 12f);
+            size.x = Mathf.Lerp(size.x, _underlineTargetWidth, k);
             _tabUnderline.sizeDelta = size;
 
             var pos = _tabUnderline.anchoredPosition;
-            pos.x = Mathf.Lerp(pos.x, _underlineTargetX, Time.unscaledDeltaTime * 12f);
+            pos.x = Mathf.Lerp(pos.x, _underlineTargetX, k);
             _tabUnderline.anchoredPosition = pos;
         }
 
@@ -109,9 +111,9 @@ namespace LustHouse.Lobby
             foreach (var kv in _tabLabels)
                 kv.Value.color = kv.Key == category ? UiFactory.TextPrimary : UiFactory.TextSecondary;
 
-            if (_tabCentres.TryGetValue(category, out float centre))
+            if (_tabCentres.TryGetValue(category, out float left))
             {
-                _underlineTargetX = centre - 60f;
+                _underlineTargetX = left;
                 _underlineTargetWidth = 120f;
 
                 if (instant)
@@ -177,18 +179,24 @@ namespace LustHouse.Lobby
             go.transform.SetParent(parent, false);
 
             _tileParent = (RectTransform)go.transform;
-            _tileParent.anchorMin = new Vector2(0f, 1f);
-            _tileParent.anchorMax = new Vector2(1f, 1f);
-            _tileParent.pivot = new Vector2(0f, 1f);
-            _tileParent.offsetMin = new Vector2(0f, 0f);
-            _tileParent.offsetMax = new Vector2(0f, 0f);
+            _tileParent.anchorMin = Vector2.zero;
+            _tileParent.anchorMax = Vector2.one;
+            _tileParent.offsetMin = Vector2.zero;
+            _tileParent.offsetMax = Vector2.zero;
+
+            _gridWidth = Mathf.Max(1, columns) * tileWidth + (Mathf.Max(1, columns) - 1) * gap;
         }
 
-        public void SetGridBounds(Rect bounds)
+        /// <summary>
+        /// Horizontal left inset that centres the tile block inside the grid area, so the
+        /// grid never hugs the screen edge (§2.2 uses a 48px outer margin).
+        /// </summary>
+        private float GridInset()
         {
-            if (_tileParent == null) return;
-            _tileParent.offsetMin = bounds.min;
-            _tileParent.offsetMax = bounds.max;
+            if (_tileParent == null) return 0f;
+            float areaWidth = _tileParent.rect.width;
+            if (areaWidth <= 1f) return 0f;
+            return Mathf.Max(0f, (areaWidth - _gridWidth) / 2f);
         }
 
         public void RebuildGrid()
@@ -224,13 +232,16 @@ namespace LustHouse.Lobby
                 return;
             }
 
+            int cols = Mathf.Max(1, columns);
+            float inset = GridInset();
+
             for (int i = 0; i < matches.Count; i++)
             {
-                int col = i % Mathf.Max(1, columns);
-                int row = i / Mathf.Max(1, columns);
+                int col = i % cols;
+                int row = i / cols;
 
-                float x = col * (tileWidth + gap);
-                float y = -(row * (tileHeight + gap));
+                float x = inset + col * (tileWidth + gap);
+                float y = -row * (tileHeight + gap);
 
                 BuildTile(matches[i], _tileParent, new Vector2(x, y));
             }
@@ -247,8 +258,8 @@ namespace LustHouse.Lobby
                            : new Color(0.18f, 0.14f, 0.20f, 0.45f));
             tile.raycastTarget = true;
 
-            UiFactory.Place(tile.rectTransform, new Vector2(0f, 1f),
-                new Vector2(tileWidth, tileHeight), position);
+            UiFactory.PlaceTopLeft(tile.rectTransform, position.x, -position.y,
+                tileWidth, tileHeight);
 
             var button = tile.gameObject.AddComponent<Button>();
             button.targetGraphic = tile;

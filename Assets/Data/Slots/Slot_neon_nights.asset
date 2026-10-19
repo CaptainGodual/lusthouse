@@ -1,0 +1,122 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 8c7b9882327ff33479d9a848dea7f72d, type: 3}
+  m_Name: Slot_neon_nights
+  m_EditorClassIdentifier: 
+  id: neon_nights
+  title: Neon Nights
+  tagline: 
+  template: 1
+  volatility: 1
+  themeTint: {r: 0.21568628, g: 0.8784314, b: 0.84705883, a: 1}
+  keyArt: {fileID: 0}
+  addressableKey: 
+  audioBank: 
+  reelCount: 5
+  rowCount: 3
+  symbols:
+  - id: 0
+    symbolName: Wild
+    sprite: {fileID: 0}
+    payoutsByMatch: 0000000000000000000000000000000000000000000000000000000000000000
+    isWild: 1
+    isScatter: 0
+    isSpecial: 0
+  - id: 1
+    symbolName: Scatter
+    sprite: {fileID: 0}
+    payoutsByMatch: 000000000000000000000000000000000000000000000000
+    isWild: 0
+    isScatter: 1
+    isSpecial: 0
+  - id: 10
+    symbolName: Ace
+    sprite: {fileID: 0}
+    payoutsByMatch: 050000000000000014000000000000003c00000000000000
+    isWild: 0
+    isScatter: 0
+    isSpecial: 0
+  - id: 11
+    symbolName: King
+    sprite: {fileID: 0}
+    payoutsByMatch: 04000000000000000f000000000000003200000000000000
+    isWild: 0
+    isScatter: 0
+    isSpecial: 0
+  - id: 12
+    symbolName: Queen
+    sprite: {fileID: 0}
+    payoutsByMatch: 03000000000000000c000000000000002800000000000000
+    isWild: 0
+    isScatter: 0
+    isSpecial: 0
+  - id: 13
+    symbolName: Jack
+    sprite: {fileID: 0}
+    payoutsByMatch: 020000000000000008000000000000001900000000000000
+    isWild: 0
+    isScatter: 0
+    isSpecial: 0
+  - id: 14
+    symbolName: Ten
+    sprite: {fileID: 0}
+    payoutsByMatch: 010000000000000005000000000000000f00000000000000
+    isWild: 0
+    isScatter: 0
+    isSpecial: 0
+  - id: 15
+    symbolName: Nine
+    sprite: {fileID: 0}
+    payoutsByMatch: 010000000000000004000000000000000c00000000000000
+    isWild: 0
+    isScatter: 0
+    isSpecial: 0
+  - id: 16
+    symbolName: Filigree
+    sprite: {fileID: 0}
+    payoutsByMatch: 14000000000000005000000000000000fa00000000000000
+    isWild: 0
+    isScatter: 0
+    isSpecial: 0
+  payType: 0
+  paylines:
+  - lineName: H0
+    rows: 0000000000000000000000000000000000000000
+  - lineName: H1
+    rows: 0100000001000000010000000100000001000000
+  - lineName: H2
+    rows: 0200000002000000020000000200000002000000
+  - lineName: V-down
+    rows: 0000000001000000020000000000000001000000
+  - lineName: V-up
+    rows: 0100000000000000020000000100000000000000
+  minBet: 100
+  maxBet: 5000
+  betLevels: 6
+  targetRtp: 0.955
+  maxWinMultiplier: 2500
+  progressive: 0
+  progressiveSeed: 250000
+  hasFreeSpins: 1
+  freeSpinScatterCount: 3
+  freeSpinAward: 10
+  freeSpinBetMultiplier: 1
+  hasCascade: 0
+  cascadeClusterSize: 5
+  hasHoldAndSpin: 0
+  holdSpinInitialLocked: 3
+  holdSpinMaxRespins: 10
+  hasBonusBuy: 0
+  bonusBuyCostMultiplier: 80
+  spinDurationSeconds: 1.6
+  anticipationSeconds: 0.9
+  winCelebrationThresholds: 0a000000000000003200000000000000c800000000000000e8030000000000008813000000000000
