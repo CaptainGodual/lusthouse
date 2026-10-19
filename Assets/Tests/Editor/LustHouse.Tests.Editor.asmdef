@@ -3,6 +3,7 @@
     "rootNamespace": "LustHouse.Tests",
     "references": [
         "LustHouse.Scripts",
+        "LustHouse.Editor",
         "UnityEngine.TestRunner",
         "UnityEditor.TestRunner"
     ],

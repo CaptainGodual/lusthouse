@@ -7,6 +7,12 @@ Headless verification that works while the Unity editor has the project locked.
 Compiles `LustHouse.Scripts`, `LustHouse.Editor`, and `LustHouse.Tests.Editor` with
 Roslyn, referencing the assemblies Unity already built in `Library/ScriptAssemblies`.
 
+Assembly references are **read from the `.asmdef` files**, not hardcoded. An earlier
+version of this script kept a flat reference list, which silently masked two missing
+asmdef references that only Unity reported. It now fails if an asmdef names an assembly
+it cannot resolve, and prefers a freshly-compiled DLL over Unity's stale cached copy of
+our own assemblies.
+
 ```powershell
 .\Tools\check_compile.ps1            # runtime + editor
 .\Tools\check_compile.ps1 -WithTests # + test assembly

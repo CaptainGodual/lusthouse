@@ -3,8 +3,9 @@
     "rootNamespace": "LustHouse.EditorTools",
     "references": [
         "LustHouse.Scripts",
-        "Unity.RenderPipelines.Universal.Runtime",
         "Unity.RenderPipelines.Core.Runtime",
+        "Unity.RenderPipelines.Universal.Runtime",
+        "Unity.RenderPipelines.Universal.2D.Runtime",
         "UnityEngine.UI",
         "Unity.Addressables",
         "Unity.Addressables.Editor"
