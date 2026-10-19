@@ -1,31 +1,155 @@
 using System;
+using System.Collections.Generic;
+using LustHouse.Core;
 using UnityEngine;
 
 namespace LustHouse.Slots
 {
-    public interface IReelEvaluator
-    {
-        SpinResult Evaluate(SlotMachineDefinition def, int[] stops);
-    }
-
+    /// <summary>
+    /// One evaluated spin: which symbols landed where, what paid, and which features fired.
+    /// </summary>
     public struct SpinResult
     {
-        public long totalWin;
-        public int[][] winningLines;
+        public int[] stops;              // stop index per reel
+        public int[][] grid;             // grid[reel][row] -> symbol id
+        public long totalWin;            // in currency units (already multiplied by bet)
+        public long bet;
+        public List<LineWin> lineWins;
+        public int scatterCount;
         public bool triggeredFreeSpins;
+        public bool triggeredBonusBuy;
         public bool triggeredHoldAndSpin;
+        public int freeSpinsAwarded;
+
+        public bool IsWin => totalWin > 0;
+
+        public float Multiplier(long bet) => bet <= 0 ? 0f : (float)((double)totalWin / bet);
     }
 
+    public struct LineWin
+    {
+        public int paylineIndex;
+        public int count;       // matching symbols
+        public int symbolId;
+        public long payout;     // in bet-multiples
+    }
+
+    /// <summary>Common shape for all five mechanic templates (plan §5.2: strategy classes).</summary>
+    public interface IReelEvaluator
+    {
+        SpinResult Evaluate(SlotMachineDefinition def, int[] stops, long bet);
+    }
+
+    /// <summary>
+    /// Spins reels from a seeded stream. Deterministic: the same definition, seed and bet
+    /// always produce the same grid, which is what makes the RTP simulation in
+    /// <c>MathSimulator</c> meaningful and guardrail §6 satisfiable.
+    /// </summary>
     public class ReelEngine : MonoBehaviour
     {
-        public IReelEvaluator Evaluator { get; set; }
+        [Tooltip("Base seed for the session. Overridden by QA repro entry.")]
+        public int sessionSeed = 0;
 
-        public SpinResult Spin(SlotMachineDefinition def)
+        private SeededRng _rng;
+        private bool _seeded;
+
+        public SeededRng Rng => _rng;
+
+        public void Seed(int seed)
         {
-            int[] stops = new int[def.reelCount];
-            for (int i = 0; i < stops.Length; i++)
-                stops[i] = UnityEngine.Random.Range(0, def.symbolStrip.Length / def.reelCount);
-            return Evaluator != null ? Evaluator.Evaluate(def, stops) : default;
+            _rng = SeededRng.FromSeed(seed);
+            _seeded = true;
+        }
+
+        public void SeedFromState(ulong s0, ulong s1)
+        {
+            _rng = SeededRng.FromState(s0, s1);
+            _seeded = true;
+        }
+
+        public (ulong s0, ulong s1) CaptureState()
+        {
+            EnsureSeeded();
+            return (_rng.State0, _rng.State1);
+        }
+
+        private void EnsureSeeded()
+        {
+            if (_seeded) return;
+            _rng = SeededRng.FromSeed(sessionSeed != 0 ? sessionSeed : Environment.TickCount);
+            _seeded = true;
+        }
+
+        /// <summary>Headless spin used by the simulator — no MonoBehaviour required.</summary>
+        public static SpinResult SpinStatic(SlotMachineDefinition def, ref SeededRng rng, long bet)
+        {
+            if (def == null) return default;
+
+            var evaluator = EvaluatorFor(def);
+            var stops = Stop(def, ref rng);
+            return evaluator.Evaluate(def, stops, bet);
+        }
+
+        public SpinResult Spin(SlotMachineDefinition def, long bet)
+        {
+            EnsureSeeded();
+            if (def == null) return default;
+
+            var evaluator = EvaluatorFor(def);
+            var stops = Stop(def, ref _rng);
+            return evaluator.Evaluate(def, stops, bet);
+        }
+
+        /// <summary>One uniform stop per reel, drawn from that reel's own strip.</summary>
+        private static int[] Stop(SlotMachineDefinition def, ref SeededRng rng)
+        {
+            var stops = new int[def.reelCount];
+            for (int r = 0; r < def.reelCount; r++)
+            {
+                var strip = def.reelStrips[r];
+                stops[r] = strip.Length <= 1 ? 0 : rng.NextInt(strip.Length);
+            }
+            return stops;
+        }
+
+        /// <summary>Builds the grid from the stops, honouring per-reel strip length.</summary>
+        public static int[][] BuildGrid(SlotMachineDefinition def, int[] stops)
+        {
+            var grid = new int[def.reelCount][];
+            for (int r = 0; r < def.reelCount; r++)
+            {
+                var strip = def.reelStrips[r];
+                grid[r] = new int[def.rowCount];
+                for (int row = 0; row < def.rowCount; row++)
+                    grid[r][row] = strip[(stops[r] + row) % strip.Length];
+            }
+            return grid;
+        }
+
+        private static IReelEvaluator EvaluatorFor(SlotMachineDefinition def)
+        {
+            switch (def.template)
+            {
+                case SlotTemplate.Cascade: return new CascadeEvaluator();
+                case SlotTemplate.HoldAndSpin: return new HoldSpinEvaluator();
+                case SlotTemplate.Progressive: return new ProgressiveEvaluator();
+                default: return new PaylineEvaluator();
+            }
+        }
+
+        /// <summary>Counts scatters anywhere on the grid.</summary>
+        public static int CountScatters(SlotMachineDefinition def, int[][] grid)
+        {
+            int count = 0;
+            for (int r = 0; r < grid.Length; r++)
+            {
+                for (int row = 0; row < grid[r].Length; row++)
+                {
+                    var sym = def.SymbolById(grid[r][row]);
+                    if (sym != null && sym.isScatter) count++;
+                }
+            }
+            return count;
         }
     }
 }

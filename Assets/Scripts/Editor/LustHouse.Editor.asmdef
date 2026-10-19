@@ -1,8 +1,17 @@
 {
     "name": "LustHouse.Editor",
     "rootNamespace": "LustHouse.EditorTools",
-    "references": [ "LustHouse.Scripts" ],
-    "includePlatforms": [ "Editor" ],
+    "references": [
+        "LustHouse.Scripts",
+        "Unity.RenderPipelines.Universal.Runtime",
+        "Unity.RenderPipelines.Core.Runtime",
+        "UnityEngine.UI",
+        "Unity.Addressables",
+        "Unity.Addressables.Editor"
+    ],
+    "includePlatforms": [
+        "Editor"
+    ],
     "excludePlatforms": [],
     "allowUnsafeCode": false,
     "overrideReferences": false,
