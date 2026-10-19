@@ -1,6 +1,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using LustHouse.Core;
 using UnityEngine;
 
 namespace LustHouse.Boot
@@ -69,6 +70,32 @@ namespace LustHouse.Boot
             _tasks.Add(new TaskBakeReelAtlases());
             _tasks.Add(new TaskLoadAudio());
             _tasks.Add(new TaskFetchConfig());
+
+            EnsurePresenter();
+        }
+
+        /// <summary>
+        /// Guarantees the boot screen can present its "TAP TO ENTER" prompt.
+        ///
+        /// Beat 4 never auto-advances, so if the presenter is missing the game reaches
+        /// <see cref="ReadyToEnter"/> and then sits on a dead screen forever. That failure
+        /// mode is unacceptable, so the presenter is added on the spot rather than trusted
+        /// to the scene file. Scenes generated before BootPresenter existed are repaired
+        /// automatically the first time they run.
+        /// </summary>
+        private void EnsurePresenter()
+        {
+            var existing = GetComponent<BootPresenter>();
+            if (existing != null)
+            {
+                if (existing.sequence == null) existing.sequence = this;
+                return;
+            }
+
+            var presenter = gameObject.AddComponent<BootPresenter>();
+            presenter.sequence = this;
+            LustLog.Info("[LustHouse] BootPresenter was missing from BootLoader; added it at runtime. " +
+                         "Run LustHouse > Setup > Repair boot scene to persist this in the scene file.");
         }
 
         private void Start()
@@ -171,7 +198,13 @@ namespace LustHouse.Boot
         /// <summary>Called by the "TAP TO ENTER" prompt.</summary>
         public void EnterLobby()
         {
-            if (!ReadyToEnter) return;
+            if (!ReadyToEnter)
+            {
+                LustLog.Warn("[LustHouse] EnterLobby called before the boot sequence was ready; ignored.");
+                return;
+            }
+
+            LustLog.Info($"[LustHouse] Boot complete -> loading scene '{lobbySceneName}'.");
             UnityEngine.SceneManagement.SceneManager.LoadScene(lobbySceneName);
         }
     }

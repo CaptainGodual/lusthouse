@@ -223,19 +223,30 @@ namespace LustHouse.EditorTools
         {
             EnsureFolders();
 
+            int created = 0;
             foreach (var spec in SceneSpecs)
-                CreateScene(spec.name, spec.scenes);
+                if (CreateScene(spec.name, spec.scenes)) created++;
+
+            if (created < SceneSpecs.Length)
+            {
+                // Scenes are only ever created, never overwritten. That silent skip is how
+                // BootLoader ended up without its presenter, so say so loudly.
+                LustLog.Warn(
+                    $"[LustHouse] Created {created} of {SceneSpecs.Length} scenes; the rest already existed " +
+                    "and were left untouched. Existing scenes are NOT refreshed — if you changed a " +
+                    "generator, run 'LustHouse > Setup > Repair boot scene' or delete the scene first.");
+            }
 
             AssetDatabase.Refresh();
         }
 
-        private static void CreateScene(string sceneName, string[] additiveScenes)
+        private static bool CreateScene(string sceneName, string[] additiveScenes)
         {
             string path = $"Assets/Scenes/{sceneName}.unity";
             if (File.Exists(path))
             {
-                LustLog.Info($"[LustHouse] Scene {sceneName} already exists; leaving it alone.");
-                return;
+                LustLog.Warn($"[LustHouse] Scene {sceneName} already exists; leaving it alone.");
+                return false;
             }
 
             var scene = EditorSceneManager.NewScene(NewSceneSetup.EmptyScene, NewSceneMode.Single);
@@ -303,6 +314,7 @@ namespace LustHouse.EditorTools
 
             EditorSceneManager.SaveScene(scene, path);
             LustLog.Info($"[LustHouse] Created scene {path}");
+            return true;
         }
 
         /// <summary>
