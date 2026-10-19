@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -27,8 +28,28 @@ namespace LustHouse.Catalog
             public string blurb = "";
             public bool locked = false;
             public string lockedMessage = "";
+
+            [Tooltip("ISO-8601 release date. Drives the 'New' tab and the NEW badge " +
+                     "(plan §2.7). Blank means not released / never 'New'.")]
+            public string releasedAtUtc = "";
+
+            [Tooltip("Fallback for the featured row when the promo config does not list " +
+                     "this game. Order still comes from the config.")]
+            public bool isFeatured = false;
+
+            public int featuredOrder = 0;
+
             [Tooltip("Gems required to enter. 0 = enter with Coins. Never purchasable with Coins.")]
             public int entryCostGems = 0;
+
+            /// <summary>Parsed release date, or default when unset or unparseable.</summary>
+            public DateTime ReleasedUtc =>
+                DateTime.TryParse(releasedAtUtc, System.Globalization.CultureInfo.InvariantCulture,
+                                  System.Globalization.DateTimeStyles.AdjustToUniversal |
+                                  System.Globalization.DateTimeStyles.AssumeUniversal,
+                                  out var parsed)
+                    ? parsed
+                    : default;
 
             public string Title
             {

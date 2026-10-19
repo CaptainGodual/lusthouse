@@ -1,4 +1,5 @@
 #if UNITY_EDITOR
+using System;
 using System.Collections.Generic;
 using LustHouse.Catalog;
 using LustHouse.Core;
@@ -63,9 +64,74 @@ namespace LustHouse.EditorTools
             }
 
             RegisterPlaceholderGames();
+            StampReleaseDates();
+            CreatePromoConfig();
+
             EditorUtility.SetDirty(_catalog);
             AssetDatabase.SaveAssets();
             LustLog.Info($"[LustHouse] Starter content ready ({_catalog.games.Count} game(s)).");
+        }
+
+        /// <summary>
+        /// Stamps a release date on each catalog entry so the "New" window and the NEW badge
+        /// have something to work with. Existing dates are left alone.
+        /// </summary>
+        private static void StampReleaseDates()
+        {
+            var catalog = AssetDatabase.LoadAssetAtPath<GameCatalog>(CatalogPath);
+            if (catalog == null) return;
+
+            // Descending: the last-launched game is the newest.
+            var now = DateTime.UtcNow;
+            bool changed = false;
+
+            for (int i = 0; i < catalog.games.Count; i++)
+            {
+                var entry = catalog.games[i];
+                if (entry == null || !string.IsNullOrEmpty(entry.releasedAtUtc)) continue;
+
+                entry.releasedAtUtc = now.AddDays(-i * 5).ToString("o");
+                changed = true;
+            }
+
+            if (changed) EditorUtility.SetDirty(catalog);
+        }
+
+        /// <summary>
+        /// Creates the lobby promo config if absent: one daily-bonus slide plus featured
+        /// entries. The Newest and Jackpot slides are derived from the catalog at runtime,
+        /// so new games appear without touching this asset.
+        /// </summary>
+        public const string PromoConfigPath = "Assets/Data/Economy/LobbyPromoConfig.asset";
+
+        public static LobbyPromoConfig CreatePromoConfig()
+        {
+            var existing = AssetDatabase.LoadAssetAtPath<LobbyPromoConfig>(PromoConfigPath);
+            if (existing != null) return existing;
+
+            var config = LobbyPromoConfig.CreateDefault();
+            AssetDatabase.CreateAsset(config, PromoConfigPath);
+
+            var catalog = AssetDatabase.LoadAssetAtPath<GameCatalog>(CatalogPath);
+            if (catalog != null)
+            {
+                int order = 0;
+                foreach (var entry in catalog.games)
+                {
+                    if (entry == null) continue;
+                    config.featured.Add(new FeaturedTile
+                    {
+                        gameId = entry.id,
+                        headline = entry.Title.ToUpperInvariant(),
+                        order = order++
+                    });
+                }
+            }
+
+            EditorUtility.SetDirty(config);
+            AssetDatabase.SaveAssets();
+            LustLog.Info($"[LustHouse] Created {PromoConfigPath}");
+            return config;
         }
 
         /// <summary>

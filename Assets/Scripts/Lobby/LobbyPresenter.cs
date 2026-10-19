@@ -12,15 +12,16 @@ namespace LustHouse.Lobby
     /// beneath the featured row.
     ///
     /// Structure, top to bottom:
-    ///   1. Top bar        — avatar + level, LVL, Coins (+), Gems (+), gear      [mockup, §2.5]
-    ///   2. Daily bonus    — promo banner with carousel dots                       [mockup, §2.6]
-    ///   3. Featured row   — large tiles with a right chevron                     [mockup]
+    ///   1. Top bar        — avatar + level, LVL, Coins (+), Gems, gear      [mockup, §2.5]
+    ///   2. Carousel       — daily bonus / newest / jackpot slides          [mockup, §2.6]
+    ///   3. Featured row   — large tiles driven by promo config            [mockup]
     ///   4. Category tabs  — All / Slots / Jackpots / New / Favorites / High Vol  [§2.7]
-    ///   5. Game grid      — dense 224x280 tiles                                  [§2.8]
-    ///   6. Bottom nav     — Home / Shop / Missions / Social / Leaderboard        [mockup, §2.11]
+    ///   5. Game grid      — dense 224x280 tiles                           [§2.8]
+    ///   6. Bottom nav     — Home / Shop / Missions / Social / Leaderboard [mockup, §2.11]
     ///
-    /// SOCIAL and LEADERBOARD open a "coming soon" sheet rather than doing nothing —
-    /// a nav item that goes nowhere is a dead end, which the plan forbids (§2.8).
+    /// The carousel and featured row are built by <see cref="PromoCarousel"/> and
+    /// <see cref="FeaturedRow"/>, both data-driven from <see cref="PromoService"/>.
+    ///
     /// The plan's desktop side rail (§2.9) is not built yet and remains M4.
     /// </summary>
     [DisallowMultipleComponent]
@@ -29,6 +30,7 @@ namespace LustHouse.Lobby
         [Header("Wiring")]
         public LobbyController controller;
         public GameCatalog catalog;
+        public PromoService promo;
 
         [Header("Dev")]
         [Tooltip("Shows a QA row for granting currency. Never enable in a release build.")]
@@ -48,7 +50,10 @@ namespace LustHouse.Lobby
         private Text _gems;
         private Text _level;
         private Text _status;
+        private Text _offlineChip;
         private LobbyGrid _grid;
+        private PromoCarousel _carousel;
+        private FeaturedRow _featuredRow;
         private ModalSheet _sheet;
         private RectTransform _root;
 
@@ -60,6 +65,7 @@ namespace LustHouse.Lobby
             if (controller != null && catalog != null && controller.catalog == null)
                 controller.catalog = catalog;
 
+            EnsurePromoService();
             UiFactory.EnsureEventSystem();
         }
 
@@ -68,6 +74,9 @@ namespace LustHouse.Lobby
             EventBus.Subscribe<WalletChanged>(OnWalletChanged);
             Build();
             Refresh();
+
+            // The lobby is already usable; the override only ever improves it in place.
+            promo?.FetchRemoteOverride();
         }
 
         private void OnDisable()
@@ -81,15 +90,32 @@ namespace LustHouse.Lobby
             Refresh();
             _grid?.RebuildGrid();
         }
+
+        private void EnsurePromoService()
+        {
+            if (promo != null) return;
+
+            promo = GetComponent<PromoService>();
+            if (promo != null) return;
+
+            promo = FindFirstObjectByType<PromoService>();
+            if (promo != null) return;
+
+            var host = new GameObject("PromoService");
+            DontDestroyOnLoad(host);
+            promo = host.AddComponent<PromoService>();
+            promo.catalog = catalog;
+        }
+
+        // =====================================================================
         // Layout
         //
-        // One vertical rhythm for the whole screen, top to bottom, in 1920x1080
-        // reference pixels. Every rect is positioned by its top-left corner via
-        // UiFactory.PlaceTopLeft / PlaceTopCentre, so nothing depends on a hand-computed
-        // pivot and nothing can drift off the left edge.
+        // One vertical rhythm, top to bottom, in 1920x1080 reference pixels. Every rect
+        // is positioned by its top-left corner via UiFactory.PlaceTopLeft /
+        // PlaceTopCentre, so nothing depends on a hand-computed pivot.
         //
         //    0.. 88   top bar
-        //  100..232   daily bonus banner
+        //  100..232   carousel banner (PromoCarousel.BannerY / BannerHeight)
         //  244..544   featured row
         //  556..960   library: heading / tabs / grid
         //  976..1080  bottom nav
@@ -97,13 +123,14 @@ namespace LustHouse.Lobby
 
         private const float Margin = 40f;
         private const float TopBarHeight = 88f;
-        private const float BonusY = 100f, BonusH = 132f;
         private const float FeaturedY = 244f, FeaturedH = 300f;
         private const float LibraryTop = 556f, LibraryBottom = 120f;
         private const float NavHeight = 104f;
 
         private void Build()
         {
+            if (_root != null) return;   // build once
+
             var canvas = GetComponentInChildren<Canvas>();
             if (canvas == null) canvas = UiFactory.CreateCanvas(transform, "LobbyCanvas");
             _root = canvas.transform as RectTransform;
@@ -112,7 +139,7 @@ namespace LustHouse.Lobby
             UiFactory.Stretch(backdrop.rectTransform);
 
             BuildTopBar(_root);
-            BuildDailyBonus(_root);
+            BuildCarousel(_root);
             BuildFeaturedRow(_root);
 
             _grid = GetComponent<LobbyGrid>() ?? gameObject.AddComponent<LobbyGrid>();
@@ -136,7 +163,6 @@ namespace LustHouse.Lobby
             float chipY = 18f;
             const float chipH = 52f;
 
-            // Avatar + level shield (mockup, far left).
             var avatar = UiFactory.NewImage("Avatar", root, UiFactory.VelvetRaised);
             UiFactory.PlaceTopLeft(avatar.rectTransform, Margin, chipY, chipH, chipH);
             avatar.raycastTarget = true;
@@ -149,7 +175,6 @@ namespace LustHouse.Lobby
                 FontStyle.Bold, UiFactory.GoldPrimary);
             UiFactory.Stretch(initial.rectTransform);
 
-            // LVL chip.
             var lvlChip = UiFactory.NewImage("LevelChip", root, UiFactory.VelvetRaised);
             UiFactory.PlaceTopLeft(lvlChip.rectTransform, Margin + chipH + 8f, chipY, 130f, chipH);
             var lvlCaption = UiFactory.NewText("Caption", lvlChip.transform, "LVL", 12,
@@ -168,7 +193,7 @@ namespace LustHouse.Lobby
             UiFactory.PlaceLeftMid(_coins.rectTransform, 18f, 220f, chipH);
 
             var coinPlus = UiFactory.NewButton("CoinPlus", root, "+", 30, UiFactory.VelvetBase, out Text coinPlusText);
-            UiFactory.PlaceTopLeft(coinPlus.GetComponent<RectTransform>(), coinsX + 300f - 56f, chipY + 4f, 48f, chipH - 8f);
+            UiFactory.PlaceTopLeft(coinPlus.GetComponent<RectTransform>(), coinsX + 244f, chipY + 4f, 48f, chipH - 8f);
             UiFactory.Stretch(coinPlusText.rectTransform);
             coinPlus.GetComponent<Image>().color = UiFactory.GoldPrimary;
             coinPlus.onClick.AddListener(() => controller?.OnCurrencyPlusPressed(Currency.Coins));
@@ -181,7 +206,12 @@ namespace LustHouse.Lobby
                 FontStyle.Bold, UiFactory.NeonCyan, TextAnchor.MiddleLeft);
             UiFactory.PlaceLeftMid(_gems.rectTransform, 18f, 200f, chipH);
 
-            // Settings gear, far right.
+            // Persistent OFFLINE chip (§2.13) — hidden until a fetch actually fails.
+            _offlineChip = UiFactory.NewText("OfflineChip", root, "OFFLINE", 13,
+                FontStyle.Bold, UiFactory.StateWarn, TextAnchor.MiddleCenter);
+            UiFactory.PlaceTopLeft(_offlineChip.rectTransform, gemsX + 236f, chipY, 100f, chipH);
+            _offlineChip.gameObject.SetActive(false);
+
             var gear = UiFactory.NewButton("Gear", root, "⚙", 28, UiFactory.TextSecondary, out Text gearText);
             UiFactory.PlaceTopLeft(gear.GetComponent<RectTransform>(), 1920f - Margin - 56f, chipY, 56f, chipH);
             UiFactory.Stretch(gearText.rectTransform);
@@ -190,104 +220,39 @@ namespace LustHouse.Lobby
                 "This sheet exists so the gear is never a dead end.", "CLOSE"));
         }
 
-        // ---- 2. daily bonus banner -------------------------------------------
+        // ---- 2. carousel ------------------------------------------------------
 
-        private void BuildDailyBonus(RectTransform root)
+        private void BuildCarousel(RectTransform root)
         {
-            var banner = UiFactory.NewImage("DailyBonus", root, UiFactory.VelvetPanel);
-            UiFactory.PlaceTopCentre(banner.rectTransform, BonusY, 1000f, BonusH);
-            banner.raycastTarget = true;
+            var host = new GameObject("PromoArea", typeof(RectTransform));
+            host.transform.SetParent(root, false);
+            UiFactory.PlaceTopLeft(host.GetComponent<RectTransform>(), 0f, 0f, 1920f,
+                PromoCarousel.BannerY + PromoCarousel.BannerHeight + 28f);
 
-            var edge = UiFactory.NewImage("Edge", banner.transform, UiFactory.NeonMagenta);
-            UiFactory.Stretch(edge.rectTransform, 2f);
-
-            var heading = UiFactory.NewText("Heading", banner.transform, "D A I L Y   B O N U S", 32,
-                FontStyle.Bold, UiFactory.GoldGlow);
-            UiFactory.PlaceTopCentre(heading.rectTransform, 26f, 520f, 48f, -40f);
-
-            var claim = UiFactory.NewButton("Claim", banner.transform, "CLAIM", 22,
-                UiFactory.VelvetBase, out Text claimText);
-            UiFactory.PlaceTopLeft(claim.GetComponent<RectTransform>(), 1000f / 2f + 40f, 70f, 200f, 48f);
-            UiFactory.Stretch(claimText.rectTransform);
-            claim.GetComponent<Image>().color = UiFactory.StateSuccess;
-            claim.onClick.AddListener(() => ShowSheet("DAILY BONUS",
-                "The daily gift and its escalation ladder ship in M2/M4.\n\n" +
-                "It guarantees enough Coins for at least 20 minutes at the lowest bet (plan §4.3).",
-                "CLOSE"));
-
-            // Carousel dots (§2.6).
-            for (int i = 0; i < 4; i++)
-            {
-                var dot = UiFactory.NewImage("Dot" + i, banner.transform,
-                    i == 0 ? UiFactory.GoldPrimary : UiFactory.TextDisabled);
-                float size = i == 0 ? 12f : 8f;
-                UiFactory.PlaceTopCentre(dot.rectTransform, BonusH - 22f, size, size,
-                    (i - 1.5f) * 24f);
-            }
+            _carousel = host.AddComponent<PromoCarousel>();
+            _carousel.promo = promo;
+            _carousel.controller = controller;
+            _carousel.DailyBonusRequested += ShowDailyBonusSheet;
         }
 
-        // ---- 3. featured row (mockup) ----------------------------------------
+        // ---- 3. featured row --------------------------------------------------
 
         private void BuildFeaturedRow(RectTransform root)
         {
-            var host = new GameObject("FeaturedRow", typeof(RectTransform));
+            var host = new GameObject("FeaturedArea", typeof(RectTransform));
             host.transform.SetParent(root, false);
-            var row = (RectTransform)host.transform;
-            UiFactory.PlaceTopLeft(row, Margin, FeaturedY, 1920f - Margin * 2f, FeaturedH);
+            UiFactory.PlaceTopLeft(host.GetComponent<RectTransform>(), Margin, FeaturedY,
+                1920f - Margin * 2f, FeaturedH);
 
-            var layout = new (string label, string body, Color accent, bool locked)[]
-            {
-                ("FEATURED SLOTS", "Featured slot games from the library.", UiFactory.NeonMagenta, false),
-                ("BLACKJACK",  "Table games are not in the v1 roster — plan §3.4 is slots-only.", UiFactory.StateSuccess, true),
-                ("ROULETTE",   "Table games are not in the v1 roster — plan §3.4 is slots-only.", UiFactory.NeonMagenta, true),
-                ("POKER",      "Table games are not in the v1 roster — plan §3.4 is slots-only.", UiFactory.NeonCyan, true)
-            };
-
-            // Four tiles across the content width, chevron overlapping the right edge.
-            float chevronW = 44f;
-            float usable = 1920f - Margin * 2f - chevronW;
-            float tileW = (usable - 3f * 24f) / 4f;
-
-            for (int i = 0; i < layout.Length; i++)
-            {
-                var spec = layout[i];
-                float x = i * (tileW + 24f);
-
-                var tile = UiFactory.NewImage("Featured_" + spec.label.Replace(' ', '_'), row,
-                    new Color(spec.accent.r * 0.30f, spec.accent.g * 0.30f, spec.accent.b * 0.30f, 1f));
-                tile.raycastTarget = true;
-                UiFactory.PlaceTopLeft(tile.rectTransform, x, 0f, tileW, FeaturedH);
-
-                var edge = UiFactory.NewImage("Edge", tile.transform, spec.accent);
-                UiFactory.Stretch(edge.rectTransform, 3f);
-
-                var label = UiFactory.NewText("Label", tile.transform, spec.label, 26,
-                    FontStyle.Bold, spec.locked ? UiFactory.TextDisabled : UiFactory.TextPrimary,
-                    TextAnchor.LowerCenter);
-                var labelRect = label.rectTransform;
-                labelRect.anchorMin = new Vector2(0f, 0f);
-                labelRect.anchorMax = new Vector2(1f, 0f);
-                labelRect.pivot = new Vector2(0.5f, 0f);
-                labelRect.offsetMin = new Vector2(8f, 16f);
-                labelRect.offsetMax = new Vector2(-8f, 66f);
-                label.horizontalOverflow = HorizontalWrapMode.Wrap;
-
-                var captured = spec;
-                tile.gameObject.AddComponent<Button>().onClick.AddListener(() =>
-                {
-                    if (captured.locked) { ShowSheet(captured.label, captured.body, "GOT IT"); return; }
-
-                    var first = catalog != null && catalog.games.Count > 0 ? catalog.games[0] : null;
-                    if (first != null) controller?.OnGameTilePressed(first.id);
-                });
-            }
-
-            var chevron = UiFactory.NewText("Chevron", row, "›", 60, FontStyle.Bold,
-                UiFactory.TextSecondary, TextAnchor.MiddleLeft);
-            UiFactory.PlaceTopLeft(chevron.rectTransform, usable, 0f, chevronW, FeaturedH);
+            _featuredRow = host.AddComponent<FeaturedRow>();
+            _featuredRow.promo = promo;
+            _featuredRow.controller = controller;
+            _featuredRow.tileHeight = FeaturedH;
+            _featuredRow.rightMargin = Margin;
+            _featuredRow.TeaserTapped += (headline, body) => ShowSheet(headline, body, "GOT IT");
         }
 
-        // ---- 4 + 5. library: tabs and grid ------------------------------------
+        // ---- 4 + 5. library ---------------------------------------------------
 
         private void BuildLibrary(RectTransform root)
         {
@@ -310,7 +275,7 @@ namespace LustHouse.Lobby
             var gridRect = (RectTransform)gridHost.transform;
             gridRect.anchorMin = Vector2.zero;
             gridRect.anchorMax = Vector2.one;
-            gridRect.offsetMin = new Vector2(0f, 0f);
+            gridRect.offsetMin = Vector2.zero;
             gridRect.offsetMax = new Vector2(0f, -84f);
 
             _grid.BuildGridArea(gridRect);
@@ -345,8 +310,6 @@ namespace LustHouse.Lobby
                 var destination = destinations[i];
                 bool selected = i == 0;
 
-                // Label sits above the underline; the underline is at y=20 from the nav's
-                // bottom, the label baseline above it.
                 var item = UiFactory.NewText("Nav_" + destination.label, nav.transform, destination.label, 20,
                     FontStyle.Bold, selected ? UiFactory.GoldPrimary : UiFactory.TextSecondary);
                 UiFactory.PlaceBottomCentre(item.rectTransform, 34f, slotWidth, 44f,
@@ -368,7 +331,6 @@ namespace LustHouse.Lobby
                 });
             }
 
-            // Status line above the nav, used by dev tools and nav feedback.
             _status = UiFactory.NewText("Status", root, "", 16, FontStyle.Normal,
                 UiFactory.TextSecondary, TextAnchor.MiddleLeft);
             UiFactory.PlaceBottomLeft(_status.rectTransform, Margin, NavHeight + 6f, 1200f, 28f);
@@ -389,6 +351,7 @@ namespace LustHouse.Lobby
                 SetStatus("Dev grant: +5,000 Coins (ledger reason Admin).", UiFactory.StateDanger);
             });
         }
+
         // =====================================================================
         // State
         // =====================================================================
@@ -403,6 +366,9 @@ namespace LustHouse.Lobby
 
             var progression = Economy.PlayerProgression.Instance;
             if (progression != null && _level != null) _level.text = progression.Level.ToString();
+
+            if (promo != null && _offlineChip != null)
+                _offlineChip.gameObject.SetActive(promo.IsOffline);
         }
 
         private void SetStatus(string message, Color color)
@@ -414,6 +380,11 @@ namespace LustHouse.Lobby
 
         private void OnLockedTapped(string title) =>
             ShowSheet(title.ToUpperInvariant(), "This title is marked coming soon.", "GOT IT");
+
+        private void ShowDailyBonusSheet() => ShowSheet("DAILY BONUS",
+            "The daily gift and its escalation ladder ship in M2/M4.\n\n" +
+            "It guarantees enough Coins for at least 20 minutes at the lowest bet (plan §4.3).",
+            "CLOSE");
 
         private void ShowSheet(string title, string body, string closeLabel)
         {
