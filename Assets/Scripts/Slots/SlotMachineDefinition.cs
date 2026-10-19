@@ -20,6 +20,11 @@ namespace LustHouse.Slots
         [Tooltip("Payout in bet-multiples for 3, 4, 5, ... matching symbols. Index 0 == three of a kind.")]
         public long[] payoutsByMatch = new long[0];
 
+        [Tooltip("Payout in bet-multiples by cluster size, index 0 == cascadeClusterSize " +
+                 "symbols. Required for PayType.Cluster: a 9-cell cluster would otherwise " +
+                 "index 6 into payoutsByMatch and pay nothing at all.")]
+        public long[] clusterPayouts = new long[0];
+
         [Tooltip("Substitutes for any non-scatter symbol when counting lines.")]
         public bool isWild = false;
 
@@ -34,6 +39,23 @@ namespace LustHouse.Slots
             int index = count - 3;
             if (index < 0 || index >= payoutsByMatch.Length) return 0;
             return payoutsByMatch[index];
+        }
+
+        /// <summary>
+        /// Payout for a cluster of <paramref name="size"/> symbols. Keyed off
+        /// <c>cascadeClusterSize</c>, not off three-of-a-kind, so a nine-cell cluster does
+        /// not index six entries into the line paytable and pay nothing.
+        /// </summary>
+        public long PayoutForCluster(int size, int minSize)
+        {
+            if (clusterPayouts != null && clusterPayouts.Length > 0)
+            {
+                int index = size - minSize;
+                if (index >= 0 && index < clusterPayouts.Length) return clusterPayouts[index];
+                return 0;
+            }
+
+            return PayoutForMatch(size);   // fall back for hand-built fixtures
         }
     }
 
@@ -234,6 +256,63 @@ namespace LustHouse.Slots
                         }
                     }
                 }
+            }
+            else if (payType == PayType.Cluster)
+            {
+                // Cluster pays need a usable cluster size, and no paylines -- leftover
+                // paylines on a cluster game mean the wrong maths is silently running.
+                if (cascadeClusterSize < 3)
+                {
+                    error = "Cluster pays need cascadeClusterSize of at least 3.";
+                    return false;
+                }
+
+                if (paylines != null && paylines.Count > 0)
+                {
+                    error = "Cluster pays have no paylines; clear them or the payline maths will run instead.";
+                    return false;
+                }
+
+                bool anyClusterPay = false;
+                for (int i = 0; i < symbols.Count && !anyClusterPay; i++)
+                {
+                    var s = symbols[i];
+                    if (s == null || s.clusterPayouts == null) continue;
+                    for (int k = 0; k < s.clusterPayouts.Length; k++)
+                        if (s.clusterPayouts[k] > 0) { anyClusterPay = true; break; }
+                }
+
+                if (!anyClusterPay)
+                {
+                    error = "Cluster pays need at least one symbol with a non-zero " +
+                            "clusterPayouts entry, otherwise every cluster pays zero.";
+                    return false;
+                }
+            }
+            else if (payType == PayType.Ways && paylines != null && paylines.Count > 0)
+            {
+                error = "Ways pays has no paylines; clear them or the payline maths will run instead.";
+                return false;
+            }
+
+            // Every payType needs at least one symbol that can actually pay. Ways with a
+            // single-tier paytable, or a paytable with no paying symbol, silently returns 0.
+            bool anyPaying = false;
+            for (int i = 0; i < symbols.Count; i++)
+            {
+                var s = symbols[i];
+                if (s == null || s.isScatter) continue;
+                var pays = s.payoutsByMatch;
+                if (pays == null) continue;
+                for (int k = 0; k < pays.Length; k++)
+                    if (pays[k] > 0) { anyPaying = true; break; }
+                if (anyPaying) break;
+            }
+
+            if (!anyPaying)
+            {
+                error = "No symbol pays anything; every spin would return zero.";
+                return false;
             }
 
             return true;

@@ -156,9 +156,8 @@ namespace LustHouse.EditorTools
         /// </summary>
         public static double ExactRtp(SlotMachineDefinition def)
         {
-            if (def == null || def.reelCount <= 0) return 0.0;
-            if (def.paylines == null || def.paylines.Count == 0) return 0.0;
-            if (def.reelStrips == null || def.reelStrips.Count != def.reelCount) return 0.0;
+            if (def == null || def.reelCount <= 0) return double.NaN;
+            if (def.reelStrips == null || def.reelStrips.Count != def.reelCount) return double.NaN;
 
             var probs = new Dictionary<int, double>[def.reelCount];
             for (int r = 0; r < def.reelCount; r++)
@@ -175,11 +174,123 @@ namespace LustHouse.EditorTools
                     probs[r][kv.Key] = (double)kv.Value / strip.Count;
             }
 
+            if (def.payType == PayType.Ways) return ExactRtpWays(def, probs);
+
+            // Cluster pays refill the grid with fresh draws, so there is no closed form.
+            // NaN, never a plausible zero -- callers check SupportsExactRtp first.
+            if (def.payType == PayType.Cluster) return double.NaN;
+
+            if (def.paylines == null || def.paylines.Count == 0) return double.NaN;
+
             // Every (reel, row) cell is uniform over that reel's multiset, so the row a
             // payline visits does not change its expectation: all lines share one value.
             int width = def.paylines[0].rows?.Length ?? def.reelCount;
             var ids = new int[width];
             return def.paylines.Count * SumLine(def, probs, 0, width, ids, 1.0);
+        }
+
+        /// <summary>
+        /// True when <see cref="ExactRtp"/> can produce a trustworthy number. Cluster pays
+        /// have no closed form, so their RTP can only be sampled and the gate must not
+        /// present a sampled figure as though it were exact.
+        /// </summary>
+        public static bool SupportsExactRtp(SlotMachineDefinition def) =>
+            def != null && def.payType != PayType.Cluster;
+
+        /// <summary>
+        /// Exact RTP for <see cref="PayType.Ways"/>. Each reel contributes an expected
+        /// count of qualifying positions per symbol; wins are elementary symmetric
+        /// polynomials over those counts, so this is closed form rather than enumeration.
+        /// </summary>
+        private static double ExactRtpWays(SlotMachineDefinition def, Dictionary<int, double>[] probs)
+        {
+            double total = 0.0;
+            int wildId = -1;
+            for (int i = 0; i < def.symbols.Count; i++)
+                if (def.symbols[i] != null && def.symbols[i].isWild) { wildId = def.symbols[i].id; break; }
+
+            double wildPerReel = wildId >= 0 ? probs[0].GetValueOrDefault(wildId) * def.rowCount : 0.0;
+
+            for (int i = 0; i < def.symbols.Count; i++)
+            {
+                var symbol = def.symbols[i];
+                if (symbol == null || symbol.isScatter) continue;
+
+                var counts = new double[def.reelCount];
+                for (int r = 0; r < def.reelCount; r++)
+                {
+                    if (symbol.isWild)
+                    {
+                        counts[r] = wildPerReel;
+                    }
+                    else
+                    {
+                        // A wild on a reel can stand in for this symbol on that reel.
+                        counts[r] = probs[r].GetValueOrDefault(symbol.id) * def.rowCount + wildPerReel;
+                    }
+                }
+
+                // Elementary symmetric polynomials over expected counts. Linear in the
+                // outcome, so the expectation of the product is the product of expectations.
+                var e = new double[def.reelCount + 1];
+                e[0] = 1.0;
+                for (int idx = 0; idx < def.reelCount; idx++)
+                {
+                    double v = counts[idx];
+                    for (int k = idx + 1; k >= 1; k--)
+                        e[k] += e[k - 1] * v;
+                }
+
+                for (int k = 3; k <= def.reelCount; k++)
+                {
+                    long payout = symbol.PayoutForMatch(k);
+                    if (payout > 0) total += e[k] * payout;
+                }
+            }
+
+            if (def.hasFreeSpins)
+            {
+                // Scatter triggers are counted over the whole grid.
+                double scatterPerReel = 0.0;
+                for (int i = 0; i < def.symbols.Count; i++)
+                {
+                    if (def.symbols[i] == null || !def.symbols[i].isScatter) continue;
+                    for (int r = 0; r < def.reelCount; r++)
+                        scatterPerReel = Math.Max(scatterPerReel, probs[r].GetValueOrDefault(def.symbols[i].id));
+                }
+
+                if (scatterPerReel > 0)
+                    total += ScatterTriggerChance(def, scatterPerReel) *
+                             def.freeSpinAward * def.freeSpinBetMultiplier;
+            }
+
+            return total;
+        }
+
+        /// <summary>P(scells on one reel &gt;= 1) ^ needed, summed over trigger counts.</summary>
+        private static double ScatterTriggerChance(SlotMachineDefinition def, double pPerCell)
+        {
+            int cellsPerReel = def.reelCount * def.rowCount;
+            double pAnyOnReel = 1.0 - Math.Pow(1.0 - pPerCell, def.rowCount);
+
+            // Small grid: enumerate the scatter count distribution exactly.
+            var dist = new double[def.freeSpinScatterCount + 1];
+            dist[0] = 1.0;
+            for (int i = 0; i < def.reelCount; i++)
+            {
+                var next = new double[dist.Length];
+                for (int c = 0; c < dist.Length; c++)
+                {
+                    next[c] += dist[c] * (1.0 - pAnyOnReel);
+                    if (c + 1 < dist.Length) next[c + 1] += dist[c] * pAnyOnReel;
+                }
+                dist = next;
+            }
+
+            double chance = 0.0;
+            for (int c = def.freeSpinScatterCount; c < dist.Length; c++)
+                chance += dist[c];
+            return chance;
         }
 
         private static double SumLine(SlotMachineDefinition def, Dictionary<int, double>[] probs,

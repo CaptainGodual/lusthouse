@@ -21,6 +21,18 @@ namespace LustHouse.Slots
         public bool triggeredHoldAndSpin;
         public int freeSpinsAwarded;
 
+        /// <summary>Ways-based wins (PayType.Ways) or clusters cleared (PayType.Cluster).</summary>
+        public long waysWon;
+
+        public int clustersWon;
+        public int cascadeSteps;
+
+        /// <summary>
+        /// Draw source for evaluators that must refill the grid (cluster pays).
+        /// Set by ReelEngine before evaluation; null means the evaluator seeds its own.
+        /// </summary>
+        public SeededRng? rng;
+
         public bool IsWin => totalWin > 0;
 
         public float Multiplier(long bet) => bet <= 0 ? 0f : (float)((double)totalWin / bet);
@@ -87,7 +99,9 @@ namespace LustHouse.Slots
 
             var evaluator = EvaluatorFor(def);
             var stops = Stop(def, ref rng);
-            return evaluator.Evaluate(def, stops, bet);
+            var result = evaluator.Evaluate(def, stops, bet);
+            result.rng = rng;
+            return result;
         }
 
         public SpinResult Spin(SlotMachineDefinition def, long bet)
@@ -97,7 +111,9 @@ namespace LustHouse.Slots
 
             var evaluator = EvaluatorFor(def);
             var stops = Stop(def, ref _rng);
-            return evaluator.Evaluate(def, stops, bet);
+            var result = evaluator.Evaluate(def, stops, bet);
+            result.rng = _rng;
+            return result;
         }
 
         /// <summary>One uniform stop per reel, drawn from that reel's own strip.</summary>
@@ -128,13 +144,21 @@ namespace LustHouse.Slots
 
         private static IReelEvaluator EvaluatorFor(SlotMachineDefinition def)
         {
-            switch (def.template)
-            {
-                case SlotTemplate.Cascade: return new CascadeEvaluator();
-                case SlotTemplate.HoldAndSpin: return new HoldSpinEvaluator();
-                case SlotTemplate.Progressive: return new ProgressiveEvaluator();
-                default: return new PaylineEvaluator();
-            }
+            // payType decides how a win is measured; template layers features on top.
+                // A cluster-pays game must not be scored as paylines, and vice versa.
+                switch (def.payType)
+                {
+                    case PayType.Ways: return new WaysEvaluator();
+                    case PayType.Cluster: return new ClusterEvaluator();
+                }
+
+                switch (def.template)
+                {
+                    case SlotTemplate.Cascade: return new CascadeEvaluator();
+                    case SlotTemplate.HoldAndSpin: return new HoldSpinEvaluator();
+                    case SlotTemplate.Progressive: return new ProgressiveEvaluator();
+                    default: return new PaylineEvaluator();
+                }
         }
 
         /// <summary>Counts scatters anywhere on the grid.</summary>
