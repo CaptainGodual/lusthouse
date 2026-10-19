@@ -23,6 +23,11 @@ Unity.exe -batchmode -quit -projectPath . -executeMethod LustHouse.EditorTools.P
 
 Individual steps are available under `LustHouse → Setup → 1..6` if you want to re-run one.
 
+> If your scenes were generated **before** the boot UI existed, run
+> **LustHouse → Setup → Repair boot scene** once. It adds `BootPresenter` to
+> `BootLoader.unity` and removes the old null-font label. Without it the boot screen
+> finishes loading and then sits there forever — there is no auto-advance by design.
+
 What it creates:
 
 | Step | Result |

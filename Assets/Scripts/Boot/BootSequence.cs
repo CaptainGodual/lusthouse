@@ -50,6 +50,13 @@ namespace LustHouse.Boot
         /// <summary>Raised each frame the weighted progress changes.</summary>
         public event Action<float, string> ProgressChanged;
 
+        /// <summary>
+        /// Raised once when every task has finished and the minimum screen time is met.
+        /// The presenter listens for this to reveal "TAP TO ENTER" — the sequence never
+        /// advances on its own (plan §1.2, beat 4).
+        /// </summary>
+        public event Action Ready;
+
         private readonly List<LoadingTaskBase> _tasks = new List<LoadingTaskBase>();
         private float _startTime;
 
@@ -104,6 +111,7 @@ namespace LustHouse.Boot
 
             ReadyToEnter = true;
             Publish();
+            Ready?.Invoke();
         }
 
         private IEnumerator RunTasks()

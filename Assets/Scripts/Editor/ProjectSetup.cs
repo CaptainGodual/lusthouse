@@ -57,7 +57,7 @@ namespace LustHouse.EditorTools
             AssetDatabase.SaveAssets();
             AssetDatabase.Refresh();
 
-            Debug.Log("[LustHouse] Setup complete. Open Assets/Scenes/BootLoader.unity and press Play.");
+            LustLog.Info("[LustHouse] Setup complete. Open Assets/Scenes/BootLoader.unity and press Play.");
         }
 
         [MenuItem("LustHouse/Setup/1. Render pipeline (URP 2D)", priority = 20)]
@@ -70,7 +70,7 @@ namespace LustHouse.EditorTools
             {
                 rendererData = ScriptableObject.CreateInstance<Renderer2DData>();
                 AssetDatabase.CreateAsset(rendererData, RendererPath);
-                Debug.Log($"[LustHouse] Created 2D renderer data at {RendererPath}");
+                LustLog.Info($"[LustHouse] Created 2D renderer data at {RendererPath}");
             }
 
             var pipelineAsset = AssetDatabase.LoadAssetAtPath<UniversalRenderPipelineAsset>(UrpAssetPath);
@@ -78,7 +78,7 @@ namespace LustHouse.EditorTools
             {
                 pipelineAsset = UniversalRenderPipelineAsset.Create(rendererData);
                 AssetDatabase.CreateAsset(pipelineAsset, UrpAssetPath);
-                Debug.Log($"[LustHouse] Created URP asset at {UrpAssetPath}");
+                LustLog.Info($"[LustHouse] Created URP asset at {UrpAssetPath}");
             }
             else
             {
@@ -100,7 +100,7 @@ namespace LustHouse.EditorTools
             AssignQualityLevels(pipelineAsset);
 
             AssetDatabase.SaveAssets();
-            Debug.Log("[LustHouse] URP assigned to GraphicsSettings and all quality levels.");
+            LustLog.Info("[LustHouse] URP assigned to GraphicsSettings and all quality levels.");
         }
 
         /// <summary>
@@ -142,7 +142,7 @@ namespace LustHouse.EditorTools
 
             if (!changed) return;
             so.ApplyModifiedPropertiesWithoutUndo();
-            Debug.Log("[LustHouse] Added 2D/UI shaders to Always Included Shaders.");
+            LustLog.Info("[LustHouse] Added 2D/UI shaders to Always Included Shaders.");
         }
 
         /// <summary>
@@ -155,7 +155,7 @@ namespace LustHouse.EditorTools
             var qualityAsset = AssetDatabase.LoadAllAssetsAtPath("ProjectSettings/QualitySettings.asset");
             if (qualityAsset == null || qualityAsset.Length == 0)
             {
-                Debug.LogWarning("[LustHouse] Could not open QualitySettings.asset; " +
+                LustLog.Warn("[LustHouse] Could not open QualitySettings.asset; " +
                                  "the URP asset is assigned globally instead.");
                 return;
             }
@@ -164,7 +164,7 @@ namespace LustHouse.EditorTools
             var levels = so.FindProperty("customRenderPipeline");
             if (levels == null || !levels.isArray)
             {
-                Debug.LogWarning("[LustHouse] QualitySettings.customRenderPipeline not found; " +
+                LustLog.Warn("[LustHouse] QualitySettings.customRenderPipeline not found; " +
                                  "the URP asset is assigned globally instead.");
                 return;
             }
@@ -173,7 +173,7 @@ namespace LustHouse.EditorTools
                 levels.GetArrayElementAtIndex(i).objectReferenceValue = pipelineAsset;
 
             so.ApplyModifiedPropertiesWithoutUndo();
-            Debug.Log($"[LustHouse] Assigned URP to {levels.arraySize} quality level(s).");
+            LustLog.Info($"[LustHouse] Assigned URP to {levels.arraySize} quality level(s).");
         }
 
 
@@ -187,7 +187,7 @@ namespace LustHouse.EditorTools
             if (PlayerSettings.colorSpace != ColorSpace.Linear)
             {
                 PlayerSettings.colorSpace = ColorSpace.Linear;
-                Debug.Log("[LustHouse] Color space set to Linear.");
+                LustLog.Info("[LustHouse] Color space set to Linear.");
             }
 
             PlayerSettings.companyName = "Lust House";
@@ -215,7 +215,7 @@ namespace LustHouse.EditorTools
 #if UNITY_EDITOR_WIN
             PlayerSettings.SetIl2CppCompilerConfiguration(NamedBuildTarget.Standalone, Il2CppCompilerConfiguration.Release);
 #endif
-            Debug.Log("[LustHouse] Player settings updated (identity, orientation, colour space).");
+            LustLog.Info("[LustHouse] Player settings updated (identity, orientation, colour space).");
         }
 
         [MenuItem("LustHouse/Setup/3. Scenes", priority = 22)]
@@ -234,7 +234,7 @@ namespace LustHouse.EditorTools
             string path = $"Assets/Scenes/{sceneName}.unity";
             if (File.Exists(path))
             {
-                Debug.Log($"[LustHouse] Scene {sceneName} already exists; leaving it alone.");
+                LustLog.Info($"[LustHouse] Scene {sceneName} already exists; leaving it alone.");
                 return;
             }
 
@@ -265,7 +265,12 @@ namespace LustHouse.EditorTools
                     var servicesGo = new GameObject("Services", typeof(ServicesBootstrap));
                     servicesGo.GetComponent<ServicesBootstrap>().lobbySceneName = "Lobby";
 
-                    var bootGo = new GameObject("BootSequence", typeof(LustHouse.Boot.BootSequence));
+                    // BootPresenter builds its own UI in code — see the class comment.
+                    var bootGo = new GameObject("BootSequence",
+                        typeof(LustHouse.Boot.BootSequence),
+                        typeof(LustHouse.Boot.BootPresenter));
+                    var presenter = bootGo.GetComponent<LustHouse.Boot.BootPresenter>();
+                    presenter.sequence = bootGo.GetComponent<LustHouse.Boot.BootSequence>();
                     bootGo.GetComponent<LustHouse.Boot.BootSequence>().lobbySceneName = "Lobby";
                     break;
 
@@ -292,21 +297,71 @@ namespace LustHouse.EditorTools
                     break;
             }
 
-            // A label so the greybox is readable in the Scene view.
-            var labelGo = new GameObject("SceneLabel");
-            var label = labelGo.AddComponent<UnityEngine.UI.Text>();
-            label.text = sceneName;
-            label.font = null;
-            label.alignment = TextAnchor.MiddleCenter;
-            var rect = labelGo.GetComponent<RectTransform>();
-            rect.anchorMin = Vector2.zero;
-            rect.anchorMax = Vector2.one;
-            rect.offsetMin = Vector2.zero;
-            rect.offsetMax = Vector2.zero;
-            labelGo.transform.SetParent(canvasGo.transform, false);
+            // No runtime Text here on purpose: the old SceneLabel had a null font and
+            // rendered nothing, which is part of why the first boot looked like a black
+            // screen. BootPresenter owns all runtime boot UI.
 
             EditorSceneManager.SaveScene(scene, path);
-            Debug.Log($"[LustHouse] Created scene {path}");
+            LustLog.Info($"[LustHouse] Created scene {path}");
+        }
+
+        /// <summary>
+        /// Repairs an already-generated BootLoader scene. Needed because the scenes were
+        /// created before <see cref="LustHouse.Boot.BootPresenter"/> existed, and a scene
+        /// that cannot hand off to the Lobby is worse than no scene at all.
+        /// </summary>
+        [MenuItem("LustHouse/Setup/Repair boot scene", priority = 26)]
+        public static void RepairBootScene()
+        {
+            const string path = "Assets/Scenes/BootLoader.unity";
+            if (!File.Exists(path))
+            {
+                LustLog.Warn("[LustHouse] No BootLoader scene to repair. Run step 3 first.");
+                return;
+            }
+
+            var scene = EditorSceneManager.OpenScene(path, OpenSceneMode.Single);
+
+            var sequence = UnityEngine.Object.FindFirstObjectByType<LustHouse.Boot.BootSequence>();
+            if (sequence == null)
+            {
+                var go = new GameObject("BootSequence",
+                    typeof(LustHouse.Boot.BootSequence),
+                    typeof(LustHouse.Boot.BootPresenter));
+                sequence = go.GetComponent<LustHouse.Boot.BootSequence>();
+                LustLog.Info("[LustHouse] Added BootSequence + BootPresenter.");
+            }
+            else if (sequence.GetComponent<LustHouse.Boot.BootPresenter>() == null)
+            {
+                var presenter = sequence.gameObject.AddComponent<LustHouse.Boot.BootPresenter>();
+                presenter.sequence = sequence;
+                LustLog.Info("[LustHouse] Added BootPresenter to the existing BootSequence.");
+            }
+            else
+            {
+                LustLog.Info("[LustHouse] BootLoader already has a BootPresenter.");
+            }
+
+            if (UnityEngine.Object.FindFirstObjectByType<ServicesBootstrap>() == null)
+            {
+                var servicesGo = new GameObject("Services", typeof(ServicesBootstrap));
+                servicesGo.GetComponent<ServicesBootstrap>().lobbySceneName = "Lobby";
+                LustLog.Info("[LustHouse] Added ServicesBootstrap.");
+            }
+
+            // The old generator left a Text with a null font behind.
+            var labels = UnityEngine.Object.FindObjectsByType<UnityEngine.UI.Text>(FindObjectsSortMode.None);
+            foreach (var label in labels)
+            {
+                if (label.name != "SceneLabel") continue;
+                UnityEngine.Object.DestroyImmediate(label.gameObject);
+                LustLog.Info("[LustHouse] Removed the old null-font SceneLabel.");
+            }
+
+            EditorSceneManager.MarkSceneDirty(scene);
+            EditorSceneManager.SaveScene(scene);
+            AssetDatabase.Refresh();
+            LustLog.Info("[LustHouse] BootLoader repaired. Open it and press Play.");
         }
 
         [MenuItem("LustHouse/Setup/4. Build settings", priority = 23)]
@@ -320,7 +375,7 @@ namespace LustHouse.EditorTools
             };
 
             EditorBuildSettings.scenes = order.ToArray();
-            Debug.Log("[LustHouse] Build settings order: BootLoader, Lobby, Slot.");
+            LustLog.Info("[LustHouse] Build settings order: BootLoader, Lobby, Slot.");
         }
 
         [MenuItem("LustHouse/Setup/5. Addressables groups", priority = 24)]
@@ -329,7 +384,7 @@ namespace LustHouse.EditorTools
             var settings = AddressableAssetSettingsDefaultObject.GetSettings(true);
             if (settings == null)
             {
-                Debug.LogWarning("[LustHouse] Could not create Addressables settings; skipping groups.");
+                LustLog.Warn("[LustHouse] Could not create Addressables settings; skipping groups.");
                 return;
             }
 
@@ -354,7 +409,7 @@ namespace LustHouse.EditorTools
                     bundled.LoadPath.SetVariableByName(settings, AddressableAssetSettings.kLocalLoadPath);
                 }
 
-                Debug.Log($"[LustHouse] Created addressable group '{groupName}'");
+                LustLog.Info($"[LustHouse] Created addressable group '{groupName}'");
             }
 
             settings.SetDirty(AddressableAssetSettings.ModificationEvent.BatchModification, null, true, true);

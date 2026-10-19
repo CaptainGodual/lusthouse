@@ -1,0 +1,24 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2a0b427e1e718ae4aaefa054929fb156, type: 3}
+  m_Name: GameCatalog
+  m_EditorClassIdentifier: 
+  games:
+  - id: velvet_room
+    displayTitle: 
+    definition: {fileID: 11400000, guid: f610cae053c7e0f47ba5fd87b78e2829, type: 2}
+    category: 1
+    keyArt: {fileID: 0}
+    blurb: The house tutorial game. Art deco, suits, gold filigree.
+    locked: 0
+    lockedMessage: 
+    entryCostGems: 0

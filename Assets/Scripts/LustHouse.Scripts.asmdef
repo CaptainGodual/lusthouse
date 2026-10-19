@@ -1,7 +1,9 @@
 {
     "name": "LustHouse.Scripts",
     "rootNamespace": "LustHouse",
-    "references": [],
+    "references": [
+        "UnityEngine.UI"
+    ],
     "includePlatforms": [],
     "excludePlatforms": [],
     "allowUnsafeCode": false,
