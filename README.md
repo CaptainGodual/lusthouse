@@ -120,6 +120,16 @@ Unity.exe -batchmode -runTests -testPlatform PlayMode -projectPath .
 > playable, but their RTP is not tuned, so `RtpGateTests` lists them explicitly as deferred.
 > Adding a new definition without either gating or deferring it fails the suite.
 
+
+### Looking at the lobby
+
+`LobbyScreenshotTests` (PlayMode) renders the lobby to `Logs/lobby.png`. An overlay
+canvas is not drawn by any camera, so the test switches the canvas to
+`ScreenSpaceCamera`, renders the camera into a RenderTexture and reads the pixels back.
+That works in batch mode, where no window is ever opened -- which is the only way to
+*see* a UI change without a human in front of the screen. It asserts nothing and always
+passes; it is a development tool, not a test of behaviour.
+
 ---
 
 ## Layout

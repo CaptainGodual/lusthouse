@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using LustHouse.Catalog;
 using LustHouse.Core;
+using LustHouse.Economy;
 using LustHouse.Slots;
 using LustHouse.UI;
 using UnityEngine;
@@ -10,7 +11,12 @@ using UnityEngine.UI;
 namespace LustHouse.Lobby
 {
     /// <summary>
-    /// The category tab bar (§2.7) and the dense game grid (§2.8).
+    /// The category chips (§2.7) and the library shelf (§2.8).
+    ///
+    /// The shelf is a paged row rather than a vertical grid, which is the shape the casino
+    /// reference uses: a ribbon header, the games in a row, gold arrows at the ends and
+    /// page dots underneath. Four titles fit a page, so paging is real rather than
+    /// decorative once the library grows past one screen.
     ///
     /// Greybox implementation: every tile is instantiated up front rather than pooled from
     /// an <c>ObjectPool</c>. At nine games the pool is free, but §2.8 asks for one because
@@ -20,11 +26,13 @@ namespace LustHouse.Lobby
     [DisallowMultipleComponent]
     public class LobbyGrid : MonoBehaviour
     {
-        [Header("Layout (plan §2.2)")]
-        public int columns = 6;
-        public float tileWidth = 224f;
-        public float tileHeight = 280f;
-        public float gap = 24f;
+        [Header("Layout")]
+        [Tooltip("Tiles per page in the shelf.")]
+        public int columns = 4;
+
+        public float tileWidth = 236f;
+        public float tileHeight = 300f;
+        public float gap = 26f;
 
         [Header("Wiring")]
         public LobbyController controller;
@@ -32,17 +40,25 @@ namespace LustHouse.Lobby
 
         private GameCategory _active = GameCategory.All;
         private readonly HashSet<string> _favourites = new HashSet<string>();
-        private float _gridWidth;
 
         private RectTransform _tabStrip;
         private RectTransform _tabUnderline;
-        private RectTransform _tileParent;
+        private RectTransform _viewport;
+        private RectTransform _content;
+        private RectTransform _dotStrip;
+        private RectTransform _leftArrow;
+        private RectTransform _rightArrow;
         private Text _emptyState;
 
         private readonly Dictionary<GameCategory, Text> _tabLabels = new Dictionary<GameCategory, Text>();
         private readonly Dictionary<GameCategory, float> _tabCentres = new Dictionary<GameCategory, float>();
         private float _underlineTargetX;
         private float _underlineTargetWidth;
+
+        private int _page;
+        private int _pageCount;
+        private float _contentTargetX;
+        private float _pageSpan;
 
         public GameCategory ActiveCategory => _active;
 
@@ -54,10 +70,10 @@ namespace LustHouse.Lobby
             go.transform.SetParent(parent, false);
 
             _tabStrip = (RectTransform)go.transform;
-            UiFactory.PlaceTopLeft(_tabStrip, 0f, 40f, 1920f, 48f);
+            UiFactory.PlaceTopLeft(_tabStrip, 0f, 0f, 1920f, 44f);
 
-            const float tabW = 170f;
-            const float step = 186f;
+            const float tabW = 176f;
+            const float step = 190f;
             const float underlineW = 120f;
 
             float x = 0f;
@@ -66,18 +82,28 @@ namespace LustHouse.Lobby
                 int count = CountOf(category);
                 string label = $"{Label(category)}  {count}";
 
-                var text = UiFactory.NewText("Tab_" + category, _tabStrip, label, 16,
-                    FontStyle.Bold, UiFactory.TextSecondary, TextAnchor.MiddleLeft);
-                // Left-anchored with a left pivot, so x really is the left edge. The
-                // previous centred pivot pushed the first label outside the strip.
-                UiFactory.PlaceLeftMid(text.rectTransform, x, tabW, 48f);
+                // A chip: a rounded pill with the label inside, the way the reference
+                // dresses its category filters.
+                var chip = UiFactory.NewImage("Chip_" + category, _tabStrip, UiFactory.VelvetRaised);
+                chip.sprite = UiFactory.RoundedPanel;
+                chip.type = Image.Type.Sliced;
+                UiFactory.PlaceTopLeft(chip.rectTransform, x, 0f, tabW, 40f);
 
-                // UiFactory.NewText leaves raycastTarget off, which is right for decoration and fatal
-                // for a control: a Button only ever fires when a raycast actually lands on a
-                // Graphic in its hierarchy, and a non-raycastable Text can never be landed on.
-                // The tab bar was therefore built out of six buttons that could not be clicked.
-                text.raycastTarget = true;
-                var hit = text.gameObject.AddComponent<Button>();
+                var rim = UiChrome.NewRim("Rim", chip.transform, new Color(1f, 1f, 1f, 0.18f));
+                UiFactory.Stretch(rim.rectTransform, 2f);
+
+                var text = UiFactory.NewText("Tab_" + category, chip.transform, label, 16,
+                    FontStyle.Bold, UiFactory.TextSecondary, TextAnchor.MiddleCenter);
+                UiFactory.Stretch(text.rectTransform, 8f);
+
+                // UiFactory.NewText leaves raycastTarget off, which is right for decoration
+                // and fatal for a control: a Button only ever fires when a raycast actually
+                // lands on a Graphic in its hierarchy, and a non-raycastable Graphic can
+                // never be landed on.
+                chip.raycastTarget = true;
+                var hit = chip.gameObject.AddComponent<Button>();
+                hit.targetGraphic = chip;
+                UiFactory.StyleButton(hit);
                 var captured = category;
                 hit.onClick.AddListener(() => SelectCategory(captured));
 
@@ -88,7 +114,7 @@ namespace LustHouse.Lobby
             }
 
             _tabUnderline = UiFactory.NewImage("ActiveUnderline", _tabStrip, UiFactory.GoldPrimary).rectTransform;
-            UiFactory.PlaceLeftMid(_tabUnderline, 0f, underlineW, 4f, -26f);
+            UiFactory.PlaceLeftMid(_tabUnderline, 0f, underlineW, 4f, -22f);
 
             SelectCategory(categories[0], instant: true);
         }
@@ -107,6 +133,13 @@ namespace LustHouse.Lobby
             var pos = _tabUnderline.anchoredPosition;
             pos.x = Mathf.Lerp(pos.x, _underlineTargetX, k);
             _tabUnderline.anchoredPosition = pos;
+
+            if (_content != null)
+            {
+                var contentPos = _content.anchoredPosition;
+                contentPos.x = Mathf.Lerp(contentPos.x, _contentTargetX, k);
+                _content.anchoredPosition = contentPos;
+            }
         }
 
         public void SelectCategory(GameCategory category, bool instant = false)
@@ -132,6 +165,7 @@ namespace LustHouse.Lobby
                 }
             }
 
+            _page = 0;
             RebuildGrid();
         }
 
@@ -176,40 +210,84 @@ namespace LustHouse.Lobby
             }
         }
 
-        // ---- grid (§2.8) ------------------------------------------------------
-
-        public void BuildGridArea(Transform parent)
-        {
-            var go = new GameObject("GameGrid", typeof(RectTransform));
-            go.transform.SetParent(parent, false);
-
-            _tileParent = (RectTransform)go.transform;
-            _tileParent.anchorMin = Vector2.zero;
-            _tileParent.anchorMax = Vector2.one;
-            _tileParent.offsetMin = Vector2.zero;
-            _tileParent.offsetMax = Vector2.zero;
-
-            _gridWidth = Mathf.Max(1, columns) * tileWidth + (Mathf.Max(1, columns) - 1) * gap;
-        }
+        // ---- the shelf (§2.8) -------------------------------------------------
 
         /// <summary>
-        /// Horizontal left inset that centres the tile block inside the grid area, so the
-        /// grid never hugs the screen edge (§2.2 uses a 48px outer margin).
+        /// Builds the shelf: a masked viewport, the arrows at either end and the page dots
+        /// underneath. The viewport is masked rather than clipped by hand, so the tiles that
+        /// are off the page are neither drawn nor clickable.
         /// </summary>
-        private float GridInset()
+        public void BuildShelf(Transform parent, float hostHeight)
         {
-            if (_tileParent == null) return 0f;
-            float areaWidth = _tileParent.rect.width;
-            if (areaWidth <= 1f) return 0f;
-            return Mathf.Max(0f, (areaWidth - _gridWidth) / 2f);
+            var host = (RectTransform)parent;
+
+            int perPage = Mathf.Max(1, columns);
+            _pageSpan = perPage * (tileWidth + gap);
+
+            float blockWidth = perPage * tileWidth + (perPage - 1) * gap;
+            float blockX = Mathf.Max(0f, (host.rect.width - blockWidth) * 0.5f);
+
+            var viewportGo = new GameObject("ShelfViewport", typeof(RectTransform));
+            viewportGo.transform.SetParent(host, false);
+            _viewport = (RectTransform)viewportGo.transform;
+            UiFactory.PlaceTopLeft(_viewport, blockX, 0f, blockWidth, tileHeight);
+            _viewport.gameObject.AddComponent<RectMask2D>();
+
+            var contentGo = new GameObject("ShelfContent", typeof(RectTransform));
+            contentGo.transform.SetParent(_viewport, false);
+            _content = (RectTransform)contentGo.transform;
+            _content.anchorMin = new Vector2(0f, 1f);
+            _content.anchorMax = new Vector2(0f, 1f);
+            _content.pivot = new Vector2(0f, 1f);
+            _content.sizeDelta = new Vector2(_pageSpan, tileHeight);
+            _content.anchoredPosition = Vector2.zero;
+
+            // The arrows, in the style of the reference: gold rings either side of the row.
+            _leftArrow = BuildArrow("ArrowLeft", host, blockX - 84f, "‹", -1);
+            _rightArrow = BuildArrow("ArrowRight", host, blockX + blockWidth + 16f, "›", 1);
+
+            var dotGo = new GameObject("PageDots", typeof(RectTransform));
+            dotGo.transform.SetParent(host, false);
+            _dotStrip = (RectTransform)dotGo.transform;
+            UiFactory.PlaceTopCentre(_dotStrip, tileHeight + 10f, 320f, 26f);
+        }
+
+        private RectTransform BuildArrow(string name, Transform parent, float x, string glyph, int direction)
+        {
+            var button = UiChrome.NewPillButton(name, parent, glyph, 46,
+                UiFactory.GoldPrimary, out Text glyphText);
+            UiFactory.PlaceTopLeft(button.GetComponent<RectTransform>(), x, tileHeight * 0.5f - 42f, 78f, 84f);
+            UiFactory.Stretch(glyphText.rectTransform, 4f);
+            button.GetComponent<Image>().color = new Color(0.13f, 0.06f, 0.17f, 0.94f);
+            button.onClick.AddListener(() => GoToPage(_page + direction));
+            return button.GetComponent<RectTransform>();
+        }
+
+        private void GoToPage(int page)
+        {
+            int pages = Mathf.Max(1, _pageCount);
+            _page = Mathf.Clamp(page, 0, pages - 1);
+            _contentTargetX = -_page * _pageSpan;
+            RefreshArrows();
+        }
+
+        private void RefreshArrows()
+        {
+            if (_leftArrow == null) return;
+
+            var left = _leftArrow.GetComponent<Button>();
+            var right = _rightArrow != null ? _rightArrow.GetComponent<Button>() : null;
+
+            if (left != null) left.interactable = _page > 0;
+            if (right != null) right.interactable = _page < _pageCount - 1;
         }
 
         public void RebuildGrid()
         {
-            if (_tileParent == null) return;
+            if (_content == null) return;
 
-            for (int i = _tileParent.childCount - 1; i >= 0; i--)
-                Destroy(_tileParent.GetChild(i).gameObject);
+            for (int i = _content.childCount - 1; i >= 0; i--)
+                Destroy(_content.GetChild(i).gameObject);
 
             if (_emptyState != null)
             {
@@ -224,75 +302,148 @@ namespace LustHouse.Lobby
                     if (entry != null && Matches(entry, _active)) matches.Add(entry);
             }
 
-            // The grid never empties silently (§2.7).
+            // The shelf never empties silently (§2.7).
             if (matches.Count == 0)
             {
                 string message = _active == GameCategory.Favorites
                     ? "Tap the star on any game to save it here"
                     : $"No games in {Label(_active).ToLowerInvariant()}";
 
-                _emptyState = UiFactory.NewText("EmptyState", _tileParent, message, 20,
-                    FontStyle.Normal, UiFactory.TextSecondary, TextAnchor.UpperLeft);
-                UiFactory.Stretch(_emptyState.rectTransform);
+                _emptyState = UiFactory.NewText("EmptyState", _content, message, 20,
+                    FontStyle.Normal, UiFactory.TextSecondary, TextAnchor.MiddleLeft);
+                UiFactory.PlaceTopLeft(_emptyState.rectTransform, 0f, 0f, _content.rect.width, tileHeight);
+                RebuildDots(0);
                 return;
             }
 
-            int cols = Mathf.Max(1, columns);
-            float inset = GridInset();
+            int perPage = Mathf.Max(1, columns);
+            _pageCount = Mathf.Max(1, Mathf.CeilToInt(matches.Count / (float)perPage));
+            _page = Mathf.Clamp(_page, 0, _pageCount - 1);
 
             for (int i = 0; i < matches.Count; i++)
             {
-                int col = i % cols;
-                int row = i / cols;
+                float x = i * (tileWidth + gap);
+                BuildTile(matches[i], _content, x);
+            }
 
-                float x = inset + col * (tileWidth + gap);
-                float y = -row * (tileHeight + gap);
+            _contentTargetX = -_page * _pageSpan;
+            var pos = _content.anchoredPosition;
+            pos.x = _contentTargetX;
+            _content.anchoredPosition = pos;
 
-                BuildTile(matches[i], _tileParent, new Vector2(x, y));
+            RebuildDots(_pageCount);
+            RefreshArrows();
+        }
+
+        /// <summary>
+        /// The page dots. The active one is gold and wider, the way the reference marks the
+        /// current page.
+        /// </summary>
+        private void RebuildDots(int pages)
+        {
+            if (_dotStrip == null) return;
+
+            for (int i = _dotStrip.childCount - 1; i >= 0; i--)
+                Destroy(_dotStrip.GetChild(i).gameObject);
+
+            if (pages <= 1) return;
+
+            const float spacing = 26f;
+            const float stripWidth = 320f;
+            float width = (pages - 1) * spacing + 16f;
+
+            for (int i = 0; i < pages; i++)
+            {
+                bool active = i == _page;
+                var dot = UiFactory.NewImage("Dot", _dotStrip,
+                    active ? UiFactory.GoldPrimary : new Color(1f, 1f, 1f, 0.35f));
+                dot.sprite = UiFactory.Circle;
+
+                // The strip is centred, so the dots are placed from its left edge and the
+                // whole run is pushed back by half its own width to stay centred.
+                float x = stripWidth * 0.5f - width * 0.5f + 8f + i * spacing;
+                UiFactory.PlaceTopLeft(dot.rectTransform, x, 6f, active ? 16f : 10f, 10f);
+
+                var captured = i;
+                dot.raycastTarget = true;
+                var hit = dot.gameObject.AddComponent<Button>();
+                hit.targetGraphic = dot;
+                UiFactory.StyleButton(hit);
+                hit.onClick.AddListener(() => GoToPage(captured));
             }
         }
 
-        private void BuildTile(GameCatalog.Entry entry, Transform parent, Vector2 position)
+        private void BuildTile(GameCatalog.Entry entry, Transform parent, float x)
         {
             bool affordable = IsAffordable(entry);
             bool favourite = _favourites.Contains(entry.id);
 
             var tint = entry.definition != null ? entry.definition.themeTint : Color.gray;
+
             var tile = UiFactory.NewImage("Tile_" + entry.id, parent,
-                affordable ? new Color(tint.r * 0.35f, tint.g * 0.35f, tint.b * 0.35f, 1f)
-                           : new Color(0.18f, 0.14f, 0.20f, 0.45f));
+                affordable ? new Color(tint.r * 0.32f, tint.g * 0.32f, tint.b * 0.32f, 1f)
+                           : new Color(0.16f, 0.10f, 0.18f, 1f));
+            tile.sprite = UiFactory.RoundedPanel;
+            tile.type = Image.Type.Sliced;
             tile.raycastTarget = true;
-
-            // Key art, when the catalog entry has one. Image.color multiplies the sprite,
-            // so the affordable/unaffordable tinting below still dims the art rather than
-            // being thrown away by having art present.
-            var art = ResolveKeyArt(entry);
-            if (art != null)
-            {
-                tile.sprite = art;
-                tile.preserveAspect = true;
-                tile.type = Image.Type.Simple;
-
-                // Opaque dim rather than the flat-tile 0.45 alpha used above. Multiplying
-                // key art by a near-black translucent colour reads as "no art at all"
-                // against the velvet background, which defeats the point of the art.
-                tile.color = affordable ? Color.white : new Color(0.45f, 0.40f, 0.48f, 1f);
-            }
-
-            UiFactory.PlaceTopLeft(tile.rectTransform, position.x, -position.y,
-                tileWidth, tileHeight);
+            UiFactory.PlaceTopLeft(tile.rectTransform, x, 0f, tileWidth, tileHeight);
 
             var button = tile.gameObject.AddComponent<Button>();
             button.targetGraphic = tile;
 
-            // Jackpot tiles get a magenta accent border (§2.8).
-            if (entry.definition != null && entry.definition.progressive)
+            // The face: the game's own art inside the frame, so every title in the shelf
+            // is recognisable without a single new art file. The theme colour rides on
+            // the art: every game shares one art set, so the tint is what tells two
+            // tiles apart.
+            var art = entry.FaceArt();
+            if (art != null)
             {
-                var edge = UiFactory.NewImage("JackpotEdge", tile.transform, UiFactory.NeonMagenta);
-                UiFactory.Stretch(edge.rectTransform, 3f);
+                var face = UiFactory.NewImage("Face", tile.transform,
+                    affordable ? Color.Lerp(Color.white, tint, 0.55f)
+                               : new Color(0.45f, 0.40f, 0.48f, 0.85f));
+                face.sprite = art;
+                face.preserveAspect = true;
+                UiFactory.PlaceTopLeft(face.rectTransform, tileWidth * 0.08f, 18f,
+                    tileWidth * 0.84f, tileWidth * 0.84f);
             }
 
-            // Title lockup in the bottom 80px.
+            // A light unifying wash over the whole tile.
+            var wash = UiFactory.NewImage("Wash", tile.transform,
+                affordable ? new Color(tint.r, tint.g, tint.b, 0.18f)
+                           : new Color(tint.r * 0.5f, tint.g * 0.5f, tint.b * 0.5f, 0.12f));
+            wash.sprite = UiFactory.RoundedPanel;
+            wash.type = Image.Type.Sliced;
+            UiFactory.Stretch(wash.rectTransform);
+
+            // The scrim under the title.
+            var scrim = UiFactory.NewImage("Scrim", tile.transform, new Color(0.05f, 0.02f, 0.07f, 0.90f));
+            scrim.sprite = UiChrome.FadeUp;
+            var scrimRect = scrim.rectTransform;
+            scrimRect.anchorMin = new Vector2(0f, 0f);
+            scrimRect.anchorMax = new Vector2(1f, 0f);
+            scrimRect.pivot = new Vector2(0.5f, 0f);
+            scrimRect.sizeDelta = new Vector2(0f, 92f);
+            scrimRect.anchoredPosition = Vector2.zero;
+
+            // A solid band behind the title itself.
+            var band = UiFactory.NewImage("TitleBand", tile.transform, new Color(0.06f, 0.02f, 0.08f, 0.88f));
+            band.sprite = UiFactory.RoundedPanel;
+            band.type = Image.Type.Sliced;
+            var bandRect = band.rectTransform;
+            bandRect.anchorMin = new Vector2(0f, 0f);
+            bandRect.anchorMax = new Vector2(1f, 0f);
+            bandRect.pivot = new Vector2(0.5f, 0f);
+            bandRect.sizeDelta = new Vector2(0f, 54f);
+            bandRect.anchoredPosition = Vector2.zero;
+
+            // The frame: magenta for a jackpot, gold for the rest.
+            var rim = UiChrome.NewRim("Rim", tile.transform,
+                entry.definition != null && entry.definition.progressive
+                    ? UiFactory.NeonMagenta
+                    : UiFactory.GoldPrimary);
+            UiFactory.Stretch(rim.rectTransform, 2f);
+
+            // Title lockup in the bottom band.
             var title = UiFactory.NewText("Title", tile.transform, entry.Title, 18,
                 FontStyle.Bold, UiFactory.TextPrimary, TextAnchor.LowerCenter);
             var titleRect = title.rectTransform;
@@ -300,17 +451,21 @@ namespace LustHouse.Lobby
             titleRect.anchorMax = new Vector2(1f, 0f);
             titleRect.pivot = new Vector2(0.5f, 0f);
             titleRect.offsetMin = new Vector2(8f, 12f);
-            titleRect.offsetMax = new Vector2(-8f, 72f);
+            titleRect.offsetMax = new Vector2(-8f, 66f);
             title.horizontalOverflow = HorizontalWrapMode.Wrap;
+
+            int playerLevel = Economy.PlayerProgression.Instance != null ? Economy.PlayerProgression.Instance.Level : 1;
+            bool levelLocked = !entry.locked && !GameCatalog.IsUnlocked(entry, playerLevel);
 
             // Access badge, top-left.
             string badge = entry.locked ? "COMING SOON"
+                : levelLocked ? $"LEVEL {entry.unlockLevel}"
                 : entry.entryCostGems > 0 ? $"{entry.entryCostGems} GEMS"
                 : affordable ? "FREE"
                 : $"NEEDS {UiFactory.FormatAmount(entry.definition != null ? entry.definition.minBet : 0)} COINS";
 
             var badgeText = UiFactory.NewText("Badge", tile.transform, badge, 13, FontStyle.Bold,
-                entry.locked ? UiFactory.TextDisabled
+                entry.locked || levelLocked ? UiFactory.TextDisabled
                     : entry.entryCostGems > 0 ? UiFactory.NeonMagenta
                     : affordable ? UiFactory.NeonCyan : UiFactory.StateDanger,
                 TextAnchor.UpperLeft);
@@ -318,7 +473,7 @@ namespace LustHouse.Lobby
             badgeRect.anchorMin = new Vector2(0f, 1f);
             badgeRect.anchorMax = new Vector2(0f, 1f);
             badgeRect.pivot = new Vector2(0f, 1f);
-            badgeRect.anchoredPosition = new Vector2(10f, -10f);
+            badgeRect.anchoredPosition = new Vector2(12f, -12f);
             badgeRect.sizeDelta = new Vector2(200f, 24f);
 
             // Favourite star, top-right.
@@ -328,12 +483,11 @@ namespace LustHouse.Lobby
             starRect.anchorMin = new Vector2(1f, 1f);
             starRect.anchorMax = new Vector2(1f, 1f);
             starRect.pivot = new Vector2(1f, 1f);
-            starRect.anchoredPosition = new Vector2(-10f, -8f);
+            starRect.anchoredPosition = new Vector2(-12f, -10f);
             starRect.sizeDelta = new Vector2(40f, 34f);
 
             star.raycastTarget = true;      // a Button on a non-raycastable Text never fires
             var starHit = star.gameObject.AddComponent<Button>();
-            var starTarget = starHit.targetGraphic;
             var captured = entry;
             starHit.onClick.AddListener(() =>
             {
@@ -352,21 +506,12 @@ namespace LustHouse.Lobby
         /// <summary>Raised when a locked tile is tapped, so the lobby can show a sheet.</summary>
         public event Action<string> RaiseLockNotice;
 
-        /// <summary>
-        /// Key art for a tile, falling back to the slot definition's own art so a game can be
-        /// arted from either asset. Returns null when neither is set, which is the normal
-        /// case today — the tile then falls back to the flat theme-tint quad.
-        /// </summary>
-        private static Sprite ResolveKeyArt(GameCatalog.Entry entry)
-        {
-            if (entry == null) return null;
-            if (entry.keyArt != null) return entry.keyArt;
-            return entry.definition != null ? entry.definition.keyArt : null;
-        }
-
         private bool IsAffordable(GameCatalog.Entry entry)
         {
             if (entry.locked || entry.definition == null) return false;
+
+            int level = Economy.PlayerProgression.Instance != null ? Economy.PlayerProgression.Instance.Level : 1;
+            if (!GameCatalog.IsUnlocked(entry, level)) return false;
             if (entry.entryCostGems > 0)
             {
                 return WalletService.Instance != null &&

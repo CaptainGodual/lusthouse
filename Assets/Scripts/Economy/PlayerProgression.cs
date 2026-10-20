@@ -19,6 +19,9 @@ namespace LustHouse.Economy
         [Tooltip("Coins granted on each level-up.")]
         public long levelRewardCoins = 1000;
 
+        [Tooltip("XP awarded per 100 Coins won. 0 disables win XP. Wins, never bets, drive XP.")]
+        public long xpPerHundredCoinsWon = 10;
+
         /// <summary>The seven tiers, in order. Lust Points thresholds are placeholders to be tuned in alpha.</summary>
         [Serializable]
         public struct VipTier
@@ -54,6 +57,8 @@ namespace LustHouse.Economy
         public long TotalWagered { get; private set; }
         public long BiggestWin { get; private set; }
         public int LoginStreak { get; private set; }
+        /// <summary>Non-persisted: highest level already announced in this session.</summary>
+        public int LastAnnouncedLevel { get; private set; } = 1;
         public bool F2PPromptPending { get; private set; } = true;
         public string LastDailyGiftUtc { get; private set; } = "";
 
@@ -87,7 +92,15 @@ namespace LustHouse.Economy
         {
             if (xpCurve == null || xpCurve.Length == 0) return 100;
             int i = Mathf.Clamp(Level - 1, 0, xpCurve.Length - 1);
-            return xpCurve[i];
+            return Mathf.Max(1, xpCurve[i]);
+        }
+
+        /// <summary>XP awarded for a Coin win of <paramref name="coinsWon"/>. Zero for no win.</summary>
+        public long XpForCoinsWon(long coinsWon)
+        {
+            if (coinsWon <= 0 || xpPerHundredCoinsWon <= 0) return 0;
+            if (coinsWon > long.MaxValue / xpPerHundredCoinsWon) coinsWon = long.MaxValue / xpPerHundredCoinsWon;
+            return Math.Max(1, coinsWon * xpPerHundredCoinsWon / 100);
         }
 
         // ---- mutation ---------------------------------------------------------
@@ -158,9 +171,26 @@ namespace LustHouse.Economy
 
         public void ConsumeF2PPrompt() => F2PPromptPending = false;
 
-        public void NoteDailyGiftClaim(string utc) => LastDailyGiftUtc = utc ?? "";
+        public void NoteDailyGiftClaim(string utc)
+        {
+            LastDailyGiftUtc = utc ?? "";
+            MarkedDirty?.Invoke();
+        }
 
-        public void ResetDailyGiftClaim() => LastDailyGiftUtc = "";
+        public void ResetDailyGiftClaim()
+        {
+            LastDailyGiftUtc = "";
+            MarkedDirty?.Invoke();
+        }
+
+        public void RecordDailyGiftClaim(string utc, int streak)
+        {
+            LoginStreak = Mathf.Max(1, streak);
+            LastDailyGiftUtc = utc ?? "";
+            MarkedDirty?.Invoke();
+        }
+
+        public void MarkLastAnnouncedLevel(int level) => LastAnnouncedLevel = Mathf.Max(LastAnnouncedLevel, level);
 
         private int ResolveTier(long lustPoints)
         {
@@ -187,6 +217,7 @@ namespace LustHouse.Economy
             BiggestWin = state.biggestWin;
             LoginStreak = state.loginStreak;
             LastDailyGiftUtc = state.lastDailyGiftUtc ?? "";
+            LastAnnouncedLevel = Mathf.Max(1, Level);
 
             // A hand-edited save must not be able to grant a tier without the points.
             VipTierIndex = ResolveTier(LifetimeLustPoints);

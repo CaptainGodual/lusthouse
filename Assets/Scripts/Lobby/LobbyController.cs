@@ -2,6 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using LustHouse.Catalog;
 using LustHouse.Core;
+using LustHouse.Economy;
 using LustHouse.Slots;
 using LustHouse.UI;
 using UnityEngine;
@@ -38,7 +39,7 @@ namespace LustHouse.Lobby
 
         private void Awake()
         {
-            Services = FindFirstObjectByType<ServicesBootstrap>();
+            Services = ServicesBootstrap.EnsureExists();
             EnsurePresenter();
             EnsureLoadingScreen();
             EnsureContentService();
@@ -109,12 +110,29 @@ namespace LustHouse.Lobby
             var entry = catalog != null ? catalog.Find(gameId) : null;
             if (entry == null || entry.definition == null) return;
 
+            int level = PlayerProgression.Instance != null ? PlayerProgression.Instance.Level : 1;
+
             // Locked (coming soon): teaser, never a purchase path.
             if (entry.locked)
             {
                 LustLog.Info($"[LustHouse] '{entry.Title}' is coming soon.");
                 _presenter?.ShowEntryBlocked(entry.Title,
                     "This title is marked coming soon. Check back for the season update.");
+                return;
+            }
+
+            // Level-gated: not a purchase path, just progression.
+            if (!GameCatalog.IsUnlocked(entry, level))
+            {
+                int need = Mathf.Max(1, entry.unlockLevel);
+                long xp = PlayerProgression.Instance != null ? PlayerProgression.Instance.Xp : 0;
+                long needXp = PlayerProgression.Instance != null ? PlayerProgression.Instance.XpForNextLevel() : 100;
+                int lvl = PlayerProgression.Instance != null ? PlayerProgression.Instance.Level : 1;
+                LustLog.Info($"[LustHouse] '{entry.Title}' unlocks at level {need} (player level {lvl}).");
+                _presenter?.ShowEntryBlocked(entry.Title,
+                    $"{entry.Title} unlocks at level {need}.\n\n" +
+                    $"You are level {lvl} ({xp} / {needXp} XP).\n" +
+                    "Earn XP by winning Coins in the slots.");
                 return;
             }
 

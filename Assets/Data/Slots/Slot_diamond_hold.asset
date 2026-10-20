@@ -153,3 +153,4 @@ MonoBehaviour:
   spinDurationSeconds: 1.6
   anticipationSeconds: 0.9
   winCelebrationThresholds: 0a000000000000003200000000000000c800000000000000e8030000000000008813000000000000
+  faceSymbolId: 12

@@ -64,7 +64,13 @@ namespace LustHouse.UI
             }
         }
 
-        /// <summary>A rounded white sprite, so buttons can read as dark rounded panels.</summary>
+        /// <summary>
+        /// A rounded white sprite, so buttons can read as dark rounded panels.
+        ///
+        /// The sprite carries a 9-slice border, so an Image can stretch it to any size
+        /// without distorting the corners. The radius matches <see cref="UI.UiChrome.Rim"/>'s
+        /// so a gold rim laid over one of these panels follows its corners exactly.
+        /// </summary>
         public static Sprite RoundedPanel
         {
             get
@@ -96,7 +102,8 @@ namespace LustHouse.UI
                 tex.SetPixels32(pixels);
                 tex.Apply();
 
-                _rounded = Sprite.Create(tex, new Rect(0, 0, size, size), new Vector2(0.5f, 0.5f), 100f);
+                _rounded = Sprite.Create(tex, new Rect(0, 0, size, size), new Vector2(0.5f, 0.5f), 100f,
+                    0, SpriteMeshType.FullRect, new Vector4(radius + 2, radius + 2, radius + 2, radius + 2));
                 _rounded.name = "LustHouseRounded";
                 return _rounded;
             }

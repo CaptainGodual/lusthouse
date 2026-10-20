@@ -282,6 +282,21 @@ namespace LustHouse.EditorTools
         }
 
         /// <summary>
+        /// The lobby face of each title: the symbol whose artwork represents it. Every game
+        /// shares one symbol set, so this is what tells two lobby tiles apart until they
+        /// have real key art.
+        /// </summary>
+        private static int FaceSymbolFor(string id) => id switch
+        {
+            "velvet_room" => 16,          // the mint character
+            "neon_nights" => 10,           // Ace
+            "midnight_masquerade" => 11,  // King
+            "diamond_hold" => 12,          // Queen
+            "house_edge" => 13,            // Jack
+            _ => 0
+        };
+
+        /// <summary>
         /// The art for one symbol id, shared by every game. Returns null when the art
         /// file is not in the project, which is allowed: the symbol then draws as a
         /// tinted placeholder tile instead of failing.
@@ -410,6 +425,7 @@ namespace LustHouse.EditorTools
             def.progressiveSeed = 250000;
 
             def.symbols = BuildSymbols(includeHoldSymbol: template == SlotTemplate.HoldAndSpin);
+            def.faceSymbolId = FaceSymbolFor(id);
             def.paylines = BuildPaylines(reels, rows);
             def.reelStrips = BuildReelStrips(reels,
                 template == SlotTemplate.HoldAndSpin ? 17 : -1,
@@ -535,6 +551,7 @@ namespace LustHouse.EditorTools
             def.spinDurationSeconds = 1.4f;
 
             def.symbols = BuildSymbols(includeHoldSymbol: false);
+            def.faceSymbolId = FaceSymbolFor(def.id);
             def.paylines = BuildPaylines();
             def.reelStrips = BuildReelStrips();
 

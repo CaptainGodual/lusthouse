@@ -165,6 +165,11 @@ namespace LustHouse.Slots
         public float anticipationSeconds = 0.9f;
         public long[] winCelebrationThresholds = { 10, 50, 200, 1000, 5000 };
 
+        [Tooltip("The symbol whose artwork represents this game in the lobby — its face. " +
+                 "0 = the highest-paying symbol. Every game shares one symbol set, so this " +
+                 "is what tells two lobby tiles apart until they have real key art.")]
+        public int faceSymbolId = 0;
+
         // ---- derived helpers --------------------------------------------------
 
         public long BetForLevel(int levelIndex)

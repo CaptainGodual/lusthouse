@@ -64,6 +64,7 @@ namespace LustHouse.Core
             var inventory = _root.AddComponent<InventoryService>();
             var avatar = _root.AddComponent<AvatarComposer>();
             var progression = _root.AddComponent<PlayerProgression>();
+            var dailyBonus = _root.AddComponent<DailyBonusService>();
 
             avatar.SetCatalog(cosmeticCatalog, fallbackBaseId);
 

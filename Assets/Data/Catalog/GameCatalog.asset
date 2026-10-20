@@ -21,6 +21,7 @@ MonoBehaviour:
     blurb: The house tutorial game. Art deco, suits, gold filigree.
     locked: 0
     lockedMessage: 
+    unlockLevel: 1
     releasedAtUtc: 2026-10-19T01:57:08.6886747Z
     isFeatured: 0
     featuredOrder: 0
@@ -33,6 +34,7 @@ MonoBehaviour:
     blurb: 
     locked: 0
     lockedMessage: 
+    unlockLevel: 3
     releasedAtUtc: 2026-10-14T01:57:08.6886747Z
     isFeatured: 0
     featuredOrder: 0
@@ -45,6 +47,7 @@ MonoBehaviour:
     blurb: 
     locked: 0
     lockedMessage: 
+    unlockLevel: 9
     releasedAtUtc: 2026-10-09T01:57:08.6886747Z
     isFeatured: 0
     featuredOrder: 0
@@ -57,6 +60,7 @@ MonoBehaviour:
     blurb: 
     locked: 0
     lockedMessage: 
+    unlockLevel: 6
     releasedAtUtc: 2026-10-04T01:57:08.6886747Z
     isFeatured: 0
     featuredOrder: 0
@@ -69,6 +73,7 @@ MonoBehaviour:
     blurb: 
     locked: 0
     lockedMessage: 
+    unlockLevel: 12
     releasedAtUtc: 2026-09-29T01:57:08.6886747Z
     isFeatured: 0
     featuredOrder: 0
