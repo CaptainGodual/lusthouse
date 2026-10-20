@@ -52,8 +52,7 @@ namespace LustHouse.Boot
             if (sequence == null) sequence = GetComponent<BootSequence>();
 
             UI.UiFactory.EnsureEventSystem();
-            _canvas = GetComponentInChildren<Canvas>();
-            if (_canvas == null) _canvas = UI.UiFactory.CreateCanvas(transform, "BootCanvas", 100);
+            _canvas = UI.UiFactory.ResolveCanvas(transform, "BootCanvas", 100);
             BuildUI();
         }
 

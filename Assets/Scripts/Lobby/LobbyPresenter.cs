@@ -131,8 +131,7 @@ namespace LustHouse.Lobby
         {
             if (_root != null) return;   // build once
 
-            var canvas = GetComponentInChildren<Canvas>();
-            if (canvas == null) canvas = UiFactory.CreateCanvas(transform, "LobbyCanvas");
+            var canvas = UiFactory.ResolveCanvas(transform, "LobbyCanvas");
             _root = canvas.transform as RectTransform;
 
             var backdrop = UiFactory.NewImage("Backdrop", _root, UiFactory.VelvetBase);
@@ -385,6 +384,14 @@ namespace LustHouse.Lobby
             "The daily gift and its escalation ladder ship in M2/M4.\n\n" +
             "It guarantees enough Coins for at least 20 minutes at the lowest bet (plan §4.3).",
             "CLOSE");
+
+        /// <summary>
+        /// Opens the top-up sheet for a game the player cannot enter. A tile that refuses to
+        /// launch must say why on screen: a tap that silently does nothing is indistinguishable
+        /// from a broken build, which is the one reading a player cannot act on.
+        /// </summary>
+        public void ShowEntryBlocked(string title, string reason) =>
+            ShowSheet(title.ToUpperInvariant(), reason, "CLOSE");
 
         private void ShowSheet(string title, string body, string closeLabel)
         {

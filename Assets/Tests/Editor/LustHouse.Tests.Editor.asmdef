@@ -4,6 +4,7 @@
     "references": [
         "LustHouse.Scripts",
         "LustHouse.Editor",
+        "UnityEngine.UI",
         "UnityEngine.TestRunner",
         "UnityEditor.TestRunner"
     ],

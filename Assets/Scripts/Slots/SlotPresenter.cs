@@ -8,11 +8,11 @@ using UnityEngine.UI;
 namespace LustHouse.Slots
 {
     /// <summary>
-    /// Greybox slot view. Proves the full M0.5 loop: bet debits the wallet, a win credits
-    /// it, and both land in the ledger so they survive a restart.
+    /// Slot screen. Proves the full M0.5 loop: bet debits the wallet, a win credits it,
+    /// and both land in the ledger so they survive a restart. The reels themselves are drawn
+    /// by <see cref="ReelsView"/> from the same stops the engine evaluated.
     ///
-    /// Not the real reel presentation — that is M5. What matters here is that the maths,
-    /// the wallet, and the routing are demonstrably connected.
+    /// Still greybox in its chrome — the win celebration, paytable and features are M5.
     /// </summary>
     [DisallowMultipleComponent]
     public class SlotPresenter : MonoBehaviour
@@ -21,14 +21,19 @@ namespace LustHouse.Slots
         public SlotSceneController controller;
 
         [Header("Presentation")]
+        [Tooltip("Fallback hold for a spin with nothing to animate — a bet the wallet refused. " +
+                 "A real spin is timed by the definition's spinDurationSeconds.")]
         public float spinHoldSeconds = 0.35f;
+
+        /// <summary>The reel grid. Exposed so a test can assert what the player is shown.</summary>
+        public ReelsView Reels => _reels;
 
         private Text _title;
         private Text _balance;
         private Text _bet;
         private Text _result;
-        private Text _grid;
         private Text _lifetime;
+        private ReelsView _reels;
         private Button _spinButton;
         private Button _backButton;
 
@@ -60,10 +65,28 @@ namespace LustHouse.Slots
 
         private void Build()
         {
-            var canvas = GetComponentInChildren<Canvas>();
-            if (canvas == null) canvas = UiFactory.CreateCanvas(transform, "SlotCanvas");
+            var canvas = UiFactory.ResolveCanvas(transform, "SlotCanvas");
             var root = canvas.transform;
 
+            // ---- background UI (background part of the game) ----
+            var backgroundSprite = Resources.Load<Sprite>("Art/UI/Opulent Crimson Gold Casino Interface");
+            var background = UiFactory.NewImage("Background", root, UiFactory.VelvetBase);
+            if (backgroundSprite != null)
+            {
+                background.sprite = backgroundSprite;
+                background.color = Color.white;
+                background.preserveAspect = false;
+                background.type = Image.Type.Simple;
+            }
+            UiFactory.Stretch(background.rectTransform);
+            background.transform.SetAsFirstSibling();
+            background.raycastTarget = false;
+
+            // ---- slots frame UI (drawn on top of the reels) ----
+            // Loaded here so it can be parented after the reels are created below; the actual
+            // GameObject is built once the reels exist so the layering reads background ->
+            // reels (masked) -> frame.
+            var frameSprite = Resources.Load<Sprite>("Art/UI/Slots");
             // ---- header ----
             var header = UiFactory.NewImage("Header", root, UiFactory.VelvetPanel);
             var headerRect = header.rectTransform;
@@ -90,33 +113,75 @@ namespace LustHouse.Slots
             balanceRect.anchoredPosition = new Vector2(-28f, 0f);
             balanceRect.sizeDelta = new Vector2(420f, 72f);
 
-            // ---- reel readout ----
-            _grid = UiFactory.NewText("Grid", root, "", 44, FontStyle.Bold,
-                UiFactory.TextPrimary, TextAnchor.MiddleCenter);
-            UiFactory.Place(_grid.rectTransform, new Vector2(0.5f, 0.5f), new Vector2(1200f, 320f), Vector2.zero);
+            // ---- slots frame UI (drawn behind the reels so they stay visible) ----
+            var uiFrame = UiFactory.NewImage("UiFrame", root, UiFactory.VelvetBase);
+            if (frameSprite != null)
+            {
+                uiFrame.sprite = frameSprite;
+                uiFrame.color = Color.white;
+                uiFrame.preserveAspect = false;
+                uiFrame.type = Image.Type.Simple;
+            }
+            UiFactory.Place(uiFrame.rectTransform, new Vector2(0.5f, 0.5f),
+                new Vector2(1720f, 1000f), new Vector2(0f, 20f));
+            uiFrame.raycastTarget = false;
 
-            var frame = UiFactory.NewImage("ReelFrame", root, new Color(0f, 0f, 0f, 0.25f));
-            UiFactory.Place(frame.rectTransform, new Vector2(0.5f, 0.5f), new Vector2(1240f, 360f), Vector2.zero);
+            // ---- reels ----
+            // Everything about the reels — cell size, gap, icon padding, turns, stagger — is a
+            // field on ReelsView. Icons themselves are SymbolDefinition.sprite in the
+            // definition asset; symbols with no sprite yet fall back to a tinted tile.
+            // ---- reel mask (Slots-mask.png) ----
+            var maskSprite = Resources.Load<Sprite>("Art/UI/Slots-mask");
+            var maskGo = new GameObject("ReelMask", typeof(RectTransform));
+            maskGo.transform.SetParent(root, false);
+            var maskImage = maskGo.AddComponent<Image>();
+            if (maskSprite != null)
+            {
+                maskImage.sprite = maskSprite;
+                maskImage.color = Color.white;
+                maskImage.type = Image.Type.Simple;
+            }
+            maskImage.raycastTarget = false;
+            var mask = maskGo.AddComponent<Mask>();
+            mask.showMaskGraphic = false;
+            UiFactory.Place((RectTransform)maskGo.transform, new Vector2(0.5f, 0.5f),
+                new Vector2(1720f, 1000f), new Vector2(0f, 20f));
 
+            var reelsGo = new GameObject("Reels", typeof(RectTransform));
+            reelsGo.transform.SetParent(maskGo.transform, false);
+            _reels = reelsGo.AddComponent<ReelsView>();
+            _reels.cellGap = 0f;
+            UiFactory.Place((RectTransform)reelsGo.transform, new Vector2(0.5f, 0.5f),
+                new Vector2(1502f, 1070f), new Vector2(0f, 0f));
             // ---- result line ----
             _result = UiFactory.NewText("Result", root, "", 28, FontStyle.Bold,
                 UiFactory.TextSecondary);
-            UiFactory.Place(_result.rectTransform, new Vector2(0.5f, 0f), new Vector2(1200f, 48f), new Vector2(0f, 300f));
+            UiFactory.Place(_result.rectTransform, new Vector2(0.5f, 0f), new Vector2(260f, 64f), new Vector2(-580f, 60f));
 
             // ---- bet stepper ----
             _bet = UiFactory.NewText("Bet", root, "", 24, FontStyle.Bold, UiFactory.GoldPrimary);
-            UiFactory.Place(_bet.rectTransform, new Vector2(0.5f, 0f), new Vector2(420f, 40f), new Vector2(0f, 210f));
+            UiFactory.Place(_bet.rectTransform, new Vector2(0.5f, 0f), new Vector2(260f, 64f), new Vector2(-180f, 60f));
 
             var minusBtn = UiFactory.NewButton("BetDown", root, "−", 40, UiFactory.TextPrimary, out Text minusText);
-            UiFactory.Place(minusBtn.GetComponent<RectTransform>(), new Vector2(0.5f, 0f), new Vector2(72f, 64f), new Vector2(-300f, 140f));
+            UiFactory.Place(minusBtn.GetComponent<RectTransform>(), new Vector2(0.5f, 0f), new Vector2(72f, 64f), new Vector2(280f, 60f));
             UiFactory.Stretch(minusText.rectTransform);
 
             var plusBtn = UiFactory.NewButton("BetUp", root, "+", 40, UiFactory.TextPrimary, out Text plusText);
-            UiFactory.Place(plusBtn.GetComponent<RectTransform>(), new Vector2(0.5f, 0f), new Vector2(72f, 64f), new Vector2(300f, 140f));
+            UiFactory.Place(plusBtn.GetComponent<RectTransform>(), new Vector2(0.5f, 0f), new Vector2(72f, 64f), new Vector2(380f, 60f));
             UiFactory.Stretch(plusText.rectTransform);
 
             minusBtn.onClick.AddListener(() => StepBet(-1));
             plusBtn.onClick.AddListener(() => StepBet(1));
+
+            var maxBetBtn = UiFactory.NewButton("MaxBet", root, "MAX", 24, UiFactory.TextPrimary, out Text maxBetText);
+            UiFactory.Place(maxBetBtn.GetComponent<RectTransform>(), new Vector2(0.5f, 0f), new Vector2(97f, 64f), new Vector2(-360f, 60f));
+            UiFactory.Stretch(maxBetText.rectTransform);
+            maxBetBtn.onClick.AddListener(() =>
+            {
+                if (controller == null || controller.runner == null || controller.Definition == null) return;
+                controller.runner.betLevel = Mathf.Max(0, controller.Definition.betLevels - 1);
+                Refresh();
+            });
 
             // ---- spin ----
             _spinButton = UiFactory.NewButton("Spin", root, "S P I N", 40, UiFactory.VelvetBase, out _);
@@ -165,7 +230,56 @@ namespace LustHouse.Slots
 
             var result = controller.runner.Spin();
 
-            yield return new WaitForSeconds(spinHoldSeconds);
+            // The reels are driven from the stops the engine returned, so the grid the player
+            // watches land is the grid the maths scored. A refused spin has no stops and
+            // nothing to animate, so it falls back to the plain hold.
+            if (_reels != null)
+            {
+                _reels.ClearHighlights();
+                _reels.ClearLocks();       // held cells belong to one round only
+            }
+
+            if (result.stops != null && _reels != null)
+            {
+                bool turbo = controller.runner.turboMode > 0;
+                yield return StartCoroutine(_reels.PlaySpin(result.stops, turbo ? 0.35f : 1f));
+                _reels.ShowWinHighlights(result);
+            }
+            else
+            {
+                yield return new WaitForSeconds(spinHoldSeconds);
+            }
+
+            // Feature rounds (free spins, hold & spin, and later bonus games) play after the
+            // base spin, from the exact steps the engine produced. The maths already scored
+            // them; this only animates what was decided.
+            if (result.featureSteps != null && _reels != null)
+            {
+                bool turbo = controller.runner.turboMode > 0;
+                _reels.ClearHighlights();
+                foreach (var step in result.featureSteps)
+                {
+                    switch (step.kind)
+                    {
+                        case FeatureStepKind.Lock:
+                            // Locks accumulate across respins; ClearLocks runs at the start of
+                            // the next round, not between the steps of this one.
+                            _reels.ShowLock(step.reel, step.row, step.symbolId, step.amount);
+                            break;
+
+                        case FeatureStepKind.Spin:
+                            if (step.spin.stops == null) break;
+                            yield return StartCoroutine(
+                                _reels.PlaySpin(step.spin.stops, turbo ? 0.35f : 1f));
+                            _reels.ShowWinHighlights(step.spin);
+                            break;
+
+                        case FeatureStepKind.Award:
+                            // Already folded into the round total; the result line shows it.
+                            break;
+                    }
+                }
+            }
 
             if (result.bet > 0)
             {
@@ -181,45 +295,10 @@ namespace LustHouse.Slots
                                "earn more or lower the bet.";
             }
 
-            _grid.text = RenderGrid(result);
             RenderLifetime(betBefore, lustBefore);
             Refresh();
             _spinning = false;
             _spinButton.interactable = true;
-        }
-
-        private static string RenderGrid(SpinResult result)
-        {
-            if (result.grid == null) return "";
-
-            var sb = new System.Text.StringBuilder();
-            for (int row = 0; row < result.grid[0].Length; row++)
-            {
-                for (int reel = 0; reel < result.grid.Length; reel++)
-                {
-                    var def = SymbolName(result.grid[reel][row]);
-                    sb.Append(def).Append(' ');
-                }
-                sb.AppendLine();
-            }
-            return sb.ToString();
-        }
-
-        private static string SymbolName(int symbolId)
-        {
-            return symbolId switch
-            {
-                0 => "[W] ",
-                1 => "[S] ",
-                10 => " A  ",
-                11 => " K  ",
-                12 => " Q  ",
-                13 => " J  ",
-                14 => "10  ",
-                15 => " 9  ",
-                16 => "**  ",   // Filigree (the premium symbol)
-                _ => " ?  "
-            };
         }
 
         private void RenderLifetime(long coinsBefore, long lustBefore)
@@ -248,6 +327,11 @@ namespace LustHouse.Slots
 
             var def = controller != null ? controller.Definition : null;
             _title.text = def != null ? def.title.ToUpperInvariant() : "NO GAME LOADED";
+
+            // The presenter's OnEnable runs before the definition arrives, so the reels are
+            // built here rather than in Build(). Configure is a no-op layout pass once the
+            // reels exist, which matters because every wallet change lands in here.
+            if (_reels != null) _reels.Configure(def);
 
             var wallet = WalletService.Instance;
             long coins = wallet != null ? wallet.Balance(Currency.Coins) : 0;

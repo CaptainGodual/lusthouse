@@ -72,6 +72,11 @@ namespace LustHouse.Lobby
                 // previous centred pivot pushed the first label outside the strip.
                 UiFactory.PlaceLeftMid(text.rectTransform, x, tabW, 48f);
 
+                // UiFactory.NewText leaves raycastTarget off, which is right for decoration and fatal
+                // for a control: a Button only ever fires when a raycast actually lands on a
+                // Graphic in its hierarchy, and a non-raycastable Text can never be landed on.
+                // The tab bar was therefore built out of six buttons that could not be clicked.
+                text.raycastTarget = true;
                 var hit = text.gameObject.AddComponent<Button>();
                 var captured = category;
                 hit.onClick.AddListener(() => SelectCategory(captured));
@@ -326,6 +331,7 @@ namespace LustHouse.Lobby
             starRect.anchoredPosition = new Vector2(-10f, -8f);
             starRect.sizeDelta = new Vector2(40f, 34f);
 
+            star.raycastTarget = true;      // a Button on a non-raycastable Text never fires
             var starHit = star.gameObject.AddComponent<Button>();
             var starTarget = starHit.targetGraphic;
             var captured = entry;

@@ -21,6 +21,12 @@ namespace LustHouse.Slots
         public bool triggeredHoldAndSpin;
         public int freeSpinsAwarded;
 
+        /// <summary>Spins that actually ran: 1 for the base game plus any feature spins.</summary>
+        public int spinsRun;
+
+        /// <summary>Feature beats (spins, locks, picks, awards) for the presenter to animate.</summary>
+        public List<FeatureStep> featureSteps;
+
         /// <summary>Ways-based wins (PayType.Ways) or clusters cleared (PayType.Cluster).</summary>
         public long waysWon;
 
@@ -92,8 +98,28 @@ namespace LustHouse.Slots
             _seeded = true;
         }
 
-        /// <summary>Headless spin used by the simulator — no MonoBehaviour required.</summary>
+        /// <summary>
+        /// Headless spin used by the simulator and the game — no MonoBehaviour required.
+        /// Evaluates the base game, then runs every triggered feature on the same RNG stream, so
+        /// the simulator and the player see the identical outcome for a given seed.
+        /// </summary>
         public static SpinResult SpinStatic(SlotMachineDefinition def, ref SeededRng rng, long bet)
+        {
+            if (def == null) return default;
+
+            var result = SpinBaseStatic(def, ref rng, bet);
+            var features = FeatureRunner.Run(def, result, bet, ref rng, null);
+            FeatureRunner.Apply(ref result, features);
+            return result;
+        }
+
+        /// <summary>
+        /// One base-game spin with no feature run. Feature handlers use this for their own
+        /// spins: a free spin must not recursively trigger another free-spin round, and a
+        /// hold &amp; spin respin must not trigger anything but locks. The caller still owns
+        /// the RNG stream, so the outcome stays reproducible.
+        /// </summary>
+        public static SpinResult SpinBaseStatic(SlotMachineDefinition def, ref SeededRng rng, long bet)
         {
             if (def == null) return default;
 
@@ -101,6 +127,7 @@ namespace LustHouse.Slots
             var stops = Stop(def, ref rng);
             var result = evaluator.Evaluate(def, stops, bet);
             result.rng = rng;
+            result.spinsRun = 1;
             return result;
         }
 
@@ -108,12 +135,7 @@ namespace LustHouse.Slots
         {
             EnsureSeeded();
             if (def == null) return default;
-
-            var evaluator = EvaluatorFor(def);
-            var stops = Stop(def, ref _rng);
-            var result = evaluator.Evaluate(def, stops, bet);
-            result.rng = _rng;
-            return result;
+            return SpinStatic(def, ref _rng, bet);
         }
 
         /// <summary>One uniform stop per reel, drawn from that reel's own strip.</summary>
@@ -144,21 +166,15 @@ namespace LustHouse.Slots
 
         private static IReelEvaluator EvaluatorFor(SlotMachineDefinition def)
         {
-            // payType decides how a win is measured; template layers features on top.
-                // A cluster-pays game must not be scored as paylines, and vice versa.
-                switch (def.payType)
-                {
-                    case PayType.Ways: return new WaysEvaluator();
-                    case PayType.Cluster: return new ClusterEvaluator();
-                }
-
-                switch (def.template)
-                {
-                    case SlotTemplate.Cascade: return new CascadeEvaluator();
-                    case SlotTemplate.HoldAndSpin: return new HoldSpinEvaluator();
-                    case SlotTemplate.Progressive: return new ProgressiveEvaluator();
-                    default: return new PaylineEvaluator();
-                }
+            // payType decides how a base win is measured; a cluster-pays game must not be scored
+            // as paylines, and vice versa. Features are a separate axis — FeatureRunner runs
+            // them after the base game — so the evaluator stays base-only.
+            switch (def.payType)
+            {
+                case PayType.Ways: return new WaysEvaluator();
+                case PayType.Cluster: return new ClusterEvaluator();
+                default: return new PaylineEvaluator();
+            }
         }
 
         /// <summary>Counts scatters anywhere on the grid.</summary>

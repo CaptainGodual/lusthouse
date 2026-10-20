@@ -12,15 +12,27 @@ namespace LustHouse.EditorTools
     /// <summary>
     /// Generates the first playable content assets (plan §0.4 P5 / §3.4 game #1).
     ///
-    /// Art is deliberately absent — this is a maths-and-loop asset. Symbols exist as ids
-    /// with a paytable so <c>MathSimulator</c> can measure a real RTP; sprites get filled
-    /// in when the art pipeline lands.
+    /// Symbols exist as ids with a paytable so <c>MathSimulator</c> can measure a real RTP.
+    /// Sprites are optional: when the four shared character arts are present under
+    /// <see cref="ArtFolder"/> the generator wires them in, and a missing sprite still
+    /// falls back to the reels' tinted placeholder tile.
     /// </summary>
     public static class ContentBootstrap
     {
         public const string SlotFolder = "Assets/Data/Slots";
         public const string CatalogPath = "Assets/Data/Catalog/GameCatalog.asset";
         public const string VelvetRoomPath = SlotFolder + "/Slot_VelvetRoom.asset";
+
+        public const string ArtFolder = "Assets/Art/Slots";
+
+        // Shared character art. The ids are symbol ids, not filenames: Scatter is the
+        // blueberry-dress character, Ace the blueberry-lingerie variant, King the grape,
+        // and Queen the kiwi. Keep this mapping identical to Velvet Room's existing
+        // sprite references so the four games read as one set.
+        public const string BlueberryDressArt = ArtFolder + "/00035-3449701744.png";
+        public const string BlueberryLingerieArt = ArtFolder + "/00036-3449701744.png";
+        public const string GrapeArt = ArtFolder + "/00040-2458849210.png";
+        public const string KiwiArt = ArtFolder + "/00041-1051490492.png";
 
         private static GameCatalog _catalog;
 
@@ -66,10 +78,207 @@ namespace LustHouse.EditorTools
             RegisterPlaceholderGames();
             StampReleaseDates();
             CreatePromoConfig();
+            MigrateSlotContent();
 
             EditorUtility.SetDirty(_catalog);
             AssetDatabase.SaveAssets();
             LustLog.Info($"[LustHouse] Starter content ready ({_catalog.games.Count} game(s)).");
+        }
+
+        /// <summary>
+        /// Brings pre-feature slot assets up to the current serialized shape: reel strips,
+        /// hold/spin and free-spin symbols, and the shared character art. Idempotent and
+        /// non-destructive — existing sprites, paytables and strips are left alone; only
+        /// missing data is filled in.
+        ///
+        /// The four placeholder assets predate the reel-strip serialization fix, so without
+        /// this they fail <see cref="SlotMachineDefinition.IsValid"/> and cannot be opened.
+        /// </summary>
+        [MenuItem("LustHouse/Setup/Migrate slot content", priority = 41)]
+        public static void MigrateSlotContent()
+        {
+            var migrated = new List<string>();
+
+            foreach (var guid in AssetDatabase.FindAssets("t:SlotMachineDefinition", new[] { SlotFolder }))
+            {
+                var path = AssetDatabase.GUIDToAssetPath(guid);
+                var def = AssetDatabase.LoadAssetAtPath<SlotMachineDefinition>(path);
+                if (def == null) continue;
+
+                if (MigrateDefinition(def))
+                {
+                    EditorUtility.SetDirty(def);
+                    migrated.Add(def.id);
+                }
+
+                if (!def.IsValid(out var error))
+                    LustLog.Error($"[LustHouse] {def.id} is still invalid after migration: {error}", def);
+            }
+
+            if (migrated.Count > 0) AssetDatabase.SaveAssets();
+
+            LustLog.Info(migrated.Count == 0
+                ? "[LustHouse] Slot content already migrated."
+                : $"[LustHouse] Migrated {migrated.Count} slot definition(s): {string.Join(", ", migrated)}");
+        }
+
+        private static bool MigrateDefinition(SlotMachineDefinition def)
+        {
+            bool changed = false;
+
+            if (def.symbols == null || def.symbols.Count == 0)
+            {
+                def.symbols = BuildSymbols();
+                changed = true;
+            }
+
+            // GetFeatures() gives the populated feature list precedence over the legacy
+            // flags, so migration repairs exactly the features the engine will run.
+            var activeFeatures = def.GetFeatures();
+            bool hasHold = activeFeatures.Exists(f => f is HoldAndSpinFeature);
+            bool hasFree = activeFeatures.Exists(f => f is FreeSpinsFeature);
+
+            // Fill only missing sprites. A designer's explicit choice always wins, and a
+            // missing art file is allowed to fall through to the placeholder glyph.
+            for (int i = 0; i < def.symbols.Count; i++)
+            {
+                var symbol = def.symbols[i];
+                if (symbol == null || symbol.sprite != null) continue;
+
+                var art = ArtForSymbol(symbol.id);
+                if (art == null) continue;
+
+                symbol.sprite = art;
+                changed = true;
+            }
+
+            // A hold & spin game needs a lockable symbol, and every reel needs a chance to
+            // show one. Reuse the first existing special; otherwise add the shared Diamond.
+            int holdSymbolId = -1;
+            if (hasHold)
+            {
+                holdSymbolId = FirstSpecialSymbolId(def);
+                if (holdSymbolId < 0)
+                {
+                    var diamond = def.SymbolById(17);
+                    if (diamond == null)
+                    {
+                        diamond = new SymbolDefinition
+                        {
+                            id = 17,
+                            symbolName = "Diamond",
+                            isSpecial = true,
+                            payoutsByMatch = new long[] { 1, 4, 10 },
+                            holdSpinValue = 2
+                        };
+                        def.symbols.Add(diamond);
+                    }
+                    else
+                    {
+                        diamond.isSpecial = true;
+                        if (diamond.holdSpinValue <= 0) diamond.holdSpinValue = 2;
+                        if (diamond.payoutsByMatch == null || diamond.payoutsByMatch.Length == 0)
+                            diamond.payoutsByMatch = new long[] { 1, 4, 10 };
+                    }
+
+                    holdSymbolId = 17;
+                    changed = true;
+                }
+            }
+
+            // Free spins need a scatter symbol, and every reel needs a chance to show one.
+            int scatterSymbolId = -1;
+            if (hasFree)
+            {
+                scatterSymbolId = FirstScatterSymbolId(def);
+                if (scatterSymbolId < 0)
+                {
+                    var scatter = def.SymbolById(1);
+                    if (scatter == null)
+                    {
+                        scatter = new SymbolDefinition
+                        {
+                            id = 1,
+                            symbolName = "Scatter",
+                            isScatter = true,
+                            payoutsByMatch = new long[] { 0, 0, 0 }
+                        };
+                        def.symbols.Add(scatter);
+                    }
+                    else
+                    {
+                        scatter.isScatter = true;
+                    }
+
+                    scatterSymbolId = 1;
+                    changed = true;
+                }
+            }
+
+            if (def.reelStrips == null || def.reelStrips.Count != def.reelCount)
+            {
+                def.reelStrips = BuildReelStrips(def.reelCount, holdSymbolId, scatterSymbolId);
+                changed = true;
+            }
+            else
+            {
+                if (hasHold && InjectSymbol(def.reelStrips, holdSymbolId, 5)) changed = true;
+                if (hasFree && InjectSymbol(def.reelStrips, scatterSymbolId, 3)) changed = true;
+            }
+
+            return changed;
+        }
+
+        private static int FirstSpecialSymbolId(SlotMachineDefinition def)
+        {
+            for (int i = 0; i < def.symbols.Count; i++)
+                if (def.symbols[i] != null && def.symbols[i].isSpecial)
+                    return def.symbols[i].id;
+            return -1;
+        }
+
+        private static int FirstScatterSymbolId(SlotMachineDefinition def)
+        {
+            for (int i = 0; i < def.symbols.Count; i++)
+                if (def.symbols[i] != null && def.symbols[i].isScatter)
+                    return def.symbols[i].id;
+            return -1;
+        }
+
+        /// <summary>
+        /// Replaces one stop per reel with the feature symbol, but only where the strip does
+        /// not already carry it. One stop in sixteen is enough to trigger; it is sparse
+        /// enough to remain a feature rather than the base game.
+        /// </summary>
+        private static bool InjectSymbol(List<ReelStrip> strips, int symbolId, int preferredIndex)
+        {
+            if (strips == null || symbolId < 0) return false;
+
+            bool changed = false;
+            for (int r = 0; r < strips.Count; r++)
+            {
+                var strip = strips[r];
+                if (strip?.symbols == null || strip.symbols.Count < 2) continue;
+                if (strip.symbols.Contains(symbolId)) continue;
+
+                int index = Mathf.Clamp(preferredIndex, 0, strip.symbols.Count - 1);
+                strip.symbols[index] = symbolId;
+                changed = true;
+            }
+
+            return changed;
+        }
+
+        private static Sprite ArtForSymbol(int id)
+        {
+            switch (id)
+            {
+                case 1: return AssetDatabase.LoadAssetAtPath<Sprite>(BlueberryDressArt);
+                case 10: return AssetDatabase.LoadAssetAtPath<Sprite>(BlueberryLingerieArt);
+                case 11: return AssetDatabase.LoadAssetAtPath<Sprite>(GrapeArt);
+                case 12: return AssetDatabase.LoadAssetAtPath<Sprite>(KiwiArt);
+                default: return null;
+            }
         }
 
         /// <summary>
@@ -174,15 +383,15 @@ namespace LustHouse.EditorTools
             def.targetRtp = targetRtp;
             def.maxWinMultiplier = maxWin;
 
-            def.hasFreeSpins = template != SlotTemplate.Cascade;
-            def.hasCascade = template == SlotTemplate.Cascade;
-            def.hasHoldAndSpin = template == SlotTemplate.HoldAndSpin;
+            def.features = BuildFeatures(template);
             def.progressive = template == SlotTemplate.Progressive;
             def.progressiveSeed = 250000;
 
             def.symbols = BuildSymbols();
             def.paylines = BuildPaylines(reels, rows);
-            def.reelStrips = BuildReelStrips(reels);
+            def.reelStrips = BuildReelStrips(reels,
+                template == SlotTemplate.HoldAndSpin ? 17 : -1,
+                template == SlotTemplate.Cascade ? -1 : 1);
 
             AssetDatabase.CreateAsset(def, path);
             AssetDatabase.SaveAssets();
@@ -191,6 +400,33 @@ namespace LustHouse.EditorTools
                 LustLog.Error($"[LustHouse] Generated {id} is invalid: {error}", def);
 
             return def;
+        }
+
+        /// <summary>The features a generated template gets. Data, not code (plan §3.2).</summary>
+        private static List<SlotFeature> BuildFeatures(SlotTemplate template)
+        {
+            var features = new List<SlotFeature>();
+
+            if (template != SlotTemplate.Cascade)
+                features.Add(new FreeSpinsFeature
+                {
+                    id = "free_spins",
+                    displayName = "Free Spins",
+                    scatterCount = 3,
+                    award = 10,
+                    betMultiplier = 1
+                });
+
+            if (template == SlotTemplate.HoldAndSpin)
+                features.Add(new HoldAndSpinFeature
+                {
+                    id = "hold_spin",
+                    displayName = "Hold & Spin",
+                    initialLocked = 3,
+                    maxRespins = 10
+                });
+
+            return features;
         }
 
         private static Color PlaceholderTint(string id)
@@ -326,8 +562,21 @@ namespace LustHouse.EditorTools
                 {
                     id = 16, symbolName = "Filigree",
                     payoutsByMatch = new long[] { 20, 80, 250 }
+                },
+                new SymbolDefinition
+                {
+                    // The hold & spin symbol. It pays like a low symbol so a strip position
+                    // carrying it is not dead in the base game, and carries a prize when held.
+                    id = 17, symbolName = "Diamond", isSpecial = true,
+                    payoutsByMatch = new long[] { 1, 4, 10 },
+                    holdSpinValue = 2
                 }
             };
+
+            // The shared character art is optional. Ids without art keep sprite = null and
+            // draw as tinted placeholder tiles, so content still works before art lands.
+            for (int i = 0; i < symbols.Count; i++)
+                symbols[i].sprite = ArtForSymbol(symbols[i].id);
 
             return symbols;
         }
@@ -383,7 +632,8 @@ namespace LustHouse.EditorTools
         /// Generic per-reel strips. Reel 0 is the cheapest so it decides the base symbol
         /// more often; the last reel carries the premium symbol sparingly.
         /// </summary>
-        private static List<ReelStrip> BuildReelStrips(int reels)
+        private static List<ReelStrip> BuildReelStrips(int reels, int holdSymbolId,
+                                                       int scatterSymbolId)
         {
             var strips = new List<ReelStrip>();
 
@@ -399,6 +649,13 @@ namespace LustHouse.EditorTools
 
                     symbols.Add(symbol);
                 }
+
+                // One feature symbol per reel. A 16-stop strip with a 3-row window sees it
+                // often enough to be demonstrable, but rarely enough to remain a feature.
+                // A feature with no trigger symbol on the strips is a dead feature.
+                if (scatterSymbolId >= 0 && symbols.Count > 3) symbols[3] = scatterSymbolId;
+                if (holdSymbolId >= 0 && symbols.Count > 5) symbols[5] = holdSymbolId;
+
                 strips.Add(new ReelStrip { symbols = symbols });
             }
 

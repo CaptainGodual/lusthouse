@@ -63,13 +63,7 @@ namespace LustHouse.Slots
             }
 
             result.scatterCount = ReelEngine.CountScatters(def, grid);
-            if (def.hasFreeSpins && result.scatterCount >= def.freeSpinScatterCount)
-            {
-                result.triggeredFreeSpins = true;
-                result.freeSpinsAwarded = def.freeSpinAward;
-                totalMultiples += (long)def.freeSpinAward * def.freeSpinBetMultiplier;
-            }
-
+            // Features are not scored here: FeatureRunner runs them after the base game.
             result.totalWin = totalMultiples * bet;
             return result;
         }

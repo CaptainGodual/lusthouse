@@ -45,13 +45,8 @@ namespace LustHouse.Slots
             }
 
             result.scatterCount = ReelEngine.CountScatters(def, grid);
-            if (def.hasFreeSpins && result.scatterCount >= def.freeSpinScatterCount)
-            {
-                result.triggeredFreeSpins = true;
-                result.freeSpinsAwarded = def.freeSpinAward;
-                totalMultiples += (long)def.freeSpinAward * def.freeSpinBetMultiplier;
-            }
-
+            // Features are not scored here: FeatureRunner runs them after the base game so a
+            // free-spin round is actually played rather than folded into one lump.
             result.totalWin = totalMultiples * bet;
             return result;
         }
@@ -131,37 +126,7 @@ namespace LustHouse.Slots
         }
     }
 
-    /// <summary>Template C: cluster/cascade pays (plan §3.2).</summary>
-    public class CascadeEvaluator : PaylineEvaluator
-    {
-        public override SpinResult Evaluate(SlotMachineDefinition def, int[] stops, long bet)
-        {
-            var result = base.Evaluate(def, stops, bet);
-            // One cascade step in the greybox pass; the loop lands with the template
-            // implementation in M5. Payout logic is already delegated above.
-            return result;
-        }
-    }
-
-    /// <summary>Template D: hold & spin. Base payout is line-based; respins are layered on.</summary>
-    public class HoldSpinEvaluator : PaylineEvaluator
-    {
-        public override SpinResult Evaluate(SlotMachineDefinition def, int[] stops, long bet)
-        {
-            var result = base.Evaluate(def, stops, bet);
-            result.triggeredHoldAndSpin = def.hasHoldAndSpin;
-            return result;
-        }
-    }
-
-    /// <summary>Template E: progressive. Same line maths, plus a seeded meter contribution.</summary>
-    public class ProgressiveEvaluator : PaylineEvaluator
-    {
-        public override SpinResult Evaluate(SlotMachineDefinition def, int[] stops, long bet)
-        {
-            var result = base.Evaluate(def, stops, bet);
-            result.triggeredBonusBuy = def.hasBonusBuy && def.bonusBuyCostMultiplier > 0;
-            return result;
-        }
-    }
+    // Templates C/D/E used to have stub evaluator subclasses here. They are gone: the base game
+    // is chosen by payType alone, and each template's mechanic is a SlotFeatureHandler run by
+    // FeatureRunner (cluster pays is PayType.Cluster's ClusterEvaluator).
 }

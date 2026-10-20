@@ -248,7 +248,8 @@ namespace LustHouse.EditorTools
                 }
             }
 
-            if (def.hasFreeSpins)
+            var freeSpins = def.Find<FreeSpinsFeature>();
+            if (freeSpins != null)
             {
                 // Scatter triggers are counted over the whole grid.
                 double scatterPerReel = 0.0;
@@ -260,21 +261,21 @@ namespace LustHouse.EditorTools
                 }
 
                 if (scatterPerReel > 0)
-                    total += ScatterTriggerChance(def, scatterPerReel) *
-                             def.freeSpinAward * def.freeSpinBetMultiplier;
+                    total += ScatterTriggerChance(def, scatterPerReel, freeSpins.scatterCount) *
+                             freeSpins.award * freeSpins.betMultiplier;
             }
 
             return total;
         }
 
-        /// <summary>P(scells on one reel &gt;= 1) ^ needed, summed over trigger counts.</summary>
-        private static double ScatterTriggerChance(SlotMachineDefinition def, double pPerCell)
+        /// <summary>P(scatters on the grid &gt;= needed), summed over trigger counts.</summary>
+        private static double ScatterTriggerChance(SlotMachineDefinition def, double pPerCell,
+                                                   int scatterCount)
         {
-            int cellsPerReel = def.reelCount * def.rowCount;
             double pAnyOnReel = 1.0 - Math.Pow(1.0 - pPerCell, def.rowCount);
 
             // Small grid: enumerate the scatter count distribution exactly.
-            var dist = new double[def.freeSpinScatterCount + 1];
+            var dist = new double[scatterCount + 1];
             dist[0] = 1.0;
             for (int i = 0; i < def.reelCount; i++)
             {
@@ -288,7 +289,7 @@ namespace LustHouse.EditorTools
             }
 
             double chance = 0.0;
-            for (int c = def.freeSpinScatterCount; c < dist.Length; c++)
+            for (int c = scatterCount; c < dist.Length; c++)
                 chance += dist[c];
             return chance;
         }

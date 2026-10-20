@@ -29,6 +29,12 @@ Individual steps are available under `LustHouse → Setup → 1..6` if you want 
 > **LustHouse → Setup → Repair boot scene** to persist the fix in the scene file and clear
 > the warning.
 
+> **If the UI renders but nothing responds to clicks, run
+> **LustHouse → Setup → Repair input blocking**.** A full-screen `Graphic` with
+> `raycastTarget` on is returned as the top hit for every pixel, so it swallows every click in
+> the game while looking completely normal. The generated scenes shipped with a leftover
+> `SceneLabel` that did exactly this.
+
 What it creates:
 
 | Step | Result |
@@ -38,7 +44,14 @@ What it creates:
 | 3. Scenes | `BootLoader`, `Lobby`, `Slot` |
 | 4. Build settings | Scene order `BootLoader → Lobby → Slot` |
 | 5. Addressables | Groups `Boot`, `Slots`, `Deferred` |
-| 6. Starter content | `Slot_VelvetRoom.asset` + `GameCatalog.asset` |
+| 6. Starter content | `Slot_VelvetRoom.asset`, four placeholder slot definitions + `GameCatalog.asset` |
+
+> **Existing slot assets are migrated, never deleted.** Run
+> **LustHouse → Setup → Migrate slot content** after pulling content changes (Run all setup
+> also does this). It fills in missing reel strips and feature symbols and wires the four
+> shared character arts, while leaving existing sprites, strips and paytables alone.
+> The arts live in `Assets/Art/Slots` and map to Scatter (blueberry dress), Ace
+> (blueberry lingerie), King (grape) and Queen (kiwi).
 
 Then open `Assets/Scenes/BootLoader.unity` and press Play.
 
@@ -60,6 +73,9 @@ These are enforced by tests, not convention (`Assets/Tests/Editor/GuardrailTests
    `UnityEngine.Random` — it is shared global state and cannot be replayed in QA.
 6. **One slot scene.** Games are data (`SlotMachineDefinition`), not scenes or code.
 7. **One avatar render path.** `AvatarComposer` is used by the PlayerChip, Club, and slots.
+8. **No full-screen graphic may intercept the pointer.** A `Graphic` covering the canvas with
+   `raycastTarget` on takes every click in the game. `LobbyTapTests` asserts this across all
+   three scenes.
 
 ---
 
@@ -77,10 +93,25 @@ Unity.exe -batchmode -runTests -testPlatform EditMode -projectPath .
 ```
 
 Current suites: save round-trip / corruption / migration, guardrails, RNG determinism and
-distribution, reel engine and payline evaluation, and the RTP simulator.
+distribution, reel engine and payline evaluation, the RTP simulator, feature rounds, and the
+reel view.
+
+**EditMode** covers components in isolation. **PlayMode** (`Assets/Tests/PlayMode`) covers the
+seams between scenes — currently the lobby → slot launch, which no EditMode test can reach:
+every component can pass while the player cannot tap anything, because a tap is a raycast
+through a canvas, a listener firing, and a static surviving a scene load, and each link breaks
+independently.
+
+```
+Unity.exe -batchmode -runTests -testPlatform PlayMode -projectPath .
+```
 
 > **Ship gate (plan §3.6):** never ship a paytable change without a passing 100k-spin
 > simulation within ±0.5% of target RTP.
+
+> **Placeholder math is deferred.** The four placeholder definitions validate and are
+> playable, but their RTP is not tuned, so `RtpGateTests` lists them explicitly as deferred.
+> Adding a new definition without either gating or deferring it fails the suite.
 
 ---
 

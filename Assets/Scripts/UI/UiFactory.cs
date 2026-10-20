@@ -17,6 +17,7 @@ namespace LustHouse.UI
     {
         private static Font _font;
         private static Sprite _solid;
+        private static Sprite _rounded;
 
         // ---- shared assets ----------------------------------------------------
 
@@ -62,6 +63,44 @@ namespace LustHouse.UI
             }
         }
 
+        /// <summary>A rounded white sprite, so buttons can read as dark rounded panels.</summary>
+        public static Sprite RoundedPanel
+        {
+            get
+            {
+                if (_rounded != null) return _rounded;
+
+                const int size = 128;
+                var tex = new Texture2D(size, size, TextureFormat.RGBA32, false)
+                {
+                    name = "LustHouseRounded",
+                    hideFlags = HideFlags.HideAndDontSave,
+                    filterMode = FilterMode.Bilinear,
+                    wrapMode = TextureWrapMode.Clamp
+                };
+
+                const int radius = 28;
+                var pixels = new Color32[size * size];
+                for (int y = 0; y < size; y++)
+                {
+                    for (int x = 0; x < size; x++)
+                    {
+                        // Distance to the nearest corner centre; inside the radius -> opaque.
+                        float dx = x < radius ? radius - x : (x > size - 1 - radius ? x - (size - 1 - radius) : 0f);
+                        float dy = y < radius ? radius - y : (y > size - 1 - radius ? y - (size - 1 - radius) : 0f);
+                        bool inside = dx * dx + dy * dy <= radius * radius;
+                        pixels[y * size + x] = inside ? new Color32(255, 255, 255, 255) : new Color32(255, 255, 255, 0);
+                    }
+                }
+                tex.SetPixels32(pixels);
+                tex.Apply();
+
+                _rounded = Sprite.Create(tex, new Rect(0, 0, size, size), new Vector2(0.5f, 0.5f), 100f);
+                _rounded.name = "LustHouseRounded";
+                return _rounded;
+            }
+        }
+
         // ---- palette (plan §2.1) ---------------------------------------------
 
         public static readonly Color VelvetBase = new Color32(0x14, 0x0A, 0x14, 0xFF);
@@ -102,6 +141,40 @@ namespace LustHouse.UI
             scaler.matchWidthOrHeight = 0.5f;
 
             go.AddComponent<GraphicRaycaster>();
+            return canvas;
+        }
+
+        /// <summary>
+        /// The canvas a screen's UI belongs in: one under <paramref name="context"/>, else one
+        /// authored in the same scene, else a new one.
+        ///
+        /// The middle case matters. ProjectSetup creates each scene's Canvas as a <em>scene
+        /// root</em>, a sibling of the controller rather than its child, so
+        /// <c>GetComponentInChildren&lt;Canvas&gt;()</c> returns null and every screen quietly
+        /// built a second overlay canvas alongside it. Two ScreenSpaceOverlay canvases at the
+        /// same sortingOrder have no meaningful order between them, so which one receives a
+        /// click is undefined — and the scene's stray full-quad graphic won.
+        /// </summary>
+        /// <param name="sortingOrder">Applied to whichever canvas is used, so the requested
+        /// order is guaranteed rather than inherited from whatever was authored.</param>
+        public static Canvas ResolveCanvas(Transform context, string name, int sortingOrder = 0)
+        {
+            Canvas canvas = context != null ? context.GetComponentInChildren<Canvas>() : null;
+
+            if (canvas == null && context != null)
+            {
+                foreach (var candidate in Object.FindObjectsByType<Canvas>(FindObjectsSortMode.None))
+                {
+                    if (candidate.gameObject.scene == context.gameObject.scene)
+                    {
+                        canvas = candidate;
+                        break;
+                    }
+                }
+            }
+
+            canvas ??= CreateCanvas(context, name, sortingOrder);
+            canvas.sortingOrder = sortingOrder;
             return canvas;
         }
 
@@ -236,8 +309,8 @@ namespace LustHouse.UI
             if (parent != null) go.transform.SetParent(parent, false);
 
             var image = go.AddComponent<Image>();
-            image.sprite = Solid;
-            image.color = VelvetRaised;
+            image.sprite = RoundedPanel;
+            image.color = VelvetPanel;
             image.raycastTarget = true;
 
             var button = go.AddComponent<Button>();

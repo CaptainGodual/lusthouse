@@ -28,65 +28,89 @@ MonoBehaviour:
     symbolName: Wild
     sprite: {fileID: 0}
     payoutsByMatch: 0000000000000000000000000000000000000000000000000000000000000000
+    clusterPayouts: 
     isWild: 1
     isScatter: 0
     isSpecial: 0
+    holdSpinValue: 0
   - id: 1
     symbolName: Scatter
-    sprite: {fileID: 0}
+    sprite: {fileID: 21300000, guid: ce8496af92af87947998c84f647c76c8, type: 3}
     payoutsByMatch: 000000000000000000000000000000000000000000000000
+    clusterPayouts: 
     isWild: 0
     isScatter: 1
     isSpecial: 0
+    holdSpinValue: 0
   - id: 10
     symbolName: Ace
-    sprite: {fileID: 0}
+    sprite: {fileID: 21300000, guid: 913364910e8bf2d4ba7e55643b3cab00, type: 3}
     payoutsByMatch: 050000000000000014000000000000003c00000000000000
+    clusterPayouts: 
     isWild: 0
     isScatter: 0
     isSpecial: 0
+    holdSpinValue: 0
   - id: 11
     symbolName: King
-    sprite: {fileID: 0}
+    sprite: {fileID: 21300000, guid: a8f573506f15256429f6d72681a642ad, type: 3}
     payoutsByMatch: 04000000000000000f000000000000003200000000000000
+    clusterPayouts: 
     isWild: 0
     isScatter: 0
     isSpecial: 0
+    holdSpinValue: 0
   - id: 12
     symbolName: Queen
-    sprite: {fileID: 0}
+    sprite: {fileID: 21300000, guid: d0236ae586396584a8c67c8f92b9c2ce, type: 3}
     payoutsByMatch: 03000000000000000c000000000000002800000000000000
+    clusterPayouts: 
     isWild: 0
     isScatter: 0
     isSpecial: 0
+    holdSpinValue: 0
   - id: 13
     symbolName: Jack
     sprite: {fileID: 0}
     payoutsByMatch: 020000000000000008000000000000001900000000000000
+    clusterPayouts: 
     isWild: 0
     isScatter: 0
     isSpecial: 0
+    holdSpinValue: 0
   - id: 14
     symbolName: Ten
     sprite: {fileID: 0}
     payoutsByMatch: 010000000000000005000000000000000f00000000000000
+    clusterPayouts: 
     isWild: 0
     isScatter: 0
     isSpecial: 0
+    holdSpinValue: 0
   - id: 15
     symbolName: Nine
     sprite: {fileID: 0}
     payoutsByMatch: 010000000000000004000000000000000c00000000000000
+    clusterPayouts: 
     isWild: 0
     isScatter: 0
     isSpecial: 0
+    holdSpinValue: 0
   - id: 16
     symbolName: Filigree
     sprite: {fileID: 0}
     payoutsByMatch: 14000000000000005000000000000000fa00000000000000
+    clusterPayouts: 
     isWild: 0
     isScatter: 0
     isSpecial: 0
+    holdSpinValue: 0
+  reelStrips:
+  - symbols: 0c0000000d0000000e000000010000000c0000000d0000000e0000000f0000000c0000000d0000000e0000000f0000000c0000000d0000000e0000000f000000
+  - symbols: 0b0000000c0000000d000000010000000f000000100000000b0000000c0000000d0000000e0000000f000000100000000b0000000c0000000d0000000e000000
+  - symbols: 0b0000000c0000000d000000010000000f000000100000000b0000000c0000000d0000000e0000000f000000100000000b0000000c0000000d0000000e000000
+  - symbols: 0b0000000c0000000d000000010000000f000000100000000b0000000c0000000d0000000e0000000f000000100000000b0000000c0000000d0000000e000000
+  - symbols: 0b0000000c0000000d000000010000000f0000000b0000000c0000000d0000000e0000000f0000000b000000100000000d0000000e0000000f0000000b000000
   payType: 0
   paylines:
   - lineName: H0
@@ -106,12 +130,12 @@ MonoBehaviour:
   maxWinMultiplier: 10000
   progressive: 1
   progressiveSeed: 250000
+  cascadeClusterSize: 5
   hasFreeSpins: 1
   freeSpinScatterCount: 3
   freeSpinAward: 10
   freeSpinBetMultiplier: 1
   hasCascade: 0
-  cascadeClusterSize: 5
   hasHoldAndSpin: 0
   holdSpinInitialLocked: 3
   holdSpinMaxRespins: 10

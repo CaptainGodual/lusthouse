@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.IO;
 using LustHouse.Core;
+using LustHouse.Slots;
 using UnityEditor;
 using UnityEditor.AddressableAssets;
 using UnityEditor.AddressableAssets.Settings;
@@ -36,6 +37,14 @@ namespace LustHouse.EditorTools
 
         private static readonly string[] AddressableGroups = { "Boot", "Slots", "Deferred" };
 
+        /// <summary>
+        /// Base URL the Addressables remote catalog and bundles are served from — the
+        /// "source url" the slot packs download from. Set this to the project's CDN
+        /// (for example <c>https://cdn.example.com/addressables</c>) or export
+        /// <c>LUSTHOUSE_ADDRESSABLES_URL</c> before running setup step 7.
+        /// </summary>
+        public static string RemoteCatalogUrl = "https://REPLACE-ME/addressables";
+
         private static readonly (string name, string[] scenes)[] SceneSpecs =
         {
             ("BootLoader", new[] { "BootLoader", "Lobby", "Slot" }),
@@ -52,6 +61,9 @@ namespace LustHouse.EditorTools
             CreateScenes();
             ConfigureBuildSettings();
             CreateAddressableGroups();
+            ConfigureRemoteCatalog();
+            MarkSlotPacksAddressable();
+            RepairInputBlocking();
             ContentBootstrap.CreateStarterContent();
 
             AssetDatabase.SaveAssets();
@@ -376,6 +388,52 @@ namespace LustHouse.EditorTools
             LustLog.Info("[LustHouse] BootLoader repaired. Open it and press Play.");
         }
 
+        /// <summary>
+        /// Stops scene-authored full-screen graphics from swallowing every click.
+        ///
+        /// The generated scenes carried a leftover <c>SceneLabel</c> — a Text stretched over the
+        /// whole canvas with <c>raycastTarget</c> on, left over from a generator that predates
+        /// the runtime UI. It renders nothing (null font) but it sits under the pointer for
+        /// every pixel of the screen, so the GraphicRaycaster returned it as the top hit and
+        /// every button, tile and tab in the game was unreachable. The symptom is a build that
+        /// looks alive and responds to nothing.
+        ///
+        /// It is deleted from BootLoader by <see cref="RepairBootScene"/>; this covers every
+        /// scene and is safe to re-run.
+        /// </summary>
+        [MenuItem("LustHouse/Setup/Repair input blocking", priority = 27)]
+        public static void RepairInputBlocking()
+        {
+            int fixedCount = 0;
+
+            foreach (var spec in SceneSpecs)
+            {
+                var path = "Assets/Scenes/" + spec.name + ".unity";
+                if (!File.Exists(path)) continue;
+
+                var scene = EditorSceneManager.OpenScene(path, OpenSceneMode.Additive);
+                bool changed = false;
+
+                foreach (var label in UnityEngine.Object.FindObjectsByType<UnityEngine.UI.Graphic>(FindObjectsSortMode.None))
+                {
+                    if (label.name != "SceneLabel" || !label.raycastTarget) continue;
+                    label.raycastTarget = false;
+                    changed = true;
+                    fixedCount++;
+                    LustLog.Info($"[LustHouse] {spec.name}: SceneLabel no longer intercepts clicks.");
+                }
+
+                if (changed) EditorSceneManager.SaveScene(scene);
+                EditorSceneManager.CloseScene(scene, true);
+            }
+
+            if (fixedCount == 0)
+                LustLog.Info("[LustHouse] No full-screen raycast blockers found; scenes are clean.");
+            else
+                LustLog.Warn($"[LustHouse] Repaired {fixedCount} click blocker(s). " +
+                             "If buttons were unresponsive in the editor, this was why.");
+        }
+
         [MenuItem("LustHouse/Setup/4. Build settings", priority = 23)]
         public static void ConfigureBuildSettings()
         {
@@ -418,10 +476,148 @@ namespace LustHouse.EditorTools
                 {
                     bundled.BundleMode = BundledAssetGroupSchema.BundlePackingMode.PackTogether;
                     bundled.BuildPath.SetVariableByName(settings, AddressableAssetSettings.kRemoteBuildPath);
-                    bundled.LoadPath.SetVariableByName(settings, AddressableAssetSettings.kLocalLoadPath);
+                    bundled.LoadPath.SetVariableByName(settings, GroupLoadPath(groupName));
                 }
 
                 LustLog.Info($"[LustHouse] Created addressable group '{groupName}'");
+            }
+
+            // Groups created before the local/remote split kept the wrong load path, so
+            // re-apply it across the board rather than only on the freshly created ones.
+            ApplyGroupLoadPaths(settings);
+
+            settings.SetDirty(AddressableAssetSettings.ModificationEvent.BatchModification, null, true, true);
+            AssetDatabase.SaveAssets();
+        }
+
+        /// <summary>
+        /// Points the active Addressables profile at the remote catalog and turns on remote
+        /// catalog builds. This is the one step that needs the CDN url: without it the slot
+        /// packs have nothing to download from and the loader silently falls back to bundled
+        /// content (plan §1.3 — never block on the network).
+        /// </summary>
+        [MenuItem("LustHouse/Setup/7. Configure remote catalog", priority = 26)]
+        public static void ConfigureRemoteCatalog()
+        {
+            var settings = AddressableAssetSettingsDefaultObject.GetSettings(true);
+            if (settings == null)
+            {
+                LustLog.Warn("[LustHouse] No Addressables settings; run step 5 first.");
+                return;
+            }
+
+            // The environment wins over the in-source default so a per-machine CDN never has
+            // to be committed to the repo.
+            string url = System.Environment.GetEnvironmentVariable("LUSTHOUSE_ADDRESSABLES_URL");
+            if (string.IsNullOrWhiteSpace(url)) url = RemoteCatalogUrl;
+
+            if (string.IsNullOrWhiteSpace(url) || url.Contains("REPLACE-ME"))
+            {
+                LustLog.Warn("[LustHouse] Set ProjectSetup.RemoteCatalogUrl or export " +
+                             "LUSTHOUSE_ADDRESSABLES_URL to the remote catalog base url, then " +
+                             "re-run this step.");
+                return;
+            }
+
+            settings.BuildRemoteCatalog = true;
+            ApplyGroupLoadPaths(settings);
+            settings.profileSettings.SetValue(settings.activeProfileId,
+                AddressableAssetSettings.kRemoteLoadPath, url);
+
+            settings.SetDirty(AddressableAssetSettings.ModificationEvent.BatchModification, null, true, true);
+            AssetDatabase.SaveAssets();
+
+            LustLog.Info($"[LustHouse] Remote catalog enabled; Remote.LoadPath = {url}. " +
+                         "Publish it with Build > New Build > Default Build Script.");
+        }
+
+        /// <summary>
+        /// Boot must be present at launch — the loader cannot download its own dependencies —
+        /// so it loads locally. Slots and Deferred are streamed from the remote catalog on
+        /// demand, which is what the slot pack download actually fetches.
+        /// </summary>
+        private static string GroupLoadPath(string groupName) =>
+            groupName == "Boot"
+                ? AddressableAssetSettings.kLocalLoadPath
+                : AddressableAssetSettings.kRemoteLoadPath;
+
+        /// <summary>Re-applies the load path to every group, including ones created earlier.</summary>
+        private static void ApplyGroupLoadPaths(AddressableAssetSettings settings)
+        {
+            foreach (var groupName in AddressableGroups)
+            {
+                var group = settings.FindGroup(groupName);
+                var bundled = group?.GetSchema<BundledAssetGroupSchema>();
+                if (bundled == null) continue;
+                bundled.LoadPath.SetVariableByName(settings, GroupLoadPath(groupName));
+            }
+        }
+
+        /// <summary>
+        /// Gives every game a downloadable pack: a folder under <c>Assets/Art/Slots/</c> marked
+        /// as an addressable entry in the <c>Slots</c> group, plus the matching
+        /// <see cref="SlotMachineDefinition.addressableKey"/> so the launch loader knows what to
+        /// fetch.
+        ///
+        /// The definition itself stays bundled and local: the lobby reads its paytable, bet
+        /// range and key art to draw the tile before the pack is ever downloaded. The pack is
+        /// the per-game content (art, audio) the slot scene streams. Drop each game's content
+        /// into its <c>Assets/Art/Slots/&lt;id&gt;/</c> folder.
+        /// </summary>
+        [MenuItem("LustHouse/Setup/8. Mark slot packs addressable", priority = 27)]
+        public static void MarkSlotPacksAddressable()
+        {
+            var settings = AddressableAssetSettingsDefaultObject.GetSettings(true);
+            if (settings == null)
+            {
+                LustLog.Warn("[LustHouse] No Addressables settings; run step 5 first.");
+                return;
+            }
+
+            var group = settings.FindGroup("Slots");
+            if (group == null)
+            {
+                LustLog.Warn("[LustHouse] No 'Slots' addressable group; run step 5 first.");
+                return;
+            }
+
+            string[] guids = AssetDatabase.FindAssets("t:SlotMachineDefinition",
+                new[] { "Assets/Data/Slots" });
+            if (guids == null || guids.Length == 0)
+            {
+                LustLog.Warn("[LustHouse] No SlotMachineDefinition assets under Assets/Data/Slots.");
+                return;
+            }
+
+            foreach (var guid in guids)
+            {
+                string defPath = AssetDatabase.GUIDToAssetPath(guid);
+                var definition = AssetDatabase.LoadAssetAtPath<SlotMachineDefinition>(defPath);
+                if (definition == null) continue;
+
+                string id = string.IsNullOrWhiteSpace(definition.id)
+                    ? Path.GetFileNameWithoutExtension(defPath)
+                    : definition.id;
+                string key = "Slots/" + id;
+
+                string packFolder = "Assets/Art/Slots/" + id;
+                if (!AssetDatabase.IsValidFolder(packFolder))
+                {
+                    if (!AssetDatabase.IsValidFolder("Assets/Art/Slots"))
+                        AssetDatabase.CreateFolder("Assets/Art", "Slots");
+                    AssetDatabase.CreateFolder("Assets/Art/Slots", id);
+                }
+
+                var entry = settings.CreateOrMoveEntry(AssetDatabase.AssetPathToGUID(packFolder), group);
+                entry?.SetAddress(key);
+
+                if (definition.addressableKey != key)
+                {
+                    definition.addressableKey = key;
+                    EditorUtility.SetDirty(definition);
+                }
+
+                LustLog.Info($"[LustHouse] '{id}' pack -> {key} ({packFolder})");
             }
 
             settings.SetDirty(AddressableAssetSettings.ModificationEvent.BatchModification, null, true, true);

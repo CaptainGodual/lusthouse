@@ -1,7 +1,9 @@
+using System.Collections;
 using System.Collections.Generic;
 using LustHouse.Catalog;
 using LustHouse.Core;
 using LustHouse.Slots;
+using LustHouse.UI;
 using UnityEngine;
 
 namespace LustHouse.Lobby
@@ -27,12 +29,19 @@ namespace LustHouse.Lobby
 
         private readonly HashSet<string> _favourites = new HashSet<string>();
 
+        private LobbyPresenter _presenter;
+        private LobbyLoadingScreen _loadingScreen;
+        private SlotContentService _content;
+        private bool _launching;
+
         public ServicesBootstrap Services { get; private set; }
 
         private void Awake()
         {
             Services = FindFirstObjectByType<ServicesBootstrap>();
             EnsurePresenter();
+            EnsureLoadingScreen();
+            EnsureContentService();
         }
 
         /// <summary>
@@ -55,6 +64,7 @@ namespace LustHouse.Lobby
             if (existing == null) existing = gameObject.AddComponent<LobbyPresenter>();
             if (existing.controller == null) existing.controller = this;
             if (existing.catalog == null) existing.catalog = catalog;
+            _presenter = existing;
 
             // The grid is a separate component so it can own filtering, the tab bar, and
             // tile state without bloating the presenter.
@@ -72,6 +82,26 @@ namespace LustHouse.Lobby
             grid.RebuildGrid();
         }
 
+        /// <summary>
+        /// Guarantees the interstitial loader exists. It is a separate component so the
+        /// lobby scene needs no authored UI for it, and so a missing reference can never
+        /// produce a black screen (the failure mode the boot screen was built to avoid).
+        /// </summary>
+        private void EnsureLoadingScreen()
+        {
+            var existing = GetComponent<LobbyLoadingScreen>();
+            if (existing == null) existing = gameObject.AddComponent<LobbyLoadingScreen>();
+            _loadingScreen = existing;
+        }
+
+        /// <summary>Guarantees the Addressables content service exists for pack downloads.</summary>
+        private void EnsureContentService()
+        {
+            var existing = GetComponent<SlotContentService>();
+            if (existing == null) existing = gameObject.AddComponent<SlotContentService>();
+            _content = existing;
+        }
+
         // ---- tile tap routing -------------------------------------------------
 
         public void OnGameTilePressed(string gameId)
@@ -83,6 +113,8 @@ namespace LustHouse.Lobby
             if (entry.locked)
             {
                 LustLog.Info($"[LustHouse] '{entry.Title}' is coming soon.");
+                _presenter?.ShowEntryBlocked(entry.Title,
+                    "This title is marked coming soon. Check back for the season update.");
                 return;
             }
 
@@ -90,7 +122,11 @@ namespace LustHouse.Lobby
             if (entry.entryCostGems > 0 && WalletService.Instance != null &&
                 !WalletService.Instance.CanAfford(Currency.Gems, entry.entryCostGems))
             {
+                long have = WalletService.Instance.Balance(Currency.Gems);
                 LustLog.Info($"[LustHouse] Needs {entry.entryCostGems} Gems to enter '{entry.Title}'.");
+                _presenter?.ShowEntryBlocked(entry.Title,
+                    $"This title costs {entry.entryCostGems} Gems to enter.\n\n" +
+                    $"You have {have}. Gems are never bought with Coins.");
                 return;
             }
 
@@ -99,20 +135,83 @@ namespace LustHouse.Lobby
             long minBet = entry.definition.minBet;
             if (WalletService.Instance != null && !WalletService.Instance.CanAfford(Currency.Coins, minBet))
             {
-                LustLog.Info($"[LustHouse] '{entry.Title}' needs {minBet} Coins (shortfall {minBet - WalletService.Instance.Balance(Currency.Coins)}).");
+                long have = WalletService.Instance.Balance(Currency.Coins);
+                LustLog.Info($"[LustHouse] '{entry.Title}' needs {minBet} Coins (shortfall {minBet - have}).");
+                _presenter?.ShowEntryBlocked(entry.Title,
+                    $"{entry.Title} needs at least {UiFactory.FormatAmount(minBet)} Coins for the " +
+                    $"minimum bet.\n\nYou have {UiFactory.FormatAmount(have)}. " +
+                    "Coins are earned from daily gifts, missions, and level-ups — never bought.");
                 return;
             }
 
-            Launch(entry.definition);
+            // The pack is fetched (if needed) and the scene loaded by LaunchRoutine, so the
+            // loader can show real download + load progress rather than flipping a bool.
+            Launch(entry);
         }
 
-        /// <summary>Fade-to-black, then load the single shared slot scene (plan §2.8).</summary>
+        /// <summary>Loads a game from its catalog entry, so the loader can name it.</summary>
+        public void Launch(GameCatalog.Entry entry)
+        {
+            if (entry == null || entry.definition == null) return;
+            Launch(entry.definition, entry.Title);
+        }
+
+        /// <summary>Loads the single shared slot scene (plan §2.8).</summary>
         public void Launch(SlotMachineDefinition definition)
         {
             if (definition == null) return;
+            Launch(definition, definition.title);
+        }
+
+        private void Launch(SlotMachineDefinition definition, string title)
+        {
+            if (_launching) return;
+            StartCoroutine(LaunchRoutine(definition, title));
+        }
+
+        /// <summary>
+        /// Shows the loader, fetches the game's pack from the remote catalog if the device
+        /// lacks it, then loads the shared Slot scene without activating it until it is
+        /// ready — so the bar reflects real work and the reveal is seamless.
+        /// </summary>
+        private IEnumerator LaunchRoutine(SlotMachineDefinition definition, string title)
+        {
+            _launching = true;
+            _loadingScreen?.Show(title);
+
+            // Stage 1 — the pack. A blank key means the game ships in the build; the service
+            // returns immediately and the loader never shows a pointless "Downloading".
+            string key = definition.addressableKey ?? "";
+            if (!string.IsNullOrWhiteSpace(key) && _content != null)
+            {
+                yield return _content.EnsureDownloaded(key, p =>
+                    _loadingScreen?.SetProgress(p, "Downloading " + title + "…"));
+            }
+
+            // Stage 2 — the scene. Deferred activation keeps the lobby (and this loader)
+            // on screen until the Slot scene is fully loaded.
+            _loadingScreen?.SetProgress(0f, "Preparing " + title + "…");
 
             SlotLaunchPayload.Payload = definition;
-            UnityEngine.SceneManagement.SceneManager.LoadScene(slotSceneName);
+
+            var async = UnityEngine.SceneManagement.SceneManager.LoadSceneAsync(
+                slotSceneName, UnityEngine.SceneManagement.LoadSceneMode.Single);
+            if (async == null)
+            {
+                _launching = false;
+                _loadingScreen?.Hide();
+                yield break;
+            }
+
+            async.allowSceneActivation = false;
+            while (!async.isDone && async.progress < 0.9f)
+            {
+                _loadingScreen?.SetProgress(async.progress / 0.9f, "Preparing " + title + "…");
+                yield return null;
+            }
+
+            async.allowSceneActivation = true;
+            _launching = false;
         }
 
         // ---- favourites -------------------------------------------------------

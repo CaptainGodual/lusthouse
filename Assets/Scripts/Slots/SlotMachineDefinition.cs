@@ -33,6 +33,10 @@ namespace LustHouse.Slots
 
         public bool isSpecial = false;
 
+        [Tooltip("Prize this symbol carries when it locks in a hold & spin feature, in " +
+                 "bet-multiples. 0 = no value. Only special symbols (isSpecial) are used.")]
+        public long holdSpinValue = 0;
+
         public long PayoutForMatch(int count)
         {
             if (payoutsByMatch == null || payoutsByMatch.Length == 0) return 0;
@@ -124,21 +128,36 @@ namespace LustHouse.Slots
         public long progressiveSeed = 250000;
 
         [Header("Features")]
+        [Tooltip("Features this game can trigger, in evaluation order. Data, not code — adding a " +
+                 "feature to a game is a content change (plan §3.5). The engine dispatches each to " +
+                 "its handler by type.")]
+        public List<SlotFeature> features = new List<SlotFeature>();
+
+        [Tooltip("Minimum cluster size for PayType.Cluster games (plan §3.2 template C).")]
+        public int cascadeClusterSize = 5;
+
+        // ---- legacy feature flags (deprecated) ------------------------------
+        // Kept so existing assets keep their behaviour until they are migrated to
+        // <see cref="features"/>. The engine honours these only when <see cref="features"/> is
+        // empty, and they are dropped from the data model once content is migrated.
+        [Tooltip("Deprecated: add a FreeSpinsFeature to features instead.")]
         public bool hasFreeSpins = false;
         public int freeSpinScatterCount = 3;
         public int freeSpinAward = 10;
-        [Tooltip("Multiplier applied to the base bet for a free-spin award.")]
+        [Tooltip("Deprecated: the FreeSpinsFeature betMultiplier.")]
         public int freeSpinBetMultiplier = 1;
 
+        [Tooltip("Deprecated: cluster pays is PayType.Cluster now.")]
         public bool hasCascade = false;
-        public int cascadeClusterSize = 5;
 
+        [Tooltip("Deprecated: add a HoldAndSpinFeature to features instead.")]
         public bool hasHoldAndSpin = false;
         public int holdSpinInitialLocked = 3;
         public int holdSpinMaxRespins = 10;
 
+        [Tooltip("Deprecated: bonus buy is a BonusGameFeature now.")]
         public bool hasBonusBuy = false;
-        [Tooltip("Cost as a multiple of the base bet.")]
+        [Tooltip("Deprecated: the BonusGameFeature cost.")]
         public int bonusBuyCostMultiplier = 80;
 
         [Header("Presentation")]
@@ -189,6 +208,36 @@ namespace LustHouse.Slots
             for (int i = 0; i < symbols.Count; i++)
                 if (symbols[i] != null && symbols[i].id == symbolId) return i;
             return -1;
+        }
+
+        /// <summary>
+        /// The features this game can trigger. New content populates <see cref="features"/>
+        /// directly; the legacy flags are still honoured so existing assets keep their behaviour
+        /// until they are migrated.
+        /// </summary>
+        public List<SlotFeature> GetFeatures()
+        {
+            if (features != null && features.Count > 0) return features;
+
+            var derived = new List<SlotFeature>();
+            if (hasFreeSpins)
+                derived.Add(new FreeSpinsFeature
+                {
+                    id = "free_spins",
+                    displayName = "Free Spins",
+                    scatterCount = freeSpinScatterCount,
+                    award = freeSpinAward,
+                    betMultiplier = freeSpinBetMultiplier
+                });
+            if (hasHoldAndSpin)
+                derived.Add(new HoldAndSpinFeature
+                {
+                    id = "hold_spin",
+                    displayName = "Hold & Spin",
+                    initialLocked = holdSpinInitialLocked,
+                    maxRespins = holdSpinMaxRespins
+                });
+            return derived;
         }
 
         public bool IsValid(out string error)
