@@ -34,7 +34,7 @@ MonoBehaviour:
     blurb: 
     locked: 0
     lockedMessage: 
-    unlockLevel: 3
+    unlockLevel: 2
     releasedAtUtc: 2026-10-14T01:57:08.6886747Z
     isFeatured: 0
     featuredOrder: 0
@@ -47,7 +47,7 @@ MonoBehaviour:
     blurb: 
     locked: 0
     lockedMessage: 
-    unlockLevel: 9
+    unlockLevel: 3
     releasedAtUtc: 2026-10-09T01:57:08.6886747Z
     isFeatured: 0
     featuredOrder: 0
@@ -60,7 +60,7 @@ MonoBehaviour:
     blurb: 
     locked: 0
     lockedMessage: 
-    unlockLevel: 6
+    unlockLevel: 4
     releasedAtUtc: 2026-10-04T01:57:08.6886747Z
     isFeatured: 0
     featuredOrder: 0
@@ -73,7 +73,7 @@ MonoBehaviour:
     blurb: 
     locked: 0
     lockedMessage: 
-    unlockLevel: 12
+    unlockLevel: 5
     releasedAtUtc: 2026-09-29T01:57:08.6886747Z
     isFeatured: 0
     featuredOrder: 0

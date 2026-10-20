@@ -84,7 +84,7 @@ namespace LustHouse.Tests
         [Test]
         public void Conversion_IsOneDirectional_AndCapped()
         {
-            Assert.AreEqual(100, CurrencyRules.GemsToCoinsRate);
+            Assert.AreEqual(1000, CurrencyRules.GemsToCoinsRate);
             Assert.AreEqual(3, CurrencyRules.MaxConversionsPerDay);
 
             // There is no Coins→Gems entry point anywhere: the rule lives as a data

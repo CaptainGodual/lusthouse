@@ -167,7 +167,7 @@ public static class VerifyRunner
 
         Check("Only Gems are premium", CurrencyRules.IsPremium(Currency.Gems) &&
                                      !CurrencyRules.IsPremium(Currency.Coins));
-        Check("Conversion rate is 100", CurrencyRules.GemsToCoinsRate == 100);
+        Check("Conversion rate is 1000", CurrencyRules.GemsToCoinsRate == 1000);
         Check("Conversion cap is 3/day", CurrencyRules.MaxConversionsPerDay == 3);
 
         bool hasCoinToGem = false;

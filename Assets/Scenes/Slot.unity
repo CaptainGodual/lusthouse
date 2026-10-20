@@ -219,7 +219,7 @@ MonoBehaviour:
   definition: {fileID: 0}
   reelEngine: {fileID: 887999103}
   betLevel: 0
-  lustPerThousandWagered: 1
+  lustPerTenThousandWagered: 1
   autoplayCount: 0
   turboMode: 0
 --- !u!4 &434138427

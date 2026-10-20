@@ -1,5 +1,6 @@
 using System.Collections;
 using LustHouse.Core;
+using LustHouse.Economy;
 using LustHouse.Slots;
 using LustHouse.UI;
 using UnityEngine;
@@ -36,6 +37,7 @@ namespace LustHouse.Slots
         private Text _totalWin;
         private Text _result;
         private Text _lifetime;
+        private Text _levelBanner;
         private ReelsView _reels;
         private Button _spinButton;
         private Button _betDownButton;
@@ -55,6 +57,7 @@ namespace LustHouse.Slots
         private void OnEnable()
         {
             EventBus.Subscribe<WalletChanged>(OnWalletChanged);
+            EventBus.Subscribe<LevelUp>(OnLevelUp);
             if (!_built)
             {
                 Build();
@@ -66,12 +69,28 @@ namespace LustHouse.Slots
         private void OnDisable()
         {
             EventBus.Unsubscribe<WalletChanged>(OnWalletChanged);
+            EventBus.Unsubscribe<LevelUp>(OnLevelUp);
         }
 
         private void OnWalletChanged(WalletChanged change)
         {
             if (change.currency == Currency.LustPoints) return;
             Refresh();
+        }
+
+        private void OnLevelUp(LevelUp evt)
+        {
+            if (_levelBanner == null) return;
+            _levelBanner.text = $"LEVEL {evt.newLevel}!  +{evt.xpReward} COINS";
+            _levelBanner.gameObject.SetActive(true);
+            StopAllCoroutines();
+            StartCoroutine(HideLevelBanner());
+        }
+
+        private System.Collections.IEnumerator HideLevelBanner()
+        {
+            yield return new WaitForSeconds(3f);
+            if (_levelBanner != null) _levelBanner.gameObject.SetActive(false);
         }
 
         private void Build()
@@ -170,6 +189,12 @@ namespace LustHouse.Slots
                 new Vector2(1502f, 810f), new Vector2(0f, 0f));
 
             BuildControlBar(root);
+
+            _levelBanner = UiFactory.NewText("LevelBanner", root, "", 26, FontStyle.Bold,
+                UiFactory.GoldPrimary, TextAnchor.MiddleCenter);
+            UiFactory.PlaceTopCentre(_levelBanner.rectTransform, 90f, 600f, 40f);
+            _levelBanner.gameObject.SetActive(false);
+
             header.transform.SetAsLastSibling();
         }
 
@@ -274,7 +299,7 @@ namespace LustHouse.Slots
             lifetimeRect.anchorMin = new Vector2(1f, 0.5f);
             lifetimeRect.anchorMax = new Vector2(1f, 0.5f);
             lifetimeRect.pivot = new Vector2(1f, 0.5f);
-            lifetimeRect.sizeDelta = new Vector2(150f, 96f);
+            lifetimeRect.sizeDelta = new Vector2(150f, 112f);
             lifetimeRect.anchoredPosition = new Vector2(-16f, 0f);
         }
 
@@ -407,7 +432,8 @@ namespace LustHouse.Slots
             if (_spinning || controller == null || controller.runner == null ||
                 controller.Definition == null) return;
 
-            controller.runner.betLevel = Mathf.Max(0, controller.Definition.betLevels - 1);
+            // The top of the ladder this player's level has unlocked, not the house max.
+            controller.runner.betLevel = Mathf.Max(0, controller.runner.BetOptionCount - 1);
             Refresh();
         }
 
@@ -435,6 +461,7 @@ namespace LustHouse.Slots
 
             long betBefore = WalletService.Instance != null ? WalletService.Instance.Balance(Currency.Coins) : 0;
             long lustBefore = WalletService.Instance != null ? WalletService.Instance.Balance(Currency.LustPoints) : 0;
+            long xpBefore = Economy.PlayerProgression.Instance != null ? Economy.PlayerProgression.Instance.Xp : 0;
 
             var result = controller.runner.Spin();
 
@@ -506,7 +533,7 @@ namespace LustHouse.Slots
                 _result.text = "NOT ENOUGH COINS";
             }
 
-            RenderLifetime(betBefore, lustBefore);
+            RenderLifetime(betBefore, lustBefore, xpBefore);
 
             // Refresh before clearing _spinning would keep the spin button disabled, so clear
             // the guard first and let Refresh restore every control in one place.
@@ -514,7 +541,7 @@ namespace LustHouse.Slots
             Refresh();
         }
 
-        private void RenderLifetime(long coinsBefore, long lustBefore)
+        private void RenderLifetime(long coinsBefore, long lustBefore, long xpBefore)
         {
             if (_lifetime == null) return;
 
@@ -526,11 +553,15 @@ namespace LustHouse.Slots
 
             // Lust is non-spendable and never debited, so any change is pure accrual.
             long lustGained = lustNow - lustBefore;
+            long xpNow = Economy.PlayerProgression.Instance != null ? Economy.PlayerProgression.Instance.Xp : xpBefore;
+            long xpGained = xpNow - xpBefore;
+            if (xpGained < 0) xpGained = 0;
 
             _lifetime.text =
                 $"SPINS {Economy.PlayerProgression.Instance?.TotalSpins ?? 0}\n" +
                 $"NET {coinsNow - coinsBefore:+#;-#;0}\n" +
-                $"LUST +{lustGained}";
+                $"LUST +{lustGained}\n" +
+                $"XP +{xpGained}";
         }
 
         /// <summary>Re-reads the wallet and definition. Called after the definition arrives.</summary>
@@ -552,15 +583,23 @@ namespace LustHouse.Slots
 
             if (def != null && controller.runner != null)
             {
+                int steps = controller.runner.BetOptionCount;
+                int level = Economy.BetLimits.PlayerLevel;
+                long cap = Economy.BetLimits.MaxBetForLevel(level);
+                int next = Economy.BetLimits.NextCapLevel(level);
+
                 _bet.text = UiFactory.FormatAmount(controller.runner.CurrentBet);
-                _betLevel.text = $"LEVEL {controller.runner.betLevel + 1}/{def.betLevels}";
+
+                // The ladder only means something if the player can see what is behind the
+                // next rung, so the ceiling is on screen and the level that lifts it.
+                _betLevel.text = next > 0
+                    ? $"BET {controller.runner.betLevel + 1}/{steps}  ·  LVL {next} UNLOCKS {UiFactory.FormatAmount(Economy.BetLimits.MaxBetForLevel(next))}"
+                    : $"BET {controller.runner.betLevel + 1}/{steps}  ·  MAX {UiFactory.FormatAmount(cap)}";
 
                 bool canBet = !_spinning;
                 SetInteractable(_betDownButton, canBet && controller.runner.betLevel > 0);
-                SetInteractable(_betUpButton,
-                    canBet && controller.runner.betLevel < def.betLevels - 1);
-                SetInteractable(_maxBetButton,
-                    canBet && controller.runner.betLevel < def.betLevels - 1);
+                SetInteractable(_betUpButton, canBet && controller.runner.betLevel < steps - 1);
+                SetInteractable(_maxBetButton, canBet && controller.runner.betLevel < steps - 1);
             }
             else
             {

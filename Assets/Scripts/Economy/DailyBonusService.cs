@@ -23,13 +23,13 @@ namespace LustHouse.Economy
         [Header("Reward ladder (7 days)")]
         public DailyBonusDay[] ladder = new DailyBonusDay[]
         {
-            new DailyBonusDay { coins = 10000, gems = 0 },
-            new DailyBonusDay { coins = 12000, gems = 0 },
-            new DailyBonusDay { coins = 15000, gems = 0 },
-            new DailyBonusDay { coins = 18000, gems = 0 },
-            new DailyBonusDay { coins = 20000, gems = 0 },
-            new DailyBonusDay { coins = 25000, gems = 0 },
-            new DailyBonusDay { coins = 30000, gems = 25 },
+            new DailyBonusDay { coins = 100000, gems = 0 },
+            new DailyBonusDay { coins = 120000, gems = 0 },
+            new DailyBonusDay { coins = 150000, gems = 0 },
+            new DailyBonusDay { coins = 180000, gems = 0 },
+            new DailyBonusDay { coins = 200000, gems = 0 },
+            new DailyBonusDay { coins = 250000, gems = 0 },
+            new DailyBonusDay { coins = 300000, gems = 25 },
         };
 
         [Header("Rules")]

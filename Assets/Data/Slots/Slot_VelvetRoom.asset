@@ -133,9 +133,8 @@ MonoBehaviour:
     rows: 0100000000000000010000000000000001000000
   - lineName: Peak
     rows: 0100000002000000010000000200000001000000
-  minBet: 100
-  maxBet: 5000
-  betLevels: 6
+  minBet: 1000
+  maxBet: 2400000
   targetRtp: 0.962
   maxWinMultiplier: 1500
   progressive: 0

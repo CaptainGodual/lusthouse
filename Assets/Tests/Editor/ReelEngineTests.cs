@@ -31,7 +31,6 @@ namespace LustHouse.Tests
             def.rowCount = 3;
             def.minBet = 100;
             def.maxBet = 1000;
-            def.betLevels = 3;
             def.payType = PayType.Lines;
 
             def.symbols = new List<SymbolDefinition>
@@ -225,12 +224,13 @@ namespace LustHouse.Tests
             var def = BuildFixture();
             def.minBet = 100;
             def.maxBet = 5000;
-            def.betLevels = 6;
+
+            var bets = def.AllBetOptions();
+            Assert.IsNotEmpty(bets, "The game must offer at least one bet.");
 
             long previous = 0;
-            for (int i = 0; i < def.betLevels; i++)
+            foreach (long bet in bets)
             {
-                long bet = def.BetForLevel(i);
                 Assert.GreaterOrEqual(bet, def.minBet);
                 Assert.LessOrEqual(bet, def.maxBet);
                 Assert.GreaterOrEqual(bet, previous, "Bet ladder must be monotonic.");
@@ -238,8 +238,8 @@ namespace LustHouse.Tests
                 previous = bet;
             }
 
-            Assert.AreEqual(def.minBet, def.BetForLevel(0));
-            Assert.AreEqual(def.maxBet, def.BetForLevel(def.betLevels - 1));
+            Assert.AreEqual(def.minBet, bets[0]);
+            Assert.AreEqual(def.maxBet, bets[bets.Count - 1]);
         }
 
         [Test]

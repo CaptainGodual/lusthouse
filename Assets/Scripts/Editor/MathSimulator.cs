@@ -100,7 +100,13 @@ namespace LustHouse.EditorTools
             return report;
         }
 
-        /// <summary>Runs every bet level so the ladder cannot hide a bad rung.</summary>
+        /// <summary>
+        /// Runs every bet the game can take so the ladder cannot hide a bad rung.
+        ///
+        /// It walks the whole ladder, not the bets one level unlocks: the maths is the
+        /// same at every step, and a rung that only level 9 can reach still has to be
+        /// right.
+        /// </summary>
         public static SimulationReport RunAllBets(SlotMachineDefinition def, long spinsPerLevel, int seed)
         {
             if (def == null) return default;
@@ -109,9 +115,10 @@ namespace LustHouse.EditorTools
             double sq = 0.0;
             var started = DateTime.UtcNow;
 
-            for (int level = 0; level < Mathf.Max(1, def.betLevels); level++)
+            var bets = def.AllBetOptions();
+            for (int level = 0; level < bets.Count; level++)
             {
-                long bet = def.BetForLevel(level);
+                long bet = bets[level];
                 var r = Run(def, spinsPerLevel, bet, seed + level);
 
                 accumulatedBet += r.totalBet;

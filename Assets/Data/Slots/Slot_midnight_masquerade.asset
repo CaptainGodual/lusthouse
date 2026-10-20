@@ -123,9 +123,8 @@ MonoBehaviour:
     rows: 0000000001000000020000000000000001000000
   - lineName: V-up
     rows: 0100000000000000020000000100000000000000
-  minBet: 100
-  maxBet: 5000
-  betLevels: 6
+  minBet: 1000
+  maxBet: 2400000
   targetRtp: 0.945
   maxWinMultiplier: 10000
   progressive: 0

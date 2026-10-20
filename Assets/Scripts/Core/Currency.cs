@@ -16,7 +16,7 @@ namespace LustHouse.Core
     public static class CurrencyRules
     {
         /// <summary>1 Gem converts to this many Coins. One-directional; see plan §4.3 rule 2.</summary>
-        public const long GemsToCoinsRate = 100;
+        public const long GemsToCoinsRate = 1000;
 
         /// <summary>Hard cap on Gems→Coins conversions per day. Kills coin-washing.</summary>
         public const int MaxConversionsPerDay = 3;

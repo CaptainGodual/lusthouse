@@ -35,7 +35,7 @@ namespace LustHouse.Core
 
         [Header("First run (plan §2.12)")]
         [Tooltip("Granted once, ever, on a brand-new profile. Never re-granted.")]
-        public long FirstRunCoins = 5000;
+        public long FirstRunCoins = 50000;
 
         public long FirstRunGems = 25;
 
@@ -112,7 +112,7 @@ namespace LustHouse.Core
         }
 
         /// <summary>
-        /// Grants the first-run pack (plan §2.12: "FREE 5,000 COINS + 25 GEMS").
+        /// Grants the first-run pack (plan §2.12: "FREE 50,000 COINS + 25 GEMS").
         ///
         /// Written straight to the ledger with <see cref="LedgerReason.DailyGift"/> so it
         /// is auditable and cannot be re-claimed. This is what makes guardrail 1 true — a

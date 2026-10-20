@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using LustHouse.Catalog;
 using LustHouse.Core;
+using LustHouse.Economy;
 using LustHouse.Slots;
 using UnityEditor;
 using UnityEngine;
@@ -414,9 +415,8 @@ namespace LustHouse.EditorTools
             def.rowCount = rows;
             def.payType = PayType.Lines;
 
-            def.minBet = 100;
-            def.maxBet = 5000;
-            def.betLevels = 6;
+            def.minBet = Economy.BetLimits.Ladder[2];   // 1,000 — the house floor
+            def.maxBet = Economy.BetLimits.HouseMaxBet;
             def.targetRtp = targetRtp;
             def.maxWinMultiplier = maxWin;
 
@@ -483,10 +483,10 @@ namespace LustHouse.EditorTools
             switch (id)
             {
                 case "velvet_room": return 1;
-                case "neon_nights": return 3;
-                case "diamond_hold": return 6;
-                case "midnight_masquerade": return 9;
-                case "house_edge": return 12;
+                case "neon_nights": return 2;
+                case "midnight_masquerade": return 3;
+                case "diamond_hold": return 4;
+                case "house_edge": return 5;
                 default: return 1;
             }
         }
@@ -542,9 +542,8 @@ namespace LustHouse.EditorTools
             def.rowCount = 3;
             def.payType = PayType.Lines;
 
-            def.minBet = 100;
-            def.maxBet = 5000;
-            def.betLevels = 6;
+            def.minBet = Economy.BetLimits.Ladder[2];   // 1,000 — the house floor
+            def.maxBet = Economy.BetLimits.HouseMaxBet;
             def.targetRtp = 0.962f;   // low band from plan §3.3
             def.maxWinMultiplier = 500; // low band from plan §3.3
 

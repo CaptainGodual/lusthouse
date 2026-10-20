@@ -35,7 +35,6 @@ namespace LustHouse.Tests
             def.rowCount = 3;
             def.minBet = 100;
             def.maxBet = 1000;
-            def.betLevels = 3;
             def.payType = PayType.Lines;
 
             def.symbols = new List<SymbolDefinition>
@@ -179,7 +178,6 @@ namespace LustHouse.Tests
             def.rowCount = 2;
             def.minBet = 100;
             def.maxBet = 1000;
-            def.betLevels = 3;
             def.payType = PayType.Lines;
 
             def.symbols = new List<SymbolDefinition>

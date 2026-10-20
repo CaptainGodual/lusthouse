@@ -118,9 +118,13 @@ namespace LustHouse.Slots
         public List<PaylineDefinition> paylines = new List<PaylineDefinition>();
 
         [Header("Economy")]
-        public long minBet = 100;
-        public long maxBet = 5000;
-        public int betLevels = 6;
+        [Tooltip("The smallest bet this game takes. The floor never moves with level.")]
+        public long minBet = 1000;
+
+        [Tooltip("The largest bet this game ever takes. The player's level caps what " +
+                 "they can actually reach (see BetLimits).")]
+        public long maxBet = 2400000;
+
         [Range(0.80f, 1.00f)]
         public float targetRtp = 0.955f;
         public int maxWinMultiplier = 2500;
@@ -172,33 +176,62 @@ namespace LustHouse.Slots
 
         // ---- derived helpers --------------------------------------------------
 
-        public long BetForLevel(int levelIndex)
+        /// <summary>
+        /// Every bet this game can take, ignoring who is playing: the house ladder
+        /// clipped to the game's own range.
+        ///
+        /// The maths does not care who is playing, so this is what the RTP simulator
+        /// walks. A level cap is a rule about the player, not about the game.
+        /// </summary>
+        public List<long> AllBetOptions()
         {
-            if (betLevels <= 1) return minBet;
-            int steps = betLevels - 1;
-            double t = (double)Mathf.Clamp(levelIndex, 0, steps) / steps;
-            // Round to a "round number" (plan §4.3 rule 5) by stepping through clean values.
-            long raw = (long)Math.Round(minBet + (maxBet - minBet) * t);
-            return RoundToNiceNumber(raw, minBet, maxBet);
-        }
-
-        private static long RoundToNiceNumber(long value, long min, long max)
-        {
-            if (value <= min) return min;
-            if (value >= max) return max;
-
-            // Largest power of ten at or below value.
-            long magnitude = 1;
-            while (magnitude * 10 <= value) magnitude *= 10;
-
-            // Floor onto a 1/2/5 step so every rung is a round number (§4.3 rule 5).
-            foreach (long step in new long[] { 1, 2, 5 })
+            var options = new List<long>();
+            foreach (long step in Economy.BetLimits.Ladder)
             {
-                long candidate = (value / (magnitude * step)) * (magnitude * step);
-                if (candidate >= min && candidate <= max && candidate > 0) return candidate;
+                if (step < minBet) continue;
+                if (step > maxBet) break;
+                options.Add(step);
             }
 
-            return Math.Clamp(value, min, max);
+            // A game whose range does not meet the ladder still has to be playable.
+            if (options.Count == 0) options.Add(Math.Max(1L, minBet));
+            return options;
+        }
+
+        /// <summary>
+        /// The bets a player of the given level can take: the game's own bets, cut off
+        /// at the ceiling that level has unlocked.
+        /// </summary>
+        public List<long> BetOptions(int playerLevel)
+        {
+            long ceiling = Math.Min(maxBet, Economy.BetLimits.MaxBetForLevel(playerLevel));
+
+            var options = new List<long>();
+            foreach (long step in Economy.BetLimits.Ladder)
+            {
+                if (step < minBet) continue;
+                if (step > ceiling) break;
+                options.Add(step);
+            }
+
+            if (options.Count == 0) options.Add(Math.Max(1L, minBet));
+            return options;
+        }
+
+        /// <summary>The largest bet a player of the given level can take here.</summary>
+        public long MaxBetFor(int playerLevel)
+        {
+            var options = BetOptions(playerLevel);
+            return options[options.Count - 1];
+        }
+
+        /// <summary>The bet at a position in the ladder a player of this level can reach.</summary>
+        public long BetForLevel(int levelIndex, int playerLevel)
+        {
+            var options = BetOptions(playerLevel);
+            if (options.Count == 0) return minBet;
+            int index = Mathf.Clamp(levelIndex, 0, options.Count - 1);
+            return options[index];
         }
 
         public SymbolDefinition SymbolById(int symbolId)

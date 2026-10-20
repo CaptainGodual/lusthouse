@@ -83,6 +83,10 @@ These are enforced by tests, not convention (`Assets/Tests/Editor/GuardrailTests
 9. **One symbol set across the catalogue.** Every game uses the same symbol id for the same
    symbol, no two symbols in a game share an id or an artwork, and no paytable symbol is
    unreachable from the reels. `SlotContentTests` asserts all three.
+10. **One bet ladder, and the level raises the ceiling.** Every game offers the same
+   denominations — 1,000 at the floor, 2,400,000 at the house maximum — and a player's
+   level decides how far up the ladder they can go (level 1 tops out at 75,000). The
+   floor never moves, so a bet always means the same risk. `BetLimitsTests` asserts it.
 
 ---
 

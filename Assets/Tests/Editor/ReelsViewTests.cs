@@ -39,7 +39,6 @@ namespace LustHouse.Tests
             def.rowCount = Rows;
             def.minBet = 100;
             def.maxBet = 1000;
-            def.betLevels = 3;
 
             def.symbols = new List<SymbolDefinition>
             {

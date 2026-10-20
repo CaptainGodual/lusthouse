@@ -17,10 +17,10 @@ namespace LustHouse.Economy
         public int[] xpCurve = { 100, 150, 220, 300, 400, 520, 660, 820, 1000, 1200 };
 
         [Tooltip("Coins granted on each level-up.")]
-        public long levelRewardCoins = 1000;
+        public long levelRewardCoins = 10000;
 
         [Tooltip("XP awarded per 100 Coins won. 0 disables win XP. Wins, never bets, drive XP.")]
-        public long xpPerHundredCoinsWon = 10;
+        public long xpPerHundredCoinsWon = 1;
 
         /// <summary>The seven tiers, in order. Lust Points thresholds are placeholders to be tuned in alpha.</summary>
         [Serializable]

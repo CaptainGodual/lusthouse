@@ -19,11 +19,11 @@ namespace LustHouse.Slots
         public ReelEngine reelEngine;
 
         [Header("Economy")]
-        [Tooltip("Bet level index into the definition's bet ladder.")]
+        [Tooltip("Index into the bet ladder the player's level has unlocked.")]
         public int betLevel = 0;
 
-        [Tooltip("Lust Points awarded per 1,000 Coins wagered.")]
-        public long lustPerThousandWagered = 1;
+        [Tooltip("Lust Points awarded per 10,000 Coins wagered.")]
+        public long lustPerTenThousandWagered = 1;
 
         [Header("Autoplay / turbo (plan §3.2)")]
         public int autoplayCount = 0;
@@ -36,8 +36,15 @@ namespace LustHouse.Slots
 
         private bool _busy;
 
+        /// <summary>
+        /// The bet the player is on, which is the ladder step their level has unlocked.
+        /// </summary>
         public long CurrentBet =>
-            definition != null ? definition.BetForLevel(betLevel) : 0;
+            definition != null ? definition.BetForLevel(betLevel, Economy.BetLimits.PlayerLevel) : 0;
+
+        /// <summary>How many denominations this player can choose between.</summary>
+        public int BetOptionCount =>
+            definition != null ? definition.BetOptions(Economy.BetLimits.PlayerLevel).Count : 1;
 
         /// <summary>
         /// One spin. Debits first, evaluates, then credits any win. Every path writes a
@@ -79,10 +86,12 @@ namespace LustHouse.Slots
                 // Lust is non-spendable and accrues purely from volume.
                 if (PlayerProgression.Instance != null)
                 {
-                    long lust = bet * lustPerThousandWagered / 1000;
+                    long lust = bet * lustPerTenThousandWagered / 10000;
                     PlayerProgression.Instance.RecordSpin(bet, result.totalWin);
                     PlayerProgression.Instance.AddLustPoints(lust);
-                    PlayerProgression.Instance.AddXp(Math.Max(1, bet / 100));
+                    // XP comes only from Coin wins, never from the bet itself.
+                    long xp = PlayerProgression.Instance.XpForCoinsWon(result.totalWin);
+                    if (xp > 0) PlayerProgression.Instance.AddXp(xp);
                 }
 
                 SpinResolved?.Invoke(result);
@@ -112,7 +121,8 @@ namespace LustHouse.Slots
         public void StepBet(int delta)
         {
             if (definition == null) return;
-            betLevel = Mathf.Clamp(betLevel + delta, 0, Mathf.Max(0, definition.betLevels - 1));
+            int count = BetOptionCount;
+            betLevel = Mathf.Clamp(betLevel + delta, 0, Mathf.Max(0, count - 1));
         }
     }
 }

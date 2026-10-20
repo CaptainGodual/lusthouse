@@ -87,11 +87,11 @@ namespace LustHouse.Tests
         public void AllBetLevels_AggregateCleanly()
         {
             var def = BuildFixture();
-            def.betLevels = 4;
 
             var report = SimulationEngine.RunAllBets(def, 2_000, seed: 42);
 
-            Assert.AreEqual(8_000, report.spins, "4 levels × 2000 spins.");
+            int levels = def.AllBetOptions().Count;
+            Assert.AreEqual(levels * 2_000, report.spins, $"{levels} levels x 2000 spins.");
             Assert.Greater(report.totalBet, 0);
             Assert.Greater(report.rtp, 0.0);
         }
@@ -119,7 +119,6 @@ namespace LustHouse.Tests
             def.rowCount = 3;
             def.minBet = 100;
             def.maxBet = 1000;
-            def.betLevels = 3;
             def.maxWinMultiplier = 500;
             def.targetRtp = 0.955f;
 

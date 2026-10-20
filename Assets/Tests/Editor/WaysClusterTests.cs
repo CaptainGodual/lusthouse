@@ -28,7 +28,6 @@ namespace LustHouse.Tests
             def.rowCount = rows;
             def.minBet = 100;
             def.maxBet = 1000;
-            def.betLevels = 2;
 
             def.symbols = new List<SymbolDefinition>
             {
@@ -152,7 +151,6 @@ namespace LustHouse.Tests
             def.rowCount = 3;
             def.minBet = 100;
             def.maxBet = 1000;
-            def.betLevels = 2;
             def.cascadeClusterSize = 5;
             def.maxWinMultiplier = 500;
 
