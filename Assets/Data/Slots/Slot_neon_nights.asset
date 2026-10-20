@@ -19,14 +19,14 @@ MonoBehaviour:
   volatility: 1
   themeTint: {r: 0.21568628, g: 0.8784314, b: 0.84705883, a: 1}
   keyArt: {fileID: 0}
-  addressableKey: 
+  addressableKey: Slots/neon_nights
   audioBank: 
   reelCount: 5
   rowCount: 3
   symbols:
   - id: 0
     symbolName: Wild
-    sprite: {fileID: 0}
+    sprite: {fileID: 21300000, guid: 913364910e8bf2d4ba7e55643b3cab00, type: 3}
     payoutsByMatch: 0000000000000000000000000000000000000000000000000000000000000000
     clusterPayouts: 
     isWild: 1
@@ -44,7 +44,7 @@ MonoBehaviour:
     holdSpinValue: 0
   - id: 10
     symbolName: Ace
-    sprite: {fileID: 21300000, guid: 913364910e8bf2d4ba7e55643b3cab00, type: 3}
+    sprite: {fileID: 21300000, guid: ad3685c2172adc0499e3fde3157171dc, type: 3}
     payoutsByMatch: 050000000000000014000000000000003c00000000000000
     clusterPayouts: 
     isWild: 0
@@ -53,7 +53,7 @@ MonoBehaviour:
     holdSpinValue: 0
   - id: 11
     symbolName: King
-    sprite: {fileID: 21300000, guid: a8f573506f15256429f6d72681a642ad, type: 3}
+    sprite: {fileID: 21300000, guid: c52dbc0776b3bfd46a34d0bf7a87b3a9, type: 3}
     payoutsByMatch: 04000000000000000f000000000000003200000000000000
     clusterPayouts: 
     isWild: 0
@@ -62,7 +62,7 @@ MonoBehaviour:
     holdSpinValue: 0
   - id: 12
     symbolName: Queen
-    sprite: {fileID: 21300000, guid: d0236ae586396584a8c67c8f92b9c2ce, type: 3}
+    sprite: {fileID: 21300000, guid: 8731c62073aec4e468c568e7ee39047c, type: 3}
     payoutsByMatch: 03000000000000000c000000000000002800000000000000
     clusterPayouts: 
     isWild: 0
@@ -71,7 +71,7 @@ MonoBehaviour:
     holdSpinValue: 0
   - id: 13
     symbolName: Jack
-    sprite: {fileID: 0}
+    sprite: {fileID: 21300000, guid: c1e48bab902d58e4ab7d1316e5dc239f, type: 3}
     payoutsByMatch: 020000000000000008000000000000001900000000000000
     clusterPayouts: 
     isWild: 0
@@ -80,7 +80,7 @@ MonoBehaviour:
     holdSpinValue: 0
   - id: 14
     symbolName: Ten
-    sprite: {fileID: 0}
+    sprite: {fileID: 21300000, guid: d7305cdbb6453cd4ca85a0313cc828dc, type: 3}
     payoutsByMatch: 010000000000000005000000000000000f00000000000000
     clusterPayouts: 
     isWild: 0
@@ -88,8 +88,8 @@ MonoBehaviour:
     isSpecial: 0
     holdSpinValue: 0
   - id: 15
-    symbolName: Nine
-    sprite: {fileID: 0}
+    symbolName: Grape
+    sprite: {fileID: 21300000, guid: a8f573506f15256429f6d72681a642ad, type: 3}
     payoutsByMatch: 010000000000000004000000000000000c00000000000000
     clusterPayouts: 
     isWild: 0
@@ -97,8 +97,8 @@ MonoBehaviour:
     isSpecial: 0
     holdSpinValue: 0
   - id: 16
-    symbolName: Filigree
-    sprite: {fileID: 0}
+    symbolName: Kiwi
+    sprite: {fileID: 21300000, guid: d0236ae586396584a8c67c8f92b9c2ce, type: 3}
     payoutsByMatch: 14000000000000005000000000000000fa00000000000000
     clusterPayouts: 
     isWild: 0
@@ -106,11 +106,11 @@ MonoBehaviour:
     isSpecial: 0
     holdSpinValue: 0
   reelStrips:
-  - symbols: 0c0000000d0000000e000000010000000c0000000d0000000e0000000f0000000c0000000d0000000e0000000f0000000c0000000d0000000e0000000f000000
-  - symbols: 0b0000000c0000000d000000010000000f000000100000000b0000000c0000000d0000000e0000000f000000100000000b0000000c0000000d0000000e000000
-  - symbols: 0b0000000c0000000d000000010000000f000000100000000b0000000c0000000d0000000e0000000f000000100000000b0000000c0000000d0000000e000000
-  - symbols: 0b0000000c0000000d000000010000000f000000100000000b0000000c0000000d0000000e0000000f000000100000000b0000000c0000000d0000000e000000
-  - symbols: 0b0000000c0000000d000000010000000f0000000b0000000c0000000d0000000e0000000f0000000b000000100000000d0000000e0000000f0000000b000000
+  - symbols: 000000000a0000000e000000010000000c0000000d0000000e0000000f0000000c0000000d0000000e0000000f0000000c0000000d0000000e0000000f000000
+  - symbols: 000000000a0000000d000000010000000f000000100000000b0000000c0000000d0000000e0000000f000000100000000b0000000c0000000d0000000e000000
+  - symbols: 000000000a0000000d000000010000000f000000100000000b0000000c0000000d0000000e0000000f000000100000000b0000000c0000000d0000000e000000
+  - symbols: 000000000a0000000d000000010000000f000000100000000b0000000c0000000d0000000e0000000f000000100000000b0000000c0000000d0000000e000000
+  - symbols: 000000000a0000000d000000010000000f0000000b0000000c0000000d0000000e0000000f0000000b000000100000000d0000000e0000000f0000000b000000
   payType: 0
   paylines:
   - lineName: H0

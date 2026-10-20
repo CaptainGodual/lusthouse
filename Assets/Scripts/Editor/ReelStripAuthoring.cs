@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using LustHouse.Core;
 using LustHouse.Slots;
 using UnityEditor;
 using UnityEngine;
@@ -19,7 +20,7 @@ namespace LustHouse.EditorTools
         /// <summary>
         /// Velvet Room strip, tuned to 96.2% RTP. Identical on all five reels; only the
         /// symbol counts affect RTP, never the order.
-        /// Counts: Wild 2, Scatter 3, Nine 6, Ten 10, Jack 9, Queen 5, King 5, Ace 7, Filigree 4.
+        /// Counts: Wild 2, Scatter 3, Grape 6, Ten 10, Jack 9, Queen 5, King 5, Ace 7, Kiwi 4.
         /// </summary>
         private static readonly int[] Strip =
         {
@@ -51,7 +52,7 @@ namespace LustHouse.EditorTools
 
             def.reelStrips = strips;
 
-            // Honest cap: ten paylines x Filigree 150x is the real ceiling.
+            // Honest cap: ten paylines x Kiwi 150x is the real ceiling.
             def.maxWinMultiplier = (int)(def.paylines.Count *
                 def.SymbolById(16).PayoutForMatch(5));
 
@@ -64,6 +65,44 @@ namespace LustHouse.EditorTools
             else
                 Debug.Log($"[LustHouse] '{def.id}' authored: {def.reelStrips.Count} reels x " +
                           $"{def.reelStrips[0].symbols.Count} stops, maxWin {def.maxWinMultiplier}x.");
+        }
+
+        /// <summary>
+        /// Rewrites the placeholder definitions' reel strips from the shared generator,
+        /// through the serialized API.
+        ///
+        /// Velvet Room is skipped: its strips are hand-tuned to a measured RTP and the
+        /// generator does not know that tuning. The placeholders have no measured RTP
+        /// yet, so they are regenerated from the shared rules instead.
+        ///
+        /// The strips go through the serialized API rather than hand-written YAML for the
+        /// reason the class comment describes: Unity's serializer silently discards
+        /// jagged arrays, and a hand-edited strip list that fails to round-trip is
+        /// invisible until the reel engine indexes past the end of it.
+        /// </summary>
+        [MenuItem("LustHouse/Setup/Author placeholder reel strips", priority = 31)]
+        public static void AuthorPlaceholders()
+        {
+            var authored = 0;
+
+            foreach (var guid in AssetDatabase.FindAssets(
+                         "t:SlotMachineDefinition", new[] { ContentBootstrap.SlotFolder }))
+            {
+                var path = AssetDatabase.GUIDToAssetPath(guid);
+                if (path == ContentBootstrap.VelvetRoomPath) continue;
+
+                var def = AssetDatabase.LoadAssetAtPath<SlotMachineDefinition>(path);
+                if (def == null) continue;
+
+                def.reelStrips = ContentBootstrap.BuildPlaceholderStrips(def);
+                EditorUtility.SetDirty(def);
+                authored++;
+            }
+
+            AssetDatabase.SaveAssets();
+            AssetDatabase.Refresh();
+
+            LustLog.Info($"[LustHouse] Authored reel strips for {authored} placeholder game(s).");
         }
     }
 }

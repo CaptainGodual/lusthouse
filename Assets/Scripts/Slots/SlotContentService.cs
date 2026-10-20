@@ -53,6 +53,23 @@ namespace LustHouse.Slots
 
             yield return EnsureInitialised();
 
+            // An unknown key is a configuration mistake, not a crash. Addressables throws
+            // InvalidKeyException out of GetDownloadSizeAsync, and the loader must fall back
+            // to the bundled content rather than strand the player (plan §1.3). The locations
+            // call does not throw for a missing key -- it comes back empty -- so the check
+            // has to happen before the size call.
+            var locations = Addressables.LoadResourceLocationsAsync(key);
+            yield return locations;
+
+            if (!locations.IsValid() || locations.Status != AsyncOperationStatus.Succeeded ||
+                locations.Result == null || locations.Result.Count == 0)
+            {
+                LustLog.Warn($"[LustHouse] No addressable pack '{key}'; continuing with the " +
+                             "bundled content.");
+                report(1f);
+                yield break;
+            }
+
             var size = Addressables.GetDownloadSizeAsync(key);
             yield return size;
 

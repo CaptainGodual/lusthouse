@@ -13,9 +13,9 @@ namespace LustHouse.EditorTools
     /// Generates the first playable content assets (plan §0.4 P5 / §3.4 game #1).
     ///
     /// Symbols exist as ids with a paytable so <c>MathSimulator</c> can measure a real RTP.
-    /// Sprites are optional: when the four shared character arts are present under
-    /// <see cref="ArtFolder"/> the generator wires them in, and a missing sprite still
-    /// falls back to the reels' tinted placeholder tile.
+    /// Sprites are optional: when the shared art is present under <see cref="ArtFolder"/>
+    /// the generator wires it in, and a missing sprite still falls back to the reels'
+    /// tinted placeholder tile.
     /// </summary>
     public static class ContentBootstrap
     {
@@ -25,12 +25,21 @@ namespace LustHouse.EditorTools
 
         public const string ArtFolder = "Assets/Art/Slots";
 
-        // Shared character art. The ids are symbol ids, not filenames: Scatter is the
-        // blueberry-dress character, Ace the blueberry-lingerie variant, King the grape,
-        // and Queen the kiwi. Keep this mapping identical to Velvet Room's existing
-        // sprite references so the four games read as one set.
-        public const string BlueberryDressArt = ArtFolder + "/00035-3449701744.png";
-        public const string BlueberryLingerieArt = ArtFolder + "/00036-3449701744.png";
+        // The shared symbol set. Every game in the catalogue uses the same id for the
+        // same symbol, so one art table serves all of them: the five card ranks are
+        // cut as gold-framed glyphs, and the four character illustrations fill the
+        // Wild, the Scatter and the two premium fruit symbols.
+        //
+        // These are symbol ids, not filenames. Keep this table identical to the sprite
+        // references on the shipped assets -- a regenerated game that came back with
+        // different art would look like a different game.
+        public const string WildArt = ArtFolder + "/00036-3449701744.png";        // blueberry lingerie
+        public const string ScatterArt = ArtFolder + "/00035-3449701744.png";     // blueberry dress
+        public const string AceArt = ArtFolder + "/ace.png";
+        public const string KingArt = ArtFolder + "/king.png";
+        public const string QueenArt = ArtFolder + "/queen.png";
+        public const string JackArt = ArtFolder + "/j.png";
+        public const string TenArt = ArtFolder + "/10.png";
         public const string GrapeArt = ArtFolder + "/00040-2458849210.png";
         public const string KiwiArt = ArtFolder + "/00041-1051490492.png";
 
@@ -71,7 +80,8 @@ namespace LustHouse.EditorTools
                     displayTitle = "Velvet Room",
                     blurb = "The house tutorial game. Art deco, suits, gold filigree.",
                     locked = false,
-                    entryCostGems = 0
+                    entryCostGems = 0,
+                    unlockLevel = 1
                 });
             }
 
@@ -87,7 +97,7 @@ namespace LustHouse.EditorTools
 
         /// <summary>
         /// Brings pre-feature slot assets up to the current serialized shape: reel strips,
-        /// hold/spin and free-spin symbols, and the shared character art. Idempotent and
+        /// hold/spin and free-spin symbols, and the shared art. Idempotent and
         /// non-destructive — existing sprites, paytables and strips are left alone; only
         /// missing data is filled in.
         ///
@@ -128,7 +138,9 @@ namespace LustHouse.EditorTools
 
             if (def.symbols == null || def.symbols.Count == 0)
             {
-                def.symbols = BuildSymbols();
+                // No hold symbol: a game gets one only if it has a hold & spin feature,
+                // and the feature block below adds it.
+                def.symbols = BuildSymbols(includeHoldSymbol: false);
                 changed = true;
             }
 
@@ -269,14 +281,24 @@ namespace LustHouse.EditorTools
             return changed;
         }
 
+        /// <summary>
+        /// The art for one symbol id, shared by every game. Returns null when the art
+        /// file is not in the project, which is allowed: the symbol then draws as a
+        /// tinted placeholder tile instead of failing.
+        /// </summary>
         private static Sprite ArtForSymbol(int id)
         {
             switch (id)
             {
-                case 1: return AssetDatabase.LoadAssetAtPath<Sprite>(BlueberryDressArt);
-                case 10: return AssetDatabase.LoadAssetAtPath<Sprite>(BlueberryLingerieArt);
-                case 11: return AssetDatabase.LoadAssetAtPath<Sprite>(GrapeArt);
-                case 12: return AssetDatabase.LoadAssetAtPath<Sprite>(KiwiArt);
+                case 0: return AssetDatabase.LoadAssetAtPath<Sprite>(WildArt);
+                case 1: return AssetDatabase.LoadAssetAtPath<Sprite>(ScatterArt);
+                case 10: return AssetDatabase.LoadAssetAtPath<Sprite>(AceArt);
+                case 11: return AssetDatabase.LoadAssetAtPath<Sprite>(KingArt);
+                case 12: return AssetDatabase.LoadAssetAtPath<Sprite>(QueenArt);
+                case 13: return AssetDatabase.LoadAssetAtPath<Sprite>(JackArt);
+                case 14: return AssetDatabase.LoadAssetAtPath<Sprite>(TenArt);
+                case 15: return AssetDatabase.LoadAssetAtPath<Sprite>(GrapeArt);
+                case 16: return AssetDatabase.LoadAssetAtPath<Sprite>(KiwiArt);
                 default: return null;
             }
         }
@@ -387,7 +409,7 @@ namespace LustHouse.EditorTools
             def.progressive = template == SlotTemplate.Progressive;
             def.progressiveSeed = 250000;
 
-            def.symbols = BuildSymbols();
+            def.symbols = BuildSymbols(includeHoldSymbol: template == SlotTemplate.HoldAndSpin);
             def.paylines = BuildPaylines(reels, rows);
             def.reelStrips = BuildReelStrips(reels,
                 template == SlotTemplate.HoldAndSpin ? 17 : -1,
@@ -440,6 +462,19 @@ namespace LustHouse.EditorTools
             }
         }
 
+        private static int UnlockLevelFor(string id)
+        {
+            switch (id)
+            {
+                case "velvet_room": return 1;
+                case "neon_nights": return 3;
+                case "diamond_hold": return 6;
+                case "midnight_masquerade": return 9;
+                case "house_edge": return 12;
+                default: return 1;
+            }
+        }
+
         private static void RegisterPlaceholderGames()
         {
             var specs = new (string id, string title, GameCategory category)[]
@@ -464,7 +499,8 @@ namespace LustHouse.EditorTools
                     category = spec.category,
                     displayTitle = spec.title,
                     locked = false,
-                    entryCostGems = 0
+                    entryCostGems = 0,
+                    unlockLevel = UnlockLevelFor(spec.id)
                 });
             }
         }
@@ -498,7 +534,7 @@ namespace LustHouse.EditorTools
 
             def.spinDurationSeconds = 1.4f;
 
-            def.symbols = BuildSymbols();
+            def.symbols = BuildSymbols(includeHoldSymbol: false);
             def.paylines = BuildPaylines();
             def.reelStrips = BuildReelStrips();
 
@@ -513,7 +549,16 @@ namespace LustHouse.EditorTools
             return def;
         }
 
-        private static List<SymbolDefinition> BuildSymbols()
+        /// <summary>
+        /// The shared symbol set. Every game gets the same ids for the same symbols so
+        /// the catalogue reads as one set and one art table serves all of them.
+        ///
+        /// The hold &amp; spin Diamond is opt-in: a game with no hold &amp; spin feature has
+        /// no symbol 17, and a paytable symbol that can never reach a reel is dead
+        /// weight that still has to be maintained.
+        /// </summary>
+        /// <param name="includeHoldSymbol">Adds the id 17 Diamond hold &amp; spin symbol.</param>
+        private static List<SymbolDefinition> BuildSymbols(bool includeHoldSymbol)
         {
             // Ids are stable save-data keys. Payouts are in bet-multiples and index 0 == 3 of a kind.
             var symbols = new List<SymbolDefinition>
@@ -555,26 +600,30 @@ namespace LustHouse.EditorTools
                 },
                 new SymbolDefinition
                 {
-                    id = 15, symbolName = "Nine",
+                    id = 15, symbolName = "Grape",
                     payoutsByMatch = new long[] { 1, 4, 12 }
                 },
                 new SymbolDefinition
                 {
-                    id = 16, symbolName = "Filigree",
+                    id = 16, symbolName = "Kiwi",
                     payoutsByMatch = new long[] { 20, 80, 250 }
-                },
-                new SymbolDefinition
+                }
+            };
+
+            if (includeHoldSymbol)
+            {
+                symbols.Add(new SymbolDefinition
                 {
                     // The hold & spin symbol. It pays like a low symbol so a strip position
                     // carrying it is not dead in the base game, and carries a prize when held.
                     id = 17, symbolName = "Diamond", isSpecial = true,
                     payoutsByMatch = new long[] { 1, 4, 10 },
                     holdSpinValue = 2
-                }
-            };
+                });
+            }
 
-            // The shared character art is optional. Ids without art keep sprite = null and
-            // draw as tinted placeholder tiles, so content still works before art lands.
+            // The shared art is optional. Ids without art keep sprite = null and draw as
+            // tinted placeholder tiles, so content still works before art lands.
             for (int i = 0; i < symbols.Count; i++)
                 symbols[i].sprite = ArtForSymbol(symbols[i].id);
 
@@ -643,11 +692,21 @@ namespace LustHouse.EditorTools
                 for (int i = 0; i < 16; i++)
                 {
                     int symbol;
-                    if (r == 0) symbol = 12 + (i % 4);              // J, 10, 9, Filigree-lite
+                    if (r == 0) symbol = 12 + (i % 4);              // Queen, Jack, Ten, Grape
                     else if (r == reels - 1) symbol = (i == 3 || i == 11) ? 16 : 11 + (i % 5);
                     else symbol = 11 + (i % 6);
 
                     symbols.Add(symbol);
+                }
+
+                // The Wild and the Ace are the two symbols a plain id cycle skips, and a
+                // symbol that can never reach a reel is dead weight in the paytable -- a
+                // Wild that never lands is a feature that does not exist. Both take a stop
+                // on every reel.
+                if (symbols.Count >= 2)
+                {
+                    symbols[0] = 0;   // Wild
+                    symbols[1] = 10;  // Ace
                 }
 
                 // One feature symbol per reel. A 16-stop strip with a 3-row window sees it
@@ -660,6 +719,37 @@ namespace LustHouse.EditorTools
             }
 
             return strips;
+        }
+
+        /// <summary>
+        /// The reel strips for a definition, regenerated from the shared generator.
+        ///
+        /// The feature symbols are taken from the definition itself: a hold &amp; spin game
+        /// puts its special on every reel, and a cascade game gets no scatter because it
+        /// has no free spins to trigger.
+        /// </summary>
+        public static List<ReelStrip> BuildPlaceholderStrips(SlotMachineDefinition def)
+        {
+            if (def == null) return new List<ReelStrip>();
+
+            int holdSymbolId = -1;
+            for (int i = 0; i < def.symbols.Count; i++)
+            {
+                var s = def.symbols[i];
+                if (s != null && s.isSpecial) { holdSymbolId = s.id; break; }
+            }
+
+            int scatterSymbolId = -1;
+            if (def.template != SlotTemplate.Cascade)
+            {
+                for (int i = 0; i < def.symbols.Count; i++)
+                {
+                    var s = def.symbols[i];
+                    if (s != null && s.isScatter) { scatterSymbolId = s.id; break; }
+                }
+            }
+
+            return BuildReelStrips(def.reelCount, holdSymbolId, scatterSymbolId);
         }
 
         /// <summary>

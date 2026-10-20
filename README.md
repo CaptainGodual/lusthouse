@@ -48,10 +48,14 @@ What it creates:
 
 > **Existing slot assets are migrated, never deleted.** Run
 > **LustHouse → Setup → Migrate slot content** after pulling content changes (Run all setup
-> also does this). It fills in missing reel strips and feature symbols and wires the four
-> shared character arts, while leaving existing sprites, strips and paytables alone.
-> The arts live in `Assets/Art/Slots` and map to Scatter (blueberry dress), Ace
-> (blueberry lingerie), King (grape) and Queen (kiwi).
+> also does this). It fills in missing reel strips and feature symbols and wires the
+> shared art, while leaving existing sprites, strips and paytables alone.
+> The art lives in `Assets/Art/Slots` and is **shared by every game**: the five card
+> ranks are cut as gold-framed glyphs (`ace.png`, `king.png`, `queen.png`, `j.png`,
+> `10.png`) and the four character illustrations fill the Wild (blueberry lingerie),
+> the Scatter (blueberry dress) and the two premium fruit symbols (grape, kiwi).
+> The ids are the same in every game, so one art table in `ContentBootstrap` serves the
+> whole catalogue.
 
 Then open `Assets/Scenes/BootLoader.unity` and press Play.
 
@@ -76,6 +80,9 @@ These are enforced by tests, not convention (`Assets/Tests/Editor/GuardrailTests
 8. **No full-screen graphic may intercept the pointer.** A `Graphic` covering the canvas with
    `raycastTarget` on takes every click in the game. `LobbyTapTests` asserts this across all
    three scenes.
+9. **One symbol set across the catalogue.** Every game uses the same symbol id for the same
+   symbol, no two symbols in a game share an id or an artwork, and no paytable symbol is
+   unreachable from the reels. `SlotContentTests` asserts all three.
 
 ---
 
