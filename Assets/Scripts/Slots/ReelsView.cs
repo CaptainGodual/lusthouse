@@ -61,7 +61,18 @@ namespace LustHouse.Slots
         public bool playAnticipation = false;
 
         private readonly List<ReelStripView> _reels = new List<ReelStripView>();
-        private readonly List<GameObject> _highlights = new List<GameObject>();
+        /// <summary>
+        /// A win frame, remembered with the reel and row it belongs to so it can be re-fitted
+        /// when the reels resize.
+        /// </summary>
+        private sealed class WinFrame
+        {
+            public GameObject go;
+            public int reelIndex;
+            public int row;
+        }
+
+        private readonly List<WinFrame> _winFrames = new List<WinFrame>();
         private readonly List<GameObject> _locks = new List<GameObject>();
         private RectTransform _winLinesRoot;
         private SlotMachineDefinition _definition;
@@ -218,6 +229,8 @@ namespace LustHouse.Slots
                 reel.Layout();
             }
 
+            LayoutWinFrames();
+
             _lastWidth = size.x;
             _lastHeight = size.y;
         }
@@ -230,14 +243,17 @@ namespace LustHouse.Slots
         /// </summary>
         public void ClearHighlights()
         {
-            for (int i = 0; i < _highlights.Count; i++)
-                if (_highlights[i] != null) SafeDestroy(_highlights[i]);
-            _highlights.Clear();
+            for (int i = 0; i < _winFrames.Count; i++)
+                if (_winFrames[i].go != null) SafeDestroy(_winFrames[i].go);
+            _winFrames.Clear();
             ClearWinLines();
         }
 
         /// <summary>Number of paying lines currently drawn. Exposed for tests and debug UI.</summary>
         public int WinLineCount => _winLinesRoot != null ? _winLinesRoot.childCount : 0;
+
+        /// <summary>Number of win frames currently drawn. Exposed for tests and debug UI.</summary>
+        public int WinFrameCount => _winFrames.Count;
 
         private void ClearWinLines()
         {
@@ -492,25 +508,58 @@ namespace LustHouse.Slots
             var reel = _reels[reelIndex];
             if (reel == null) return;
 
-            var go = new GameObject("WinHighlight", typeof(RectTransform));
+            var go = new GameObject("WinFrame", typeof(RectTransform));
             go.transform.SetParent(reel.transform, false);
             var rt = (RectTransform)go.transform;
             rt.anchorMin = new Vector2(0.5f, 0.5f);
             rt.anchorMax = new Vector2(0.5f, 0.5f);
             rt.pivot = new Vector2(0.5f, 0.5f);
-            rt.sizeDelta = new Vector2(reel.cellSize, reel.cellSize);
+
+            // A shade larger than the cell. The symbol punches up past the cell while it
+            // celebrates, and a frame at the cell's own size would end up behind the
+            // symbol it is supposed to be framing.
+            float frame = reel.cellSize * 1.1f;
+            rt.sizeDelta = new Vector2(frame, frame);
             rt.anchoredPosition = CellPosition(reel, row);
 
+            // A frame, not a fill. The old marker was a translucent gold square with an
+            // outline, and it sat on top of the symbol — which hid the very thing the
+            // win animation is for. A ring frames the symbol and leaves it visible.
             var image = go.AddComponent<Image>();
-            image.sprite = UiFactory.Solid;
-            image.color = new Color32(0xE8, 0xC3, 0x6B, 0x55);
+            image.sprite = UiChrome.Rim;
+            image.type = Image.Type.Sliced;
+            image.color = UiFactory.GoldPrimary;
             image.raycastTarget = false;
 
-            var outline = go.AddComponent<Outline>();
-            outline.effectColor = UiFactory.GoldPrimary;
-            outline.effectDistance = new Vector2(3f, -3f);
+            _winFrames.Add(new WinFrame { go = go, reelIndex = reelIndex, row = row });
 
-            _highlights.Add(go);
+            // The symbol itself does the celebrating, if it has an animation to play.
+            reel.AnimateWin(row);
+        }
+
+        /// <summary>
+        /// Re-fits the win frames to the reels.
+        ///
+        /// The reels resize when the canvas finally resolves, and a frame sized against the
+        /// old cell ends up two rows too big — a gold band across the reel instead of a
+        /// frame around the symbol.
+        /// </summary>
+        private void LayoutWinFrames()
+        {
+            for (int i = 0; i < _winFrames.Count; i++)
+            {
+                var frame = _winFrames[i];
+                if (frame.go == null) continue;
+                if (frame.reelIndex < 0 || frame.reelIndex >= _reels.Count) continue;
+
+                var reel = _reels[frame.reelIndex];
+                if (reel == null) continue;
+
+                var rt = (RectTransform)frame.go.transform;
+                float size = reel.cellSize * 1.1f;
+                rt.sizeDelta = new Vector2(size, size);
+                rt.anchoredPosition = CellPosition(reel, frame.row);
+            }
         }
 
         // ---- presentation ---------------------------------------------------

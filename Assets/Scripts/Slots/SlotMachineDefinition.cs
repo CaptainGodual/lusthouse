@@ -8,6 +8,24 @@ namespace LustHouse.Slots
     public enum Volatility { Low, Medium, High }
     public enum PayType { Lines, Ways, Cluster }
 
+    /// <summary>Whether a game's maths has been signed off (plan §3.7).</summary>
+    public enum RtpStatus
+    {
+        /// <summary>
+        /// The maths is not signed off. The target is a design value, not a claim: the
+        /// game still has to validate and be playable, but nothing is asserted about its
+        /// RTP beyond that.
+        /// </summary>
+        Unmeasured,
+
+        /// <summary>
+        /// The game claims to be shippable. The RTP gate then asserts the claim holds —
+        /// the exact RTP must land within ±0.5% of the target, or the gate fails until
+        /// the maths is re-measured.
+        /// </summary>
+        Measured
+    }
+
     /// <summary>One symbol in a game's paytable (plan §3.5).</summary>
     [Serializable]
     public class SymbolDefinition
@@ -36,6 +54,19 @@ namespace LustHouse.Slots
         [Tooltip("Prize this symbol carries when it locks in a hold & spin feature, in " +
                  "bet-multiples. 0 = no value. Only special symbols (isSpecial) are used.")]
         public long holdSpinValue = 0;
+
+        [Header("Win animation")]
+        [Tooltip("Whether this symbol animates when it wins. Turn it off for a symbol whose " +
+                 "artwork has nothing to animate: a static emblem that jumps reads as a " +
+                 "glitch, not a win.")]
+        public bool animatesOnWin = true;
+
+        [Tooltip("The animation played on a winning symbol, if it has one. Leave it empty and " +
+                 "the symbol gets the standard pulse.")]
+        public AnimationClip winAnimation;
+
+        [Tooltip("How long the win animation runs, in seconds.")]
+        public float winAnimationSeconds = 0.9f;
 
         public long PayoutForMatch(int count)
         {
@@ -124,6 +155,13 @@ namespace LustHouse.Slots
         [Tooltip("The largest bet this game ever takes. The player's level caps what " +
                  "they can actually reach (see BetLimits).")]
         public long maxBet = 2400000;
+
+        [Tooltip("Whether this game's maths has been signed off. An unmeasured game is " +
+                 "explicitly deferred: it must validate and be playable, but its target " +
+                 "is a design value rather than a claim. The RTP gate checks this field " +
+                 "instead of a list of names, so adding a game needs no code change at all " +
+                 "(plan §3.7).")]
+        public RtpStatus rtpStatus = RtpStatus.Unmeasured;
 
         [Range(0.80f, 1.00f)]
         public float targetRtp = 0.955f;

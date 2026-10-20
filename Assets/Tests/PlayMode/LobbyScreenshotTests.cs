@@ -1,5 +1,4 @@
 using System.Collections;
-using System.IO;
 using NUnit.Framework;
 using UnityEngine;
 using UnityEngine.TestTools;
@@ -31,35 +30,14 @@ namespace LustHouse.Tests
             Assert.IsNotNull(canvas, "The lobby has no Canvas.");
             Assert.IsNotNull(camera, "The lobby has no Main Camera.");
 
-            var previousMode = canvas.renderMode;
-            var previousCamera = canvas.worldCamera;
             canvas.renderMode = RenderMode.ScreenSpaceCamera;
             canvas.worldCamera = camera;
             canvas.planeDistance = 10f;
             Canvas.ForceUpdateCanvases();
             yield return null;
 
-            const int width = 1920, height = 1080;
-            var target = new RenderTexture(width, height, 24) { antiAliasing = 1 };
-            var previousTarget = camera.targetTexture;
-            var previousActive = RenderTexture.active;
-
-            camera.targetTexture = target;
-            RenderTexture.active = target;
-            camera.Render();
-
-            var shot = new Texture2D(width, height, TextureFormat.RGB24, false);
-            shot.ReadPixels(new Rect(0, 0, width, height), 0, 0);
-            shot.Apply();
-
-            RenderTexture.active = previousActive;
-            camera.targetTexture = previousTarget;
-            canvas.renderMode = previousMode;
-            canvas.worldCamera = previousCamera;
-
-            string path = Path.Combine(Application.dataPath, "..", "Logs", "lobby.png");
-            File.WriteAllBytes(path, shot.EncodeToPNG());
-            Debug.Log($"[LustHouse] lobby screenshot written to {path}");
+            ScreenGrab.Capture(canvas, camera, ScreenGrab.LogPath("lobby.png"));
+            Debug.Log("[LustHouse] lobby screenshot written to Logs/lobby.png");
 
             yield return null;
         }

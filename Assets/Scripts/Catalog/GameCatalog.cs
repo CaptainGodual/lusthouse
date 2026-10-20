@@ -65,16 +65,18 @@ namespace LustHouse.Catalog
             }
 
             /// <summary>
-            /// The game's face: the artwork of the symbol the lobby shows for it.
+            /// The game's face: the artwork the lobby shows for it.
             ///
-            /// Key art is a per-title asset and most titles do not have one yet, so the
-            /// lobby falls back to a symbol from the definition. The face symbol is what
-            /// tells two lobby tiles apart — every game shares one symbol set, so without
-            /// it the shelf is five copies of the same picture.
+            /// Key art wins. A title that has been painted should show its own art, not a
+            /// stand-in symbol — that is the difference between a new theme and a new
+            /// letter. Until a title has key art, the face symbol stands in, and until it
+            /// has a face symbol either, the highest-paying symbol does.
             /// </summary>
             public Sprite FaceArt()
             {
-                if (definition == null || definition.symbols == null) return keyArt;
+                if (keyArt != null) return keyArt;
+
+                if (definition == null || definition.symbols == null) return null;
 
                 if (definition.faceSymbolId != 0)
                 {

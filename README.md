@@ -125,14 +125,15 @@ Unity.exe -batchmode -runTests -testPlatform PlayMode -projectPath .
 > Adding a new definition without either gating or deferring it fails the suite.
 
 
-### Looking at the lobby
+### Looking at the UI
 
-`LobbyScreenshotTests` (PlayMode) renders the lobby to `Logs/lobby.png`. An overlay
-canvas is not drawn by any camera, so the test switches the canvas to
-`ScreenSpaceCamera`, renders the camera into a RenderTexture and reads the pixels back.
-That works in batch mode, where no window is ever opened -- which is the only way to
-*see* a UI change without a human in front of the screen. It asserts nothing and always
-passes; it is a development tool, not a test of behaviour.
+`LobbyScreenshotTests` and `SlotScreenshotTests` (PlayMode) render the lobby and a
+winning reel to `Logs/lobby.png` and `Logs/slot-win.png`. An overlay canvas is not drawn
+by any camera, so the capture switches the canvas to `ScreenSpaceCamera`, renders that
+camera into a RenderTexture and reads the pixels back. That works in batch mode, where no
+window is ever opened — which is the only way to *see* a UI change without a human in
+front of the screen. They assert nothing and always pass; they are development tools,
+not tests of behaviour.
 
 ---
 

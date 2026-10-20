@@ -411,7 +411,59 @@ namespace LustHouse.EditorTools
             if (!_hasReport) return;
 
             EditorGUILayout.Space();
-            DrawReport(_report, _definition != null ? _definition.targetRtp : 0f, _tolerance);
+            bool pass = DrawReport(_report, _definition != null ? _definition.targetRtp : 0f, _tolerance);
+
+            DrawSignOff(pass);
+        }
+
+        /// <summary>
+        /// Signs the definition off, or reopens it.
+        ///
+        /// The status lives on the asset (plan §3.7), so signing a game off is a click
+        /// rather than an edit to a list in a test file. It can only be signed off on a
+        /// passing run — the point of the gate is that the claim and the maths agree.
+        /// </summary>
+        private void DrawSignOff(bool pass)
+        {
+            if (_definition == null) return;
+
+            EditorGUILayout.Space();
+
+            if (_definition.rtpStatus == RtpStatus.Measured)
+            {
+                EditorGUILayout.HelpBox(
+                    "This game is signed off. The RTP gate now checks that its maths still " +
+                    "hits the target, so a paytable edit that breaks the claim fails the " +
+                    "suite until it is measured again.",
+                    MessageType.Info);
+
+                if (GUILayout.Button("Reopen — mark as unmeasured", GUILayout.Height(24)))
+                {
+                    _definition.rtpStatus = RtpStatus.Unmeasured;
+                    EditorUtility.SetDirty(_definition);
+                    AssetDatabase.SaveAssets();
+                    Debug.Log($"[LustHouse] '{_definition.id}' reopened for retuning.");
+                }
+                return;
+            }
+
+            if (!pass)
+            {
+                EditorGUILayout.HelpBox(
+                    "A game can only be signed off on a passing run. Retune the paytable and " +
+                    "simulate again.",
+                    MessageType.Warning);
+                return;
+            }
+
+            if (GUILayout.Button("Sign off — mark this game's RTP as measured", GUILayout.Height(28)))
+            {
+                _definition.rtpStatus = RtpStatus.Measured;
+                EditorUtility.SetDirty(_definition);
+                AssetDatabase.SaveAssets();
+                Debug.Log($"[LustHouse] '{_definition.id}' signed off at " +
+                          $"{_report.rtp:P3} against a target of {_definition.targetRtp:P3}.");
+            }
         }
 
         private void Run()
@@ -433,7 +485,7 @@ namespace LustHouse.EditorTools
             Repaint();
         }
 
-        private static void DrawReport(SimulationReport r, float targetRtp, float tolerance)
+        private static bool DrawReport(SimulationReport r, float targetRtp, float tolerance)
         {
             bool pass = r.WithinTolerance(targetRtp, tolerance);
 
@@ -475,6 +527,8 @@ namespace LustHouse.EditorTools
                     $"{r.maxWinBreaches:N0} spins exceeded maxWinMultiplier. Clamp or re-scale before shipping.",
                     MessageType.Error);
             }
+
+            return pass;
         }
 
         private static void Row(string label, string value)

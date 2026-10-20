@@ -404,32 +404,17 @@ namespace LustHouse.EditorTools
             string path = $"{SlotFolder}/Slot_{id}.asset";
             if (AssetDatabase.LoadAssetAtPath<SlotMachineDefinition>(path) != null) return null;
 
-            var def = ScriptableObject.CreateInstance<SlotMachineDefinition>();
-            def.id = id;
-            def.title = title;
-            def.template = template;
-            def.volatility = volatility;
-            def.themeTint = PlaceholderTint(id);
-
-            def.reelCount = reels;
-            def.rowCount = rows;
-            def.payType = PayType.Lines;
-
-            def.minBet = Economy.BetLimits.Ladder[2];   // 1,000 — the house floor
-            def.maxBet = Economy.BetLimits.HouseMaxBet;
-            def.targetRtp = targetRtp;
-            def.maxWinMultiplier = maxWin;
-
-            def.features = BuildFeatures(template);
-            def.progressive = template == SlotTemplate.Progressive;
-            def.progressiveSeed = 250000;
-
-            def.symbols = BuildSymbols(includeHoldSymbol: template == SlotTemplate.HoldAndSpin);
-            def.faceSymbolId = FaceSymbolFor(id);
-            def.paylines = BuildPaylines(reels, rows);
-            def.reelStrips = BuildReelStrips(reels,
-                template == SlotTemplate.HoldAndSpin ? 17 : -1,
-                template == SlotTemplate.Cascade ? -1 : 1);
+            var def = BuildDefinition(
+                id: id,
+                title: title,
+                template: template,
+                volatility: volatility,
+                targetRtp: targetRtp,
+                maxWinMultiplier: maxWin,
+                reelCount: reels,
+                rowCount: rows,
+                themeTint: PlaceholderTint(id),
+                faceSymbolId: FaceSymbolFor(id));
 
             AssetDatabase.CreateAsset(def, path);
             AssetDatabase.SaveAssets();
@@ -438,6 +423,143 @@ namespace LustHouse.EditorTools
                 LustLog.Error($"[LustHouse] Generated {id} is invalid: {error}", def);
 
             return def;
+        }
+
+        /// <summary>
+        /// Builds a slot definition in memory: the shared symbol set, the paylines, the
+        /// reel strips and the template's features.
+        ///
+        /// <paramref name="mathsSource"/> copies another game's paytable and reel
+        /// strips — the fast route to a new title, and the route a new theme takes while
+        /// its own maths is still being figured out. Null means "start from the generic
+        /// template", which is a valid game but an untuned one.
+        ///
+        /// Nothing here touches the AssetDatabase: the caller decides where the
+        /// definition lives.
+        /// </summary>
+        public static SlotMachineDefinition BuildDefinition(
+            string id,
+            string title,
+            SlotTemplate template,
+            Volatility volatility,
+            float targetRtp,
+            int maxWinMultiplier,
+            int reelCount,
+            int rowCount,
+            Color themeTint,
+            int faceSymbolId,
+            SlotMachineDefinition mathsSource = null)
+        {
+            var def = ScriptableObject.CreateInstance<SlotMachineDefinition>();
+            def.id = id;
+            def.title = title;
+            def.template = template;
+            def.volatility = volatility;
+            def.themeTint = themeTint;
+
+            def.reelCount = reelCount;
+            def.rowCount = rowCount;
+            def.payType = PayType.Lines;
+
+            def.minBet = Economy.BetLimits.Ladder[2];   // 1,000 — the house floor
+            def.maxBet = Economy.BetLimits.HouseMaxBet;
+            def.targetRtp = targetRtp;
+            def.maxWinMultiplier = maxWinMultiplier;
+
+            // A new game is unmeasured until somebody measures it (plan §3.7). The RTP
+            // gate reads this field, so nothing else has to be told about the game.
+            def.rtpStatus = RtpStatus.Unmeasured;
+
+            def.features = BuildFeatures(template);
+            def.progressive = template == SlotTemplate.Progressive;
+            def.progressiveSeed = 250000;
+
+            def.faceSymbolId = faceSymbolId;
+
+            if (mathsSource != null)
+            {
+                def.symbols = CopySymbols(mathsSource.symbols);
+                def.paylines = CopyPaylines(mathsSource.paylines);
+                def.reelStrips = CopyStrips(mathsSource.reelStrips);
+            }
+            else
+            {
+                def.symbols = BuildSymbols(includeHoldSymbol: template == SlotTemplate.HoldAndSpin);
+                def.paylines = BuildPaylines(reelCount, rowCount);
+                def.reelStrips = BuildReelStrips(reelCount,
+                    template == SlotTemplate.HoldAndSpin ? 17 : -1,
+                    template == SlotTemplate.Cascade ? -1 : 1);
+            }
+
+            return def;
+        }
+
+        /// <summary>
+        /// Copies a symbol table, payouts and all, so a new game can inherit a proven
+        /// model. The artwork comes with it — the symbol set is shared, so the sprites
+        /// are already right.
+        /// </summary>
+        private static List<SymbolDefinition> CopySymbols(List<SymbolDefinition> source)
+        {
+            var copy = new List<SymbolDefinition>();
+            if (source == null) return copy;
+
+            foreach (var symbol in source)
+            {
+                if (symbol == null) continue;
+
+                copy.Add(new SymbolDefinition
+                {
+                    id = symbol.id,
+                    symbolName = symbol.symbolName,
+                    sprite = symbol.sprite,
+                    payoutsByMatch = symbol.payoutsByMatch != null
+                        ? (long[])symbol.payoutsByMatch.Clone() : new long[0],
+                    clusterPayouts = symbol.clusterPayouts != null
+                        ? (long[])symbol.clusterPayouts.Clone() : new long[0],
+                    isWild = symbol.isWild,
+                    isScatter = symbol.isScatter,
+                    isSpecial = symbol.isSpecial,
+                    holdSpinValue = symbol.holdSpinValue,
+                    animatesOnWin = symbol.animatesOnWin,
+                    winAnimation = symbol.winAnimation,
+                    winAnimationSeconds = symbol.winAnimationSeconds
+                });
+            }
+
+            return copy;
+        }
+
+        private static List<PaylineDefinition> CopyPaylines(List<PaylineDefinition> source)
+        {
+            var copy = new List<PaylineDefinition>();
+            if (source == null) return copy;
+
+            foreach (var line in source)
+            {
+                if (line == null) continue;
+                copy.Add(new PaylineDefinition
+                {
+                    lineName = line.lineName,
+                    rows = line.rows != null ? (int[])line.rows.Clone() : new int[0]
+                });
+            }
+
+            return copy;
+        }
+
+        private static List<ReelStrip> CopyStrips(List<ReelStrip> source)
+        {
+            var copy = new List<ReelStrip>();
+            if (source == null) return copy;
+
+            foreach (var reel in source)
+            {
+                if (reel?.symbols == null) continue;
+                copy.Add(new ReelStrip { symbols = new List<int>(reel.symbols) });
+            }
+
+            return copy;
         }
 
         /// <summary>The features a generated template gets. Data, not code (plan §3.2).</summary>

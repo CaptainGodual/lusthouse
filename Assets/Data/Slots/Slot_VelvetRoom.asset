@@ -135,6 +135,7 @@ MonoBehaviour:
     rows: 0100000002000000010000000200000001000000
   minBet: 1000
   maxBet: 2400000
+  rtpStatus: 1
   targetRtp: 0.962
   maxWinMultiplier: 1500
   progressive: 0

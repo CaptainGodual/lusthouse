@@ -45,9 +45,12 @@ namespace LustHouse.UI
                 {
                     for (int x = 0; x < size; x++)
                     {
-                        bool outer = InRoundedRect(x, y, size, radius);
-                        bool inner = InRoundedRect(x, y, size, radius - thickness);
-                        pixels[y * size + x] = new Color32(255, 255, 255, (byte)((outer && !inner) ? 255 : 0));
+                        // The hole is the same shape pulled in by the ring's thickness on
+                        // every side. Without the inset the hole spans the same box as the
+                        // frame, the difference is empty, and the sprite is invisible.
+                        bool outer = InRoundedRect(x, y, size, radius, 0);
+                        bool hole = InRoundedRect(x, y, size, radius - thickness, thickness);
+                        pixels[y * size + x] = new Color32(255, 255, 255, (byte)((outer && !hole) ? 255 : 0));
                     }
                 }
 
@@ -315,13 +318,27 @@ namespace LustHouse.UI
             return tex;
         }
 
-        /// <summary>True when the pixel is inside a rounded square of the given radius.</summary>
-        private static bool InRoundedRect(int x, int y, int size, int radius)
+        /// <summary>
+        /// True when the pixel is inside a rounded square of the given corner radius.
+        ///
+        /// <paramref name="inset"/> pulls the shape in on every side, which is what turns
+        /// a filled shape into a hole with a border around it.
+        /// </summary>
+        private static bool InRoundedRect(int x, int y, int size, int radius, int inset = 0)
         {
-            radius = Mathf.Max(0, Mathf.Min(radius, size / 2));
-            float dx = x < radius ? radius - x : (x > size - 1 - radius ? x - (size - 1 - radius) : 0f);
-            float dy = y < radius ? radius - y : (y > size - 1 - radius ? y - (size - 1 - radius) : 0f);
-            return dx * dx + dy * dy <= radius * radius;
+            int left = inset;
+            int right = size - 1 - inset;
+            int bottom = inset;
+            int top = size - 1 - inset;
+
+            if (x < left || x > right || y < bottom || y > top) return false;
+
+            int r = Mathf.Max(0, Mathf.Min(radius, (right - left) / 2, (top - bottom) / 2));
+
+            float dx = x - left < r ? r - (x - left) : (x > right - r ? x - (right - r) : 0f);
+            float dy = y - bottom < r ? r - (y - bottom) : (y > top - r ? y - (top - r) : 0f);
+
+            return dx * dx + dy * dy <= (float)r * r;
         }
     }
 }

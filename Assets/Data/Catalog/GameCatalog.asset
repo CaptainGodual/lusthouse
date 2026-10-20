@@ -17,7 +17,7 @@ MonoBehaviour:
     displayTitle: 
     definition: {fileID: 11400000, guid: f610cae053c7e0f47ba5fd87b78e2829, type: 2}
     category: 1
-    keyArt: {fileID: 21300000, guid: fda19b3b70bd41b2876d465bf4b7429b, type: 3}
+    keyArt: {fileID: 0}
     blurb: The house tutorial game. Art deco, suits, gold filigree.
     locked: 0
     lockedMessage: 

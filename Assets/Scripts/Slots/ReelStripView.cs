@@ -62,6 +62,9 @@ namespace LustHouse.Slots
             public Image icon;
             public Text glyph;
 
+            /// <summary>The soft halo behind a winning symbol.</summary>
+            public Image glow;
+
             /// <summary>Unwrapped index into the strip. Grows without bound as the reel turns.</summary>
             public int stripIndex;
 
@@ -77,6 +80,10 @@ namespace LustHouse.Slots
         private int _rowCount;
         private int _reelIndex;
         private float _scroll;
+
+        /// <summary>Running win animations, so the next spin can stop them.</summary>
+        private readonly List<Coroutine> _winRoutines = new List<Coroutine>();
+        private readonly HashSet<Cell> _animatingCells = new HashSet<Cell>();
 
         private float _travelFrom, _travelTo, _duration, _elapsed;
         private bool _spinning;
@@ -167,12 +174,23 @@ namespace LustHouse.Slots
 
         private Cell NewCell(int index)
         {
-            // Three objects per cell: the container that rides the strip, the icon inside it
-            // (so symbolFill can pad the symbol without touching the strip pitch), and the
-            // fallback glyph. A pool this small is not worth the indirection of a prefab.
+            // Four objects per cell: the container that rides the strip, the icon inside it
+            // (so symbolFill can pad the symbol without touching the strip pitch), the
+            // fallback glyph, and the halo a winning symbol lights up in. A pool this
+            // small is not worth the indirection of a prefab.
             var go = new GameObject("Cell" + index, typeof(RectTransform));
             go.transform.SetParent(_stripRoot, false);
             var container = (RectTransform)go.transform;
+
+            // The halo sits behind the icon, so a winning symbol is lit from behind
+            // rather than painted over.
+            var glowGo = new GameObject("Glow", typeof(RectTransform));
+            glowGo.transform.SetParent(container, false);
+            var glow = glowGo.AddComponent<Image>();
+            glow.sprite = UiChrome.Glow;
+            glow.color = new Color(1f, 0.86f, 0.55f, 0f);
+            glow.raycastTarget = false;
+            glow.preserveAspect = true;
 
             var iconGo = new GameObject("Icon", typeof(RectTransform));
             iconGo.transform.SetParent(container, false);
@@ -188,6 +206,7 @@ namespace LustHouse.Slots
             {
                 rect = container,
                 icon = icon,
+                glow = glow,
                 glyph = glyph,
                 stripIndex = index
             };
@@ -212,6 +231,125 @@ namespace LustHouse.Slots
             Layout();
         }
 
+        // ---- win animation ----------------------------------------------------
+
+        /// <summary>
+        /// Plays the win animation for the symbol in a visible row.
+        ///
+        /// A symbol decides for itself whether it moves: artwork that has nothing to
+        /// animate should not jump, because a static emblem that pulses reads as a
+        /// glitch rather than a win. The artwork author turns it off per symbol.
+        ///
+        /// Returns false when there was nothing to animate, so a caller can tell a
+        /// symbol that opted out from a symbol that was never there.
+        /// </summary>
+        public bool AnimateWin(int row)
+        {
+            if (_definition == null || _cells.Count == 0) return false;
+
+            var symbol = SymbolAt(row);
+            if (symbol == null || !symbol.animatesOnWin) return false;
+
+            var cell = CellAt(row);
+            if (cell == null) return false;
+
+            // A symbol that is already celebrating does not start again: two pulses on
+            // one cell fight over its scale.
+            if (_animatingCells.Contains(cell)) return true;
+
+            _animatingCells.Add(cell);
+            _winRoutines.Add(StartCoroutine(Pulse(cell, symbol)));
+            return true;
+        }
+
+        /// <summary>
+        /// Stops every running win animation and puts the cells back.
+        ///
+        /// Called when the next spin clears the highlights. An animation that outlives
+        /// its win leaves a symbol pulsing on a losing spin, which is the sort of thing
+        /// that makes a player stop trusting the machine.
+        /// </summary>
+        public void StopWinAnimations()
+        {
+            for (int i = 0; i < _winRoutines.Count; i++)
+                if (_winRoutines[i] != null) StopCoroutine(_winRoutines[i]);
+
+            _winRoutines.Clear();
+            _animatingCells.Clear();
+
+            for (int i = 0; i < _cells.Count; i++)
+            {
+                _cells[i].icon.rectTransform.localScale = Vector3.one;
+                _cells[i].glow.color = new Color(1f, 0.86f, 0.55f, 0f);
+            }
+        }
+
+        /// <summary>The symbol shown in a visible row, or null when the row is empty.</summary>
+        public SymbolDefinition SymbolAt(int row)
+        {
+            if (_strip == null || StopCount == 0 || _definition == null) return null;
+            if (row < 0 || row >= _rowCount) return null;
+
+            int position = Mod(Mathf.FloorToInt(_scroll) + row, StopCount);
+            return _definition.SymbolById(_strip[position]);
+        }
+
+        /// <summary>The cell showing a visible row, or null.</summary>
+        private Cell CellAt(int row)
+        {
+            int whole = Mathf.FloorToInt(_scroll);
+            for (int i = 0; i < _cells.Count; i++)
+                if (_cells[i].stripIndex == whole + row) return _cells[i];
+            return null;
+        }
+
+        /// <summary>
+        /// The standard win pulse: the symbol punches up and the halo behind it lights.
+        ///
+        /// A symbol with its own clip plays that instead — an authored animation can
+        /// swap the sprite for a frame sequence, which is how a symbol that really does
+        /// have an animation in it shows it.
+        /// </summary>
+        private IEnumerator Pulse(Cell cell, SymbolDefinition symbol)
+        {
+            float seconds = Mathf.Max(0.1f, symbol.winAnimationSeconds);
+            float elapsed = 0f;
+
+            var iconRect = cell.icon.rectTransform;
+            Vector3 baseScale = iconRect.localScale;
+            Color glowOff = new Color(1f, 0.86f, 0.55f, 0f);
+
+            if (symbol.winAnimation != null)
+            {
+                var animation = cell.icon.gameObject.GetComponent<Animation>();
+                if (animation == null)
+                {
+                    animation = cell.icon.gameObject.AddComponent<Animation>();
+                    animation.wrapMode = WrapMode.Loop;
+                }
+                animation.clip = symbol.winAnimation;
+                animation.Play();
+            }
+
+            while (elapsed < seconds)
+            {
+                elapsed += Time.unscaledDeltaTime;
+
+                // One up-and-down per half of the window, so the symbol punches twice
+                // inside the time it is given.
+                float k = Mathf.PingPong(elapsed / (seconds * 0.5f), 1f);
+                float punch = Mathf.Sin(k * Mathf.PI);
+
+                iconRect.localScale = baseScale * (1f + 0.14f * punch);
+                cell.glow.color = new Color(1f, 0.86f, 0.55f, 0.6f * punch);
+
+                yield return null;
+            }
+
+            iconRect.localScale = baseScale;
+            cell.glow.color = glowOff;
+        }
+
         // ---- layout ---------------------------------------------------------
 
         /// <summary>
@@ -230,6 +368,11 @@ namespace LustHouse.Slots
                 var cell = _cells[i];
                 cell.rect.sizeDelta = new Vector2(cellSize, cellSize);
                 cell.icon.rectTransform.sizeDelta = new Vector2(icon, icon);
+                cell.glow.rectTransform.sizeDelta = new Vector2(icon * 1.7f, icon * 1.7f);
+
+                // A resize in the middle of a pulse would otherwise leave the symbol
+                // scaled up for good.
+                cell.icon.rectTransform.localScale = Vector3.one;
 
                 // The fallback initial has to track the cell or it is unreadable at the small
                 // end of the fit-to-parent range.
