@@ -18,6 +18,7 @@ namespace LustHouse.UI
         private static Font _font;
         private static Sprite _solid;
         private static Sprite _rounded;
+        private static Sprite _circle;
 
         // ---- shared assets ----------------------------------------------------
 
@@ -101,6 +102,44 @@ namespace LustHouse.UI
             }
         }
 
+        /// <summary>A soft-edged white disc for the round bet and spin controls.</summary>
+        public static Sprite Circle
+        {
+            get
+            {
+                if (_circle != null) return _circle;
+
+                const int size = 128;
+                var tex = new Texture2D(size, size, TextureFormat.RGBA32, false)
+                {
+                    name = "LustHouseCircle",
+                    hideFlags = HideFlags.HideAndDontSave,
+                    filterMode = FilterMode.Bilinear,
+                    wrapMode = TextureWrapMode.Clamp
+                };
+
+                const float radius = (size - 1) * 0.5f;
+                var pixels = new Color32[size * size];
+                for (int y = 0; y < size; y++)
+                {
+                    for (int x = 0; x < size; x++)
+                    {
+                        float dx = x - radius;
+                        float dy = y - radius;
+                        float distance = Mathf.Sqrt(dx * dx + dy * dy);
+                        float alpha = Mathf.Clamp01(radius + 0.5f - distance);
+                        pixels[y * size + x] = new Color32(255, 255, 255, (byte)(alpha * 255f));
+                    }
+                }
+                tex.SetPixels32(pixels);
+                tex.Apply();
+
+                _circle = Sprite.Create(tex, new Rect(0, 0, size, size), new Vector2(0.5f, 0.5f), 100f);
+                _circle.name = "LustHouseCircle";
+                return _circle;
+            }
+        }
+
         // ---- palette (plan §2.1) ---------------------------------------------
 
         public static readonly Color VelvetBase = new Color32(0x14, 0x0A, 0x14, 0xFF);
@@ -108,6 +147,12 @@ namespace LustHouse.UI
         public static readonly Color VelvetRaised = new Color32(0x2A, 0x17, 0x30, 0xFF);
         public static readonly Color GoldPrimary = new Color32(0xE8, 0xC3, 0x6B, 0xFF);
         public static readonly Color GoldGlow = new Color32(0xFF, 0xD9, 0x8A, 0xFF);
+        public static readonly Color BarBrown = new Color32(0x17, 0x0D, 0x0B, 0xF2);
+        public static readonly Color BetPanelBlue = new Color32(0x0D, 0x18, 0x33, 0xFF);
+        public static readonly Color WinPanelBlue = new Color32(0x0B, 0x2A, 0x5A, 0xFF);
+        public static readonly Color BetBlue = new Color32(0x2E, 0x7C, 0xE6, 0xFF);
+        public static readonly Color MaxPurple = new Color32(0x6B, 0x3F, 0xA0, 0xFF);
+        public static readonly Color SpinGreen = new Color32(0x22, 0xB2, 0x4C, 0xFF);
         public static readonly Color NeonMagenta = new Color32(0xFF, 0x3D, 0x8B, 0xFF);
         public static readonly Color NeonCyan = new Color32(0x37, 0xE0, 0xD8, 0xFF);
         public static readonly Color TextPrimary = new Color32(0xF5, 0xE9, 0xF2, 0xFF);
@@ -298,6 +343,18 @@ namespace LustHouse.UI
             rt.anchoredPosition = new Vector2(xOffset, y);
         }
 
+        /// <summary>Shared press/hover feedback for buttons built from sprites.</summary>
+        public static void StyleButton(Button button)
+        {
+            var colors = button.colors;
+            colors.normalColor = Color.white;
+            colors.highlightedColor = new Color(1.15f, 1.15f, 1.15f, 1f);
+            colors.pressedColor = new Color(0.8f, 0.8f, 0.8f, 1f);
+            colors.disabledColor = new Color(0.5f, 0.5f, 0.5f, 0.6f);
+            colors.fadeDuration = 0.12f;      // micro interaction, plan §2.1
+            button.colors = colors;
+        }
+
         /// <summary>
         /// A button with a visible label. Returns the Button; the label is a child so the
         /// caller can restyle it without re-plumbing the click handler.
@@ -317,13 +374,7 @@ namespace LustHouse.UI
             button.targetGraphic = image;
 
             // Legible on the default raised panel colour.
-            var colors = button.colors;
-            colors.normalColor = Color.white;
-            colors.highlightedColor = new Color(1.15f, 1.15f, 1.15f, 1f);
-            colors.pressedColor = new Color(0.8f, 0.8f, 0.8f, 1f);
-            colors.disabledColor = new Color(0.5f, 0.5f, 0.5f, 0.6f);
-            colors.fadeDuration = 0.12f;      // micro interaction, plan §2.1
-            button.colors = colors;
+            StyleButton(button);
 
             labelText = NewText("Label", go.transform, label, fontSize, FontStyle.Bold, textColor);
             Stretch(labelText.rectTransform);
