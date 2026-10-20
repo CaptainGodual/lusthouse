@@ -55,6 +55,11 @@ namespace LustHouse.Tests
                     symbols = new List<int> { r % 3, (r + 1) % 3, (r + 2) % 3, r % 3 }
                 });
 
+            def.paylines = new List<PaylineDefinition>
+            {
+                new PaylineDefinition { lineName = "Middle", rows = new[] { 1, 1, 1, 1, 1 } }
+            };
+
             return def;
         }
 
@@ -222,6 +227,114 @@ namespace LustHouse.Tests
 
             view.Configure(null);
             Assert.AreEqual(0, view.ReelCount, "A null definition must not leave reels behind.");
+        }
+
+        [Test]
+        public void WinningPayline_DrawsAConnectingLineOverTheMatchedSymbols()
+        {
+            var def = BuildFixture();
+            var view = MakeView(def);
+
+            var grid = new int[Reels][];
+            for (int r = 0; r < Reels; r++)
+            {
+                grid[r] = new int[Rows];
+                for (int row = 0; row < Rows; row++) grid[r][row] = 1;
+            }
+
+            var result = new SpinResult
+            {
+                grid = grid,
+                bet = 100,
+                totalWin = 500,
+                lineWins = new List<LineWin>
+                {
+                    new LineWin { paylineIndex = 0, count = 4, symbolId = 1, payout = 5 }
+                }
+            };
+
+            view.ShowWinHighlights(result);
+
+            Assert.AreEqual(1, view.WinLineCount,
+                "A paying payline should draw one connector, not just highlight the symbols.");
+            var line = view.transform.Find("WinLines/Line1");
+            Assert.IsNotNull(line, "The win line has no object in the reel view.");
+            Assert.IsNotNull(line.Find("Core"), "The win line has no visible core.");
+            Assert.IsNotNull(line.Find("CoreJoint"),
+                "The win line needs a joint so a corner in a zig-zag line is not notched.");
+
+            view.ClearHighlights();
+            Assert.AreEqual(0, view.WinLineCount, "Clearing highlights must clear the win lines too.");
+            Assert.IsNull(view.transform.Find("WinLines"),
+                "An empty WinLines root should not survive to the next spin.");
+        }
+
+        [Test]
+        public void NonPaylineWins_DoNotDrawConnectors()
+        {
+            var def = BuildFixture();
+            var view = MakeView(def);
+
+            var grid = new int[Reels][];
+            for (int r = 0; r < Reels; r++)
+            {
+                grid[r] = new int[Rows];
+                for (int row = 0; row < Rows; row++) grid[r][row] = 1;
+            }
+
+            // Ways and cluster results use paylineIndex -1: there is no line to connect.
+            var result = new SpinResult
+            {
+                grid = grid,
+                bet = 100,
+                totalWin = 500,
+                lineWins = new List<LineWin>
+                {
+                    new LineWin { paylineIndex = -1, count = 5, symbolId = 1, payout = 5 }
+                }
+            };
+
+            view.ShowWinHighlights(result);
+
+            Assert.AreEqual(0, view.WinLineCount,
+                "A ways/cluster win has no payline geometry and must not invent one.");
+        }
+
+        [Test]
+        public void LosingSpin_ClearsThePreviousWinningLine()
+        {
+            var def = BuildFixture();
+            var view = MakeView(def);
+
+            var winningGrid = new int[Reels][];
+            for (int r = 0; r < Reels; r++)
+            {
+                winningGrid[r] = new int[Rows];
+                for (int row = 0; row < Rows; row++) winningGrid[r][row] = 1;
+            }
+
+            view.ShowWinHighlights(new SpinResult
+            {
+                grid = winningGrid,
+                bet = 100,
+                totalWin = 500,
+                lineWins = new List<LineWin>
+                {
+                    new LineWin { paylineIndex = 0, count = 3, symbolId = 1, payout = 5 }
+                }
+            });
+            Assert.AreEqual(1, view.WinLineCount);
+
+            view.ShowWinHighlights(new SpinResult
+            {
+                grid = winningGrid,
+                bet = 100,
+                totalWin = 0,
+                lineWins = new List<LineWin>()
+            });
+
+            Assert.AreEqual(0, view.WinLineCount,
+                "A losing spin must clear the line drawn by the previous win.");
         }
 
         [Test]

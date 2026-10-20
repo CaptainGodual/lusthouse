@@ -63,6 +63,7 @@ namespace LustHouse.Slots
         private readonly List<ReelStripView> _reels = new List<ReelStripView>();
         private readonly List<GameObject> _highlights = new List<GameObject>();
         private readonly List<GameObject> _locks = new List<GameObject>();
+        private RectTransform _winLinesRoot;
         private SlotMachineDefinition _definition;
         private float _lastWidth = -1f;
         private float _lastHeight = -1f;
@@ -138,10 +139,7 @@ namespace LustHouse.Slots
 
         private void Clear()
         {
-            for (int i = 0; i < _highlights.Count; i++)
-                if (_highlights[i] != null) SafeDestroy(_highlights[i]);
-            _highlights.Clear();
-
+            ClearHighlights();
             ClearLocks();
 
             for (int i = 0; i < _reels.Count; i++)
@@ -226,12 +224,26 @@ namespace LustHouse.Slots
 
         // ---- win highlights -------------------------------------------------
 
-        /// <summary>Removes any win highlight boxes drawn by a previous spin.</summary>
+        /// <summary>
+        /// Removes every win decoration drawn by a previous spin: the symbol highlights and
+        /// the lines connecting the paying symbols.
+        /// </summary>
         public void ClearHighlights()
         {
             for (int i = 0; i < _highlights.Count; i++)
                 if (_highlights[i] != null) SafeDestroy(_highlights[i]);
             _highlights.Clear();
+            ClearWinLines();
+        }
+
+        /// <summary>Number of paying lines currently drawn. Exposed for tests and debug UI.</summary>
+        public int WinLineCount => _winLinesRoot != null ? _winLinesRoot.childCount : 0;
+
+        private void ClearWinLines()
+        {
+            if (_winLinesRoot == null) return;
+            SafeDestroy(_winLinesRoot.gameObject);
+            _winLinesRoot = null;
         }
 
         // ---- hold & spin ----------------------------------------------------
@@ -322,8 +334,9 @@ namespace LustHouse.Slots
         }
 
         /// <summary>
-        /// Draws a highlight box over every symbol that contributed to a win: the matched
-        /// positions on each winning payline, plus any scatter that triggered a feature.
+        /// Draws the win presentation: a highlight box over every symbol that contributed to
+        /// a win, and a line connecting the matched symbols on each paying payline. Scatters
+        /// that triggered a feature are highlighted as well, without a connecting line.
         /// </summary>
         public void ShowWinHighlights(SpinResult result)
         {
@@ -344,6 +357,8 @@ namespace LustHouse.Slots
                     int count = Mathf.Clamp(win.count, 0, line.rows.Length);
                     for (int r = 0; r < count; r++)
                         HighlightCell(r, line.rows[r]);
+
+                    DrawWinLine(win.paylineIndex, count);
                 }
             }
 
@@ -358,6 +373,117 @@ namespace LustHouse.Slots
                     if (symbol != null && symbol.isScatter) HighlightCell(r, row);
                 }
             }
+        }
+
+        // ---- win lines ------------------------------------------------------
+
+        private static readonly Color WinLineGlow = new Color(1f, 0.78f, 0.28f, 0.34f);
+        private static readonly Color WinLineCore = new Color(1f, 0.97f, 0.84f, 0.96f);
+        private const float WinLineGlowWidth = 24f;
+        private const float WinLineCoreWidth = 7f;
+
+        /// <summary>
+        /// Connects the matched cells of one winning payline with a glowing line. The line is
+        /// drawn in this view's space rather than inside a reel column so it can cross the
+        /// gaps between reels; the outer reel mask still clips it to the machine window.
+        /// </summary>
+        private void DrawWinLine(int paylineIndex, int count)
+        {
+            if (_definition == null || _definition.paylines == null) return;
+            if (paylineIndex < 0 || paylineIndex >= _definition.paylines.Count) return;
+
+            var line = _definition.paylines[paylineIndex];
+            if (line?.rows == null) return;
+
+            int reels = Mathf.Min(count, Mathf.Min(line.rows.Length, _reels.Count));
+            if (reels < 2) return;
+
+            if (_winLinesRoot == null)
+            {
+                var rootGo = new GameObject("WinLines", typeof(RectTransform));
+                rootGo.transform.SetParent(transform, false);
+                _winLinesRoot = (RectTransform)rootGo.transform;
+                _winLinesRoot.anchorMin = new Vector2(0.5f, 0.5f);
+                _winLinesRoot.anchorMax = new Vector2(0.5f, 0.5f);
+                _winLinesRoot.pivot = new Vector2(0.5f, 0.5f);
+                _winLinesRoot.sizeDelta = Vector2.zero;
+                _winLinesRoot.anchoredPosition = Vector2.zero;
+                _winLinesRoot.SetAsLastSibling();
+            }
+
+            var lineGo = new GameObject("Line" + (_winLinesRoot.childCount + 1),
+                typeof(RectTransform));
+            lineGo.transform.SetParent(_winLinesRoot, false);
+            var lineRect = (RectTransform)lineGo.transform;
+            lineRect.anchorMin = new Vector2(0.5f, 0.5f);
+            lineRect.anchorMax = new Vector2(0.5f, 0.5f);
+            lineRect.pivot = new Vector2(0.5f, 0.5f);
+            lineRect.sizeDelta = Vector2.zero;
+            lineRect.anchoredPosition = Vector2.zero;
+
+            var from = CellCentreInView(0, line.rows[0]);
+            AddWinJoint(lineRect, from);
+
+            for (int r = 1; r < reels; r++)
+            {
+                var to = CellCentreInView(r, line.rows[r]);
+                AddWinSegment(lineRect, from, to);
+                AddWinJoint(lineRect, to);
+                from = to;
+            }
+        }
+
+        private Vector2 CellCentreInView(int reelIndex, int row)
+        {
+            var reel = _reels[reelIndex];
+            var reelRect = (RectTransform)reel.transform;
+            return reelRect.anchoredPosition + CellPosition(reel, row);
+        }
+
+        private static void AddWinSegment(RectTransform parent, Vector2 from, Vector2 to)
+        {
+            var delta = to - from;
+            float length = delta.magnitude;
+            if (length <= 0.01f) return;
+
+            float angle = Mathf.Atan2(delta.y, delta.x) * Mathf.Rad2Deg;
+            var midpoint = (from + to) * 0.5f;
+
+            // A wide translucent halo around a narrow bright core. The joint discs hide the
+            // square ends of the rectangle and give every corner a rounded elbow.
+            AddWinLinePart(parent, "Glow", midpoint, length, WinLineGlowWidth,
+                angle, WinLineGlow, UiFactory.Solid);
+            AddWinLinePart(parent, "Core", midpoint, length, WinLineCoreWidth,
+                angle, WinLineCore, UiFactory.Solid);
+        }
+
+        private static void AddWinJoint(RectTransform parent, Vector2 position)
+        {
+            AddWinLinePart(parent, "GlowJoint", position, WinLineGlowWidth, WinLineGlowWidth,
+                0f, WinLineGlow, UiFactory.Circle);
+            AddWinLinePart(parent, "CoreJoint", position, WinLineCoreWidth, WinLineCoreWidth,
+                0f, WinLineCore, UiFactory.Circle);
+        }
+
+        private static void AddWinLinePart(RectTransform parent, string name, Vector2 position,
+                                           float width, float height, float angle, Color color,
+                                           Sprite sprite)
+        {
+            var go = new GameObject(name, typeof(RectTransform));
+            go.transform.SetParent(parent, false);
+
+            var rect = (RectTransform)go.transform;
+            rect.anchorMin = new Vector2(0.5f, 0.5f);
+            rect.anchorMax = new Vector2(0.5f, 0.5f);
+            rect.pivot = new Vector2(0.5f, 0.5f);
+            rect.sizeDelta = new Vector2(width, height);
+            rect.anchoredPosition = position;
+            rect.localEulerAngles = new Vector3(0f, 0f, angle);
+
+            var image = go.AddComponent<Image>();
+            image.sprite = sprite;
+            image.color = color;
+            image.raycastTarget = false;
         }
 
         private void HighlightCell(int reelIndex, int row)
