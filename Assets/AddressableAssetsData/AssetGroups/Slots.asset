@@ -14,7 +14,32 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   m_GroupName: Slots
   m_GUID: 0b6a1973f00d6b14e9b4fc63ae1ef50f
-  m_SerializeEntries: []
+  m_SerializeEntries:
+  - m_GUID: 12b3eedc8b08a7940bc4cd79d1ad84ef
+    m_Address: Slots/neon_nights
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 1aaf80363eb8df249a324fa9c1773d67
+    m_Address: Slots/house_edge
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 35be0577b9f28b247bc0c2c206a020bf
+    m_Address: Slots/velvet_room
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: ad8742ac1e1ae5440a6f67021d221518
+    m_Address: Slots/diamond_hold
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: f0b555de651d53e48ae5085d18778ec1
+    m_Address: Slots/midnight_masquerade
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
   m_ReadOnly: 0
   m_Settings: {fileID: 11400000, guid: b376708d1a155bb44ad16c83f05ef20d, type: 2}
   m_SchemaSet:

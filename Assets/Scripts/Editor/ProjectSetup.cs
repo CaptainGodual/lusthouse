@@ -224,10 +224,23 @@ namespace LustHouse.EditorTools
             // Age rating and store category are declared in the store consoles, not here.
             // The only thing this project controls is the 18+ gate itself (§ guardrails 3).
 
+            // Android device build (plan §5.5). BuildAndroid applies the same values before
+            // every build; setting them here means a fresh clone is build-ready without a
+            // trip through the Build Profiles window.
+            PlayerSettings.SetScriptingBackend(NamedBuildTarget.Android, ScriptingImplementation.IL2CPP);
 #if UNITY_EDITOR_WIN
             PlayerSettings.SetIl2CppCompilerConfiguration(NamedBuildTarget.Standalone, Il2CppCompilerConfiguration.Release);
+            PlayerSettings.SetIl2CppCompilerConfiguration(NamedBuildTarget.Android, Il2CppCompilerConfiguration.Release);
 #endif
-            LustLog.Info("[LustHouse] Player settings updated (identity, orientation, colour space).");
+            PlayerSettings.Android.targetArchitectures = AndroidArchitecture.ARM64;
+            PlayerSettings.Android.minSdkVersion = AndroidSdkVersions.AndroidApiLevel24;
+            PlayerSettings.Android.targetSdkVersion = AndroidSdkVersions.AndroidApiLevelAuto;
+            PlayerSettings.Android.useCustomKeystore = false;
+
+            if (PlayerSettings.Android.bundleVersionCode < 1)
+                PlayerSettings.Android.bundleVersionCode = 1;
+
+            LustLog.Info("[LustHouse] Player settings updated (identity, orientation, colour space, Android).");
         }
 
         [MenuItem("LustHouse/Setup/3. Scenes", priority = 22)]
@@ -541,6 +554,17 @@ namespace LustHouse.EditorTools
                 ? AddressableAssetSettings.kLocalLoadPath
                 : AddressableAssetSettings.kRemoteLoadPath;
 
+        /// <summary>
+        /// Where a group's bundles are built. It has to agree with the load path: a group
+        /// whose bundles are built into StreamingAssets but loaded from somewhere else is
+        /// rejected by the content build, and the build then ships without a catalogue at
+        /// all — which is how a device ends up unable to fetch anything.
+        /// </summary>
+        private static string GroupBuildPath(string groupName) =>
+            groupName == "Boot"
+                ? AddressableAssetSettings.kLocalBuildPath
+                : AddressableAssetSettings.kRemoteBuildPath;
+
         /// <summary>Re-applies the load path to every group, including ones created earlier.</summary>
         private static void ApplyGroupLoadPaths(AddressableAssetSettings settings)
         {
@@ -549,6 +573,7 @@ namespace LustHouse.EditorTools
                 var group = settings.FindGroup(groupName);
                 var bundled = group?.GetSchema<BundledAssetGroupSchema>();
                 if (bundled == null) continue;
+                bundled.BuildPath.SetVariableByName(settings, GroupBuildPath(groupName));
                 bundled.LoadPath.SetVariableByName(settings, GroupLoadPath(groupName));
             }
         }

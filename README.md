@@ -124,7 +124,6 @@ Unity.exe -batchmode -runTests -testPlatform PlayMode -projectPath .
 > playable, but their RTP is not tuned, so `RtpGateTests` lists them explicitly as deferred.
 > Adding a new definition without either gating or deferring it fails the suite.
 
-
 ### Looking at the UI
 
 `LobbyScreenshotTests` and `SlotScreenshotTests` (PlayMode) render the lobby and a
@@ -134,6 +133,58 @@ camera into a RenderTexture and reads the pixels back. That works in batch mode,
 window is ever opened — which is the only way to *see* a UI change without a human in
 front of the screen. They assert nothing and always pass; they are development tools,
 not tests of behaviour.
+
+---
+
+## Android device build
+
+The editor needs **Android Build Support** with its SDK, NDK and OpenJDK (Unity Hub →
+Installs → 6000.0.64f1 → Add modules). The bundled SDK (API 36), build-tools 36 and
+OpenJDK are what the project builds against.
+
+The UI uses `StandaloneInputModule`, so set **Edit → Project Settings → Player → Other
+Settings → Active Input Handling** to **Input Manager (Old)** and restart Unity once.
+Android rejects the "Both" setting, and new-only input would leave the UI untappable;
+the build menu refuses to run unless the legacy setting is active.
+
+Build from the menu:
+
+- **LustHouse → Build → Android APK** — release APK at `Builds/Android/LustHouse.apk`
+- **LustHouse → Build → Android APK + Run** — development APK, installed and launched on the connected device
+- **LustHouse → Build → Validate Android setup** — checks build support, the JNI module and input handling
+- **LustHouse → Build → Apply Android Player settings** — re-applies IL2CPP, ARM64 and min API 24
+
+Or headless:
+
+```
+Unity.exe -batchmode -quit -projectPath . ^
+  -executeMethod LustHouse.EditorTools.BuildAndroid.BuildApk ^
+  -logFile Logs/android-build.log
+```
+
+Install and inspect on the device:
+
+```
+adb install -r Builds/Android/LustHouse.apk
+adb shell monkey -p com.lusthouse.casino -c android.intent.category.LAUNCHER 1
+adb logcat -s Unity
+adb shell getprop ro.product.cpu.abi
+adb shell getprop ro.build.version.sdk
+```
+
+If `adb` is not on your `PATH`, the editor bundles it under
+`<UnityEditor>\Data\PlaybackEngines\AndroidPlayer\SDK\platform-tools\adb.exe`.
+
+| Symptom | Fix |
+|---|---|
+| `CS0246: AndroidJavaClass could not be found` | `com.unity.modules.androidjni` is missing from `Packages/manifest.json` (or not resolved yet — restart Unity). |
+| `Active Input Handling is set to Both ... Cancelling` | Set it to **Input Manager (Old)** and restart the editor. |
+| No device in Unity / `adb devices` | Enable USB debugging, use a data cable, accept the RSA prompt, or use Android 11+ wireless debugging. |
+| `INSTALL_FAILED_NO_MATCHING_ABIS` | The device is 32-bit only. Add `AndroidArchitecture.ARMv7` in `BuildAndroid.cs` (and `ProjectSetup.cs`) and rebuild. |
+| Build succeeds but nothing taps | Run **LustHouse → Setup → Repair input blocking** and check `adb logcat -s Unity` for input exceptions. |
+
+`AndroidBuildGuardTests` keeps `androidjni`, IL2CPP/ARM64, min API 24 and the input
+setting from drifting.
 
 ---
 

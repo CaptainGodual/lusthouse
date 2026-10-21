@@ -28,12 +28,22 @@ namespace LustHouse.Lobby
 
         public string warningMessage = "";
 
+        [Header("Launch")]
+        [Tooltip("How long a game may take to load before the lobby stops waiting for it. " +
+                 "A load that never finishes must not strand the player on the loader.")]
+        public float sceneLoadTimeoutSeconds = 45f;
+
+        [Tooltip("The backstop. A launch that has been running this long has something " +
+                 "stuck in it, and the player must not be left looking at the loader.")]
+        public float launchStuckSeconds = 90f;
+
         private readonly HashSet<string> _favourites = new HashSet<string>();
 
         private LobbyPresenter _presenter;
         private LobbyLoadingScreen _loadingScreen;
         private SlotContentService _content;
         private bool _launching;
+        private float _launchElapsed;
 
         public ServicesBootstrap Services { get; private set; }
 
@@ -184,13 +194,39 @@ namespace LustHouse.Lobby
         private void Launch(SlotMachineDefinition definition, string title)
         {
             if (_launching) return;
+            _launchElapsed = 0f;
             StartCoroutine(LaunchRoutine(definition, title));
+        }
+
+        /// <summary>
+        /// The backstop. Everything in the launch path has its own timeout, but a bug
+        /// anywhere in it must not be able to leave the player looking at the loader for
+        /// ever: the loader comes down, the guard is released so the next tap works, and
+        /// the failure is said out loud.
+        /// </summary>
+        private void Update()
+        {
+            if (!_launching) return;
+
+            _launchElapsed += Time.unscaledDeltaTime;
+            if (_launchElapsed < launchStuckSeconds) return;
+
+            LustLog.Error($"[LustHouse] A launch has been running for more than " +
+                          $"{launchStuckSeconds}s; the loader has been dismissed.");
+            _launching = false;
+            _loadingScreen?.Hide();
+            _presenter?.ShowEntryBlocked("Loading",
+                "The game took too long to load. Please try again.");
         }
 
         /// <summary>
         /// Shows the loader, fetches the game's pack from the remote catalog if the device
         /// lacks it, then loads the shared Slot scene without activating it until it is
         /// ready — so the bar reflects real work and the reveal is seamless.
+        ///
+        /// Every path out of this routine releases the launch guard and leaves the player
+        /// with something they can act on. A launch that dies quietly used to leave the
+        /// loader on screen for ever, which is the one outcome a player cannot act on.
         /// </summary>
         private IEnumerator LaunchRoutine(SlotMachineDefinition definition, string title)
         {
@@ -199,6 +235,8 @@ namespace LustHouse.Lobby
 
             // Stage 1 — the pack. A blank key means the game ships in the build; the service
             // returns immediately and the loader never shows a pointless "Downloading".
+            // The service swallows its own failures: a pack that cannot be fetched falls
+            // back to the bundled content rather than killing this coroutine (plan §1.3).
             string key = definition.addressableKey ?? "";
             if (!string.IsNullOrWhiteSpace(key) && _content != null)
             {
@@ -216,20 +254,46 @@ namespace LustHouse.Lobby
                 slotSceneName, UnityEngine.SceneManagement.LoadSceneMode.Single);
             if (async == null)
             {
-                _launching = false;
-                _loadingScreen?.Hide();
+                FailLaunch(title, "The game could not be opened. Please try again.");
                 yield break;
             }
 
             async.allowSceneActivation = false;
+
+            float elapsed = 0f;
             while (!async.isDone && async.progress < 0.9f)
             {
+                if (sceneLoadTimeoutSeconds > 0f && elapsed >= sceneLoadTimeoutSeconds)
+                {
+                    // A scene load that never finishes must not hold the player on the
+                    // loader. Let it through and say so: a late game beats a dead screen.
+                    LustLog.Warn($"[LustHouse] '{title}' did not finish loading within " +
+                                 $"{sceneLoadTimeoutSeconds}s; activating it anyway.");
+                    async.allowSceneActivation = true;
+                    _launching = false;
+                    yield break;
+                }
+
+                elapsed += Time.unscaledDeltaTime;
                 _loadingScreen?.SetProgress(async.progress / 0.9f, "Preparing " + title + "…");
                 yield return null;
             }
 
             async.allowSceneActivation = true;
             _launching = false;
+        }
+
+        /// <summary>
+        /// A launch that cannot finish must never leave the player on the loading screen.
+        /// The loader comes down, the guard is released so the next tap works, and the
+        /// failure is said out loud rather than swallowed (plan §1.2 — never a dead end).
+        /// </summary>
+        private void FailLaunch(string title, string reason)
+        {
+            _launching = false;
+            _loadingScreen?.Hide();
+            LustLog.Error($"[LustHouse] Could not launch '{title}': {reason}");
+            _presenter?.ShowEntryBlocked(title, reason);
         }
 
         // ---- favourites -------------------------------------------------------

@@ -27,6 +27,9 @@
 *.opendb.meta
 *.VC.db.meta
 Assets/GeneratedTiles/
+# Addressables build output. The remote bundles are built here for upload to a CDN;
+# it is a build artefact, not source.
+/ServerData/
 *.apk
 *.aab
 *.xcodeproj
@@ -36,3 +39,14 @@ Assets/GeneratedTiles/
 *.log
 __pycache__/
 *.pyc
+/.utmp/
+# Local tooling for the agent harness, not project source.
+/node_modules/
+/package.json
+/package-lock.json
+/opencode.json
+# Web build output (the Unity WebGL player is a build artefact, like ServerData).
+/Lusthouse/
+# Third-party asset pack, unreferenced; not part of the game yet.
+/Assets/RSG_Crowns_of_Kemet/
+/Assets/RSG_Crowns_of_Kemet.meta
