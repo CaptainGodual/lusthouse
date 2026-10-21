@@ -176,5 +176,87 @@ namespace LustHouse.Tests
                 "The ship-gated game must be fully arted -- a placeholder tile on a live " +
                 "symbol is a content bug, not a fallback:\n  " + string.Join("\n  ", problems));
         }
+
+        /// <summary>
+        /// Velvet Room's reels are per-reel strips of 20-30 stops, like a commercial slot,
+        /// rather than one identical strip copied five times.
+        ///
+        /// Three things are worth asserting together, because each is invisible on its own.
+        /// Length in range: a strip that silently grows back toward the old 51 stops changes
+        /// every probability and invalidates the signed-off RTP. Reels differing: five
+        /// identical strips would pass a length check while throwing away the whole point of
+        /// per-reel weighting. Every symbol reachable: with 20-30 stops it is easy to drop a
+        /// symbol while trimming, and a paytable entry no reel carries is a prize the player
+        /// can never win -- worse, a symbol missing from reel 0 can never pay at all, since a
+        /// line's base is reel 0's cell.
+        /// </summary>
+        [Test]
+        public void VelvetRoom_HasPerReelStripsBetween20And30Stops()
+        {
+            var def = AssetDatabase.LoadAssetAtPath<SlotMachineDefinition>(
+                ContentBootstrap.VelvetRoomPath);
+
+            Assert.IsNotNull(def, $"Velvet Room missing at {ContentBootstrap.VelvetRoomPath}.");
+            Assert.IsNotNull(def.reelStrips, "Velvet Room has no reel strips.");
+
+            var problems = new List<string>();
+            var shapes = new HashSet<string>();
+
+            for (int r = 0; r < def.reelStrips.Count; r++)
+            {
+                var strip = def.reelStrips[r]?.symbols;
+                if (strip == null || strip.Count == 0)
+                {
+                    problems.Add($"reel {r} has no strip.");
+                    continue;
+                }
+
+                if (strip.Count < 20 || strip.Count > 30)
+                    problems.Add($"reel {r} has {strip.Count} stops; commercial strips run 20-30.");
+
+                shapes.Add(string.Join(",", strip));
+            }
+
+            if (problems.Count == 0 && shapes.Count < def.reelStrips.Count)
+                problems.Add("every reel carries an identical strip, so the per-reel weighting " +
+                             "is not actually doing anything.");
+
+            Assert.IsEmpty(problems,
+                "Per-reel strips are the whole basis of the re-tuned maths:\n  " +
+                string.Join("\n  ", problems));
+
+            // Every paying symbol has to be on every reel, not merely somewhere: a line's
+            // base is reel 0's cell, so a symbol absent from reel 0 can never pay.
+            //
+            // "Paying" is load-bearing. A trigger-only symbol — the Bonus — carries no line
+            // payout and is meant to sit on a subset of reels; requiring it everywhere would
+            // force it onto reel 0, where it would block line wins at their most leveraged
+            // position and buy nothing.
+            var paying = new HashSet<int>();
+            foreach (var symbol in def.symbols)
+            {
+                if (symbol == null || symbol.isWild || symbol.isScatter || symbol.isSpecial)
+                    continue;
+
+                bool pays = false;
+                if (symbol.payoutsByMatch != null)
+                    for (int k = 0; k < symbol.payoutsByMatch.Length; k++)
+                        if (symbol.payoutsByMatch[k] > 0) { pays = true; break; }
+
+                if (pays) paying.Add(symbol.id);
+            }
+
+            for (int r = 0; r < def.reelStrips.Count; r++)
+            {
+                var onReel = new HashSet<int>(def.reelStrips[r].symbols);
+                var missing = new List<int>();
+                foreach (int id in paying)
+                    if (!onReel.Contains(id)) missing.Add(id);
+
+                Assert.IsEmpty(missing,
+                    $"reel {r} is missing paying symbol(s) {string.Join(", ", missing)}; a " +
+                    "symbol absent from a reel is a paytable entry that reel can never pay.");
+            }
+        }
     }
 }

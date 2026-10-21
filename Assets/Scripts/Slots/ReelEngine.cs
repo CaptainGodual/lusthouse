@@ -19,6 +19,10 @@ namespace LustHouse.Slots
         public bool triggeredFreeSpins;
         public bool triggeredBonusBuy;
         public bool triggeredHoldAndSpin;
+
+        /// <summary>A pick-a-prize bonus round ran. The win is already in <see cref="totalWin"/>.</summary>
+        public bool triggeredBonus;
+
         public int freeSpinsAwarded;
 
         /// <summary>Spins that actually ran: 1 for the base game plus any feature spins.</summary>

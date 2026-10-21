@@ -65,6 +65,15 @@ namespace LustHouse.Slots
                  "the symbol gets the standard pulse.")]
         public AnimationClip winAnimation;
 
+        [Tooltip("The frames of a sprite-sheet animation, in order. This is the simple path: " +
+                 "import the sheet as Multiple sprites, then drag the frames straight in " +
+                 "here and they play on a win. Leave it empty unless the symbol has its own " +
+                 "artwork to animate.")]
+        public Sprite[] winAnimationFrames = new Sprite[0];
+
+        [Tooltip("How many frames a second the sprite-sheet animation runs at.")]
+        public float winAnimationFramesPerSecond = 12f;
+
         [Tooltip("How long the win animation runs, in seconds.")]
         public float winAnimationSeconds = 0.9f;
 
@@ -173,6 +182,11 @@ namespace LustHouse.Slots
         [Tooltip("Features this game can trigger, in evaluation order. Data, not code — adding a " +
                  "feature to a game is a content change (plan §3.5). The engine dispatches each to " +
                  "its handler by type.")]
+        // SerializeReference, not the default inline path: SlotFeature is abstract, and inline
+        // serialization of an abstract field writes only the base fields and reads back as an
+        // empty entry — silently. A feature authored here would vanish on the next save, the
+        // game would quietly stop triggering it, and nothing in the YAML would look wrong.
+        [SerializeReference]
         public List<SlotFeature> features = new List<SlotFeature>();
 
         [Tooltip("Minimum cluster size for PayType.Cluster games (plan §3.2 template C).")]

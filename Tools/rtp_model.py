@@ -182,7 +182,50 @@ def parse_asset(path):
         "freeSpinScatterCount": scalar("freeSpinScatterCount", int, 3),
         "freeSpinAward": scalar("freeSpinAward", int, 0),
         "freeSpinBetMultiplier": scalar("freeSpinBetMultiplier", int, 1),
+        "bonus": _parse_bonus_feature(text),
     }
+
+
+def _parse_bonus_feature(text):
+    """The pick-a-prize round, if the game declares one.
+
+    Features live in Unity's SerializeReference registry: the main object holds
+    only a rid pointer, and the real data sits under `references: RefIds:` behind
+    a `type:` line naming the class. This walks the data block that follows the
+    BonusGameFeature type line and reads the trigger and the prize table.
+    """
+    lines = text.split("\n")
+    for i, line in enumerate(lines):
+        if "class: BonusGameFeature" not in line:
+            continue
+
+        feature = {"triggerSymbolId": -1, "triggerCount": 0, "choices": 0,
+                   "picks": 0, "prizes": []}
+        prize = None
+        for raw in lines[i + 1:]:
+            indent = len(raw) - len(raw.lstrip())
+            # The data block's fields sit at 8 spaces; anything shallower is the
+            # next registry entry or the parent object, and ends this one.
+            if raw.strip() and indent < 6:
+                break
+
+            payout = re.match(r"^\s*-\s*payout:\s*(\d+)\s*$", raw)
+            if payout:
+                prize = {"payout": int(payout.group(1)), "weight": 0.0}
+                feature["prizes"].append(prize)
+                continue
+
+            weight = re.match(r"^\s*weight:\s*([\d.]+)\s*$", raw)
+            if weight and prize is not None:
+                prize["weight"] = float(weight.group(1))
+                continue
+
+            field = re.match(r"^\s*(triggerSymbolId|triggerCount|choices|picks):\s*(-?\d+)\s*$", raw)
+            if field:
+                feature[field.group(1)] = int(field.group(2))
+
+        return feature if feature["picks"] > 0 else None
+    return None
 
 
 # ---------------------------------------------------------------- math
@@ -258,8 +301,15 @@ def evaluate_line(model, grid, rows, top_symbol):
     return payout_for_match(pay_def, matched), matched
 
 
-def evaluate(model, stops):
-    """PaylineEvaluator.Evaluate. Returns total win in bet-multiples."""
+def evaluate(model, stops, rng=None):
+    """PaylineEvaluator.Evaluate. Returns total win in bet-multiples.
+
+    When `rng` is given and the game declares a bonus round, the round is played
+    for real: draw `choices` hidden prizes, take `picks` of them blind. The pick
+    strategy is irrelevant to the expectation — every option is an i.i.d. draw —
+    so the simulator simply takes the first `picks`, matching what
+    BonusGameHandler.Run does for a non-interactive round.
+    """
     grid = spin(model, stops)
     by_id = model["by_id"]
     total = 0
@@ -280,6 +330,46 @@ def evaluate(model, stops):
     if model["hasFreeSpins"] and scatters >= model["freeSpinScatterCount"]:
         total += model["freeSpinAward"] * model["freeSpinBetMultiplier"]
 
+    feature = model.get("bonus")
+    if feature and rng is not None:
+        total += play_bonus_round(model, feature, grid, rng)
+
+    return total
+
+
+def play_bonus_round(model, feature, grid, rng):
+    """One pick-a-prize round: the sum of `picks` hidden prizes, in bet-multiples.
+
+    Options are drawn i.i.d. from the weighted prize table, so any `picks` of the
+    `choices` options have the same expected total — which is exactly why the
+    closed form B = P(trigger) x picks x weightedMean holds for blind play.
+    """
+    by_id = model["by_id"]
+
+    def is_trigger(symbol_id):
+        if feature["triggerSymbolId"] >= 0:
+            return symbol_id == feature["triggerSymbolId"]
+        symbol = by_id.get(symbol_id)
+        return bool(symbol and symbol["scatter"])
+
+    triggers = sum(1 for reel in grid for symbol_id in reel if is_trigger(symbol_id))
+    if triggers < feature["triggerCount"]:
+        return 0
+
+    prizes = feature["prizes"]
+    weights = [p["weight"] for p in prizes]
+    total_weight = sum(weights)
+    if total_weight <= 0:
+        return 0
+
+    total = 0
+    for _ in range(min(feature["picks"], feature["choices"] or feature["picks"])):
+        roll = rng.random() * total_weight
+        for prize in prizes:
+            roll -= prize["weight"]
+            if roll < 0:
+                total += prize["payout"]
+                break
     return total
 
 
@@ -339,39 +429,167 @@ def line_win(model, ids, top_symbol=None):
     return payout_for_match(pay_def, matched)
 
 
-def expected_line_win(model, p):
+def expected_line_win(model, reel_probs):
     """E[win in bet-multiples] for one payline, by exact enumeration.
 
-    Enumerates ids^reels tuples weighted by their joint probability. This is the
-    verified reference: it agrees with Monte Carlo to within sampling noise. A
-    left-to-right DP over (base, matched, saw_wild) was tried and was wrong — it
-    dropped the late-wild case where Nine/Nine/Nine/Nine/Wild upgrades to 250x —
-    so correctness beats speed here and the tuner's scan is kept coarse instead.
+    Mirrors SimulationEngine.SumLine: each reel contributes its own distribution, so
+    per-reel strips are enumerated exactly rather than sampled. This is the verified
+    reference -- it agrees with Monte Carlo to within sampling noise.
 
-    Every (reel,row) cell is an independent draw from `p`, and all reels share one
-    distribution when the strips are identical, so this single value applies to every
-    payline regardless of its row pattern.
+    Every (reel,row) cell is uniform over that reel's multiset, so the row a payline
+    visits does not change its expectation: all lines share one value.
     """
-    top = None
-    ids = [i for i in sorted(p) if p[i] > 0.0]
+    id_lists = [[i for i in sorted(p) if p[i] > 0.0] for p in reel_probs]
     total = 0.0
-    for tup in product(ids, repeat=model["reelCount"]):
+    for tup in product(*id_lists):
         prob = 1.0
-        for symbol_id in tup:
-            prob *= p[symbol_id]
+        for r, symbol_id in enumerate(tup):
+            prob *= reel_probs[r][symbol_id]
         if prob:
-            total += prob * line_win(model, tup, top)
+            total += prob * line_win(model, tup)
+    return total
+
+
+def expected_line_win_dp(model, reel_probs):
+    """E[win in bet-multiples] for one payline, by exact DP.
+
+    Same answer as expected_line_win, but O(reels x states x symbols) instead of
+    O(symbols^reels), so a strip search can afford thousands of evaluations.
+
+    The state must carry `sub` -- the first non-wild, non-scatter id on the line --
+    because PaylineEvaluator.SubstituteSymbol reads the whole line, not just the
+    matched run. A DP on (base, matched, saw_wild) alone drops the late-wild case
+    where Nine/Nine/Nine/Nine/Wild upgrades to the five-of-a-kind pay; carrying
+    `sub` is what fixes that.
+    """
+    by_id = model["by_id"]
+    wild_ids = [i for i, s in by_id.items() if s["wild"]]
+    wild_id = wild_ids[0] if wild_ids else -1
+
+    # (base, matched, sawWild, broken, sub) -> probability mass.
+    states = {}
+    for symbol_id in sorted(reel_probs[0]):
+        p0 = reel_probs[0][symbol_id]
+        if p0 <= 0:
+            continue
+        base_def = by_id.get(symbol_id)
+        if base_def is None or base_def["scatter"]:
+            continue                      # a scatter (or unknown) base never pays
+        key = (symbol_id, 1, base_def["wild"], False,
+               None if base_def["wild"] else symbol_id)
+        states[key] = states.get(key, 0.0) + p0
+
+    for r in range(1, model["reelCount"]):
+        probs = reel_probs[r]
+        ids = [i for i in sorted(probs) if probs[i] > 0.0]
+        next_states = {}
+        for (base, matched, saw_wild, broken, sub), mass in states.items():
+            for symbol_id in ids:
+                p = probs[symbol_id]
+                n_matched, n_saw, n_broken = matched, saw_wild, broken
+                if not n_broken:
+                    other = by_id.get(symbol_id)
+                    if other is None:
+                        n_broken = True
+                    elif symbol_id == base:
+                        n_matched += 1
+                    elif other["wild"]:
+                        n_matched += 1
+                        n_saw = True
+                    else:
+                        n_broken = True
+                n_sub = sub
+                if n_sub is None:
+                    other = by_id.get(symbol_id)
+                    if other is not None and not other["wild"] and not other["scatter"]:
+                        n_sub = symbol_id
+                key = (base, n_matched, n_saw, n_broken, n_sub)
+                next_states[key] = next_states.get(key, 0.0) + mass * p
+        states = next_states
+
+    total = 0.0
+    for (base, matched, saw_wild, broken, sub), mass in states.items():
+        if matched < 3:
+            continue
+        pay_id = (sub if sub is not None else wild_id) if saw_wild else base
+        pay_def = by_id.get(pay_id)
+        if pay_def is None:
+            continue
+        total += mass * payout_for_match(pay_def, matched)
     return total
 
 
 def exact_report(model, reel_probs):
     """Exact RTP: expected win per spin in bet-multiples.
 
-    Valid when every reel shares the same symbol distribution, which holds for the
-    identical strips written by the tuner.
+    Enumerates each reel's own distribution, so per-reel strips are exact.
+
+    The total is line RTP plus the pick-a-prize round's affine constant
+    B = P(trigger) x picks x weightedMean(prize). The bonus does not scale with
+    the paytable, so it is kept apart — folding it into the line sum would make
+    the retune count it once per paytable entry instead of once per spin.
     """
-    p = reel_probs[0]
-    return {"rtp": len(model["paylines"]) * expected_line_win(model, p), "exact": True}
+    line = len(model["paylines"]) * expected_line_win_dp(model, reel_probs)
+    bonus = bonus_rtp(model)
+    return {"rtp": line + bonus, "line": line, "bonus": bonus, "exact": True}
+
+
+def bonus_rtp(model):
+    """B = P(trigger) x picks x weightedMean(prize), or 0 without a bonus.
+
+    P(trigger) counts triggers in each reel's visible window. The cells a reel
+    shows are consecutive stops of one strip, not independent draws, so each
+    reel contributes a histogram over "triggers in my window" (one entry per
+    stop position) and the exact grid distribution is the convolution of those
+    histograms across reels — mirroring MathSimulator.TriggerChance.
+    """
+    feature = model.get("bonus")
+    if not feature or feature["picks"] <= 0 or feature["triggerCount"] <= 0:
+        return 0.0
+
+    total = weight = 0.0
+    for prize in feature["prizes"]:
+        if prize["weight"] <= 0:
+            continue
+        total += prize["payout"] * prize["weight"]
+        weight += prize["weight"]
+    mean = total / weight if weight > 0 else 0.0
+    if mean <= 0:
+        return 0.0
+
+    return trigger_chance(model, feature) * feature["picks"] * mean
+
+
+def trigger_chance(model, feature):
+    """P(at least triggerCount triggers on the grid), exactly."""
+    def is_trigger(symbol_id):
+        if feature["triggerSymbolId"] >= 0:
+            return symbol_id == feature["triggerSymbolId"]
+        symbol = model["by_id"].get(symbol_id)
+        return bool(symbol and symbol["scatter"])
+
+    # distribution[n] = P(exactly n triggers on the grid so far).
+    distribution = [1.0]
+    for strip in model["reelStrips"]:
+        length = len(strip)
+        window = max(1, model["rowCount"])
+
+        # histogram[k] = P(this reel's window holds k triggers), by walking every
+        # stop position of the strip.
+        histogram = [0.0] * (window + 1)
+        for stop in range(length):
+            count = sum(1 for row in range(window)
+                        if is_trigger(strip[(stop + row) % length]))
+            histogram[min(count, window)] += 1.0 / length
+
+        convolved = [0.0] * (len(distribution) + window)
+        for a, da in enumerate(distribution):
+            for b, hb in enumerate(histogram):
+                convolved[a + b] += da * hb
+        distribution = convolved
+
+    chance = sum(distribution[feature["triggerCount"]:])
+    return min(1.0, chance)
 
 
 def probs_from_strip(strip):
@@ -396,7 +614,7 @@ def simulate(model, spins, bet, seed):
 
     for _ in range(spins):
         stops = [rng.randrange(len(model["reelStrips"][r])) for r in range(reel_count)]
-        multiples = evaluate(model, stops)
+        multiples = evaluate(model, stops, rng)
         if multiples > 0:
             hits += 1
         if multiples > max_multiple:
@@ -472,8 +690,11 @@ def tune(model, target, length, spins, seed, steps=61):
                     if len(strip) != length:
                         continue
 
+                    # The bonus trigger chance depends on strip order, not just
+                    # symbol frequencies, so the probe carries the candidate strip.
+                    probe = dict(model, reelStrips=[list(strip)] * model["reelCount"])
                     probs = probs_from_strip(strip)
-                    rtp = exact_report(model, [probs])["rtp"]
+                    rtp = exact_report(probe, [probs] * model["reelCount"])["rtp"]
                     err = abs(rtp - target)
                     if best is None or err < best["err"]:
                         best = {"err": err, "rtp": rtp, "strip": strip,
@@ -549,16 +770,22 @@ def main():
     if not model["reelStrips"]:
         raise SystemExit("reelStrips missing — run with --tune to generate them.")
     probs = [probs_from_strip(s) for s in model["reelStrips"]]
-    exact = exact_report(model, probs)["rtp"]
+    report = exact_report(model, probs)
+    exact = report["rtp"]
     ok = abs(exact - target) <= 0.005
-    print(f"exact RTP : {exact:.6f} vs target {target:.4f} -> "
-          f"{'PASS' if ok else 'FAIL'} (+/-0.5%)")
+    if report["bonus"] > 0:
+        print(f"exact RTP : {exact:.6f} = line {report['line']:.6f} + "
+              f"bonus {report['bonus']:.6f} vs target {target:.4f} -> "
+              f"{'PASS' if ok else 'FAIL'} (+/-0.5%)")
+    else:
+        print(f"exact RTP : {exact:.6f} vs target {target:.4f} -> "
+              f"{'PASS' if ok else 'FAIL'} (+/-0.5%)")
 
-    report = simulate(model, args.spins, 100, args.seed)
-    print(f"Monte Carlo @ {report['spins']:,} spins, seed {args.seed}: "
-          f"RTP {report['rtp']:.4f}")
-    print(f"hit rate  : {report['hitRate']:.4f}")
-    print(f"max win   : {report['maxWin']}x bet")
+    mc = simulate(model, args.spins, 100, args.seed)
+    print(f"Monte Carlo @ {mc['spins']:,} spins, seed {args.seed}: "
+          f"RTP {mc['rtp']:.4f}")
+    print(f"hit rate  : {mc['hitRate']:.4f}")
+    print(f"max win   : {mc['maxWin']}x bet")
 
 
 if __name__ == "__main__":

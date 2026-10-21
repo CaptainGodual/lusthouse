@@ -30,6 +30,13 @@ namespace LustHouse.Slots
         public int freeSpinsAwarded;
         public bool triggeredHoldAndSpin;
         public bool triggeredBonusBuy;
+
+        /// <summary>A pick-a-prize (or wheel/trail) bonus round ran.</summary>
+        public bool triggeredBonus;
+
+        /// <summary>How many trigger symbols landed. Reported so the UI can show the count.</summary>
+        public int bonusTriggers;
+
         public readonly List<FeatureStep> steps = new List<FeatureStep>();
     }
 
@@ -101,7 +108,7 @@ namespace LustHouse.Slots
 
             Register<FreeSpinsFeature, FreeSpinsHandler>();
             Register<HoldAndSpinFeature, HoldAndSpinHandler>();
-            // BonusGameHandler registers here as it lands.
+            Register<BonusGameFeature, BonusGameHandler>();
         }
     }
 
@@ -114,6 +121,10 @@ namespace LustHouse.Slots
         public int freeSpinsAwarded;
         public bool triggeredHoldAndSpin;
         public bool triggeredBonusBuy;
+
+        /// <summary>At least one bonus round ran. Distinct from the buy path, which skips the trigger.</summary>
+        public bool triggeredBonus;
+
         public bool anyTriggered;
         public readonly List<FeatureStep> steps = new List<FeatureStep>();
     }
@@ -166,6 +177,7 @@ namespace LustHouse.Slots
                 result.freeSpinsAwarded += fr.freeSpinsAwarded;
                 result.triggeredHoldAndSpin |= fr.triggeredHoldAndSpin;
                 result.triggeredBonusBuy |= fr.triggeredBonusBuy;
+                result.triggeredBonus |= fr.triggeredBonus;
                 result.anyTriggered = true;
                 result.steps.AddRange(fr.steps);
             }
@@ -184,6 +196,7 @@ namespace LustHouse.Slots
             result.freeSpinsAwarded += features.freeSpinsAwarded;
             result.triggeredHoldAndSpin |= features.triggeredHoldAndSpin;
             result.triggeredBonusBuy |= features.triggeredBonusBuy;
+            result.triggeredBonus |= features.triggeredBonus;
 
             if (features.steps.Count > 0)
             {

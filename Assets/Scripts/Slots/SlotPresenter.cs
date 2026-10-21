@@ -27,6 +27,22 @@ namespace LustHouse.Slots
                  "A real spin is timed by the definition's spinDurationSeconds.")]
         public float spinHoldSeconds = 0.35f;
 
+        [Header("Feature round")]
+        [Tooltip("How long one spin of a feature round takes to show. A free-spins round " +
+                 "runs dozens of spins, and each one at the full spin length is minutes " +
+                 "of the player watching reels turn.")]
+        public float featureSpinSeconds = 0.35f;
+
+        [Tooltip("How many feature spins are animated before the round is resolved to its " +
+                 "final grid. A retriggering strip can run to hundreds of spins.")]
+        public int maxAnimatedFeatureSpins = 10;
+
+        [Header("Safety")]
+        [Tooltip("How long a spin may take before the game takes the controls back. A spin " +
+                 "that never finishes leaves every button disabled, and a player with no " +
+                 "button to press has no way out.")]
+        public float spinWatchdogSeconds = 60f;
+
         /// <summary>The reel grid. Exposed so a test can assert what the player is shown.</summary>
         public ReelsView Reels => _reels;
 
@@ -47,6 +63,22 @@ namespace LustHouse.Slots
 
         private bool _spinning;
         private bool _built;
+        private Coroutine _bannerRoutine;
+        private float _spinElapsed;
+
+        /// <summary>True while a spin is in flight. The controls are disabled until it ends.</summary>
+        public bool IsSpinning => _spinning;
+
+        /// <summary>
+        /// The longest a feature round of <paramref name="stepCount"/> steps can take to
+        /// show, in seconds.
+        ///
+        /// Bounded by the animation budget, so no matter how long the maths ran the player
+        /// is not left watching reels turn for minutes. Measured on the shipped content: an
+        /// average feature round is 27 spins and the worst case seen was over 160.
+        /// </summary>
+        public float FeatureRoundSeconds(int stepCount) =>
+            Mathf.Min(stepCount, maxAnimatedFeatureSpins) * featureSpinSeconds;
 
         private void Awake()
         {
@@ -83,8 +115,13 @@ namespace LustHouse.Slots
             if (_levelBanner == null) return;
             _levelBanner.text = $"LEVEL {evt.newLevel}!  +{evt.xpReward} COINS";
             _levelBanner.gameObject.SetActive(true);
-            StopAllCoroutines();
-            StartCoroutine(HideLevelBanner());
+
+            // Only the banner's own timer is restarted. StopAllCoroutines here also killed
+            // the spin in flight, and a level-up is published from inside the spin — the
+            // maths raises it the moment the win is credited. The game froze with every
+            // control disabled and the reels never turning.
+            if (_bannerRoutine != null) StopCoroutine(_bannerRoutine);
+            _bannerRoutine = StartCoroutine(HideLevelBanner());
         }
 
         private System.Collections.IEnumerator HideLevelBanner()
@@ -451,9 +488,32 @@ namespace LustHouse.Slots
             StartCoroutine(SpinRoutine());
         }
 
+        /// <summary>
+        /// The backstop. Every part of a spin has its own timeout, but a bug anywhere in it
+        /// must not be able to leave the player with no button to press: a spin that
+        /// overran its budget has the reels cut short and the controls released.
+        ///
+        /// This runs in Update rather than in a coroutine, so nothing that stops a
+        /// coroutine can stop the backstop.
+        /// </summary>
+        private void Update()
+        {
+            if (!_spinning) return;
+
+            _spinElapsed += Time.unscaledDeltaTime;
+            if (_spinElapsed < spinWatchdogSeconds) return;
+
+            LustLog.Error($"[LustHouse] A spin ran for {_spinElapsed:F0}s; the reels were " +
+                          "stopped and the controls released.");
+            _spinning = false;
+            if (_reels != null) _reels.StopSpin();
+            Refresh();
+        }
+
         private IEnumerator SpinRoutine()
         {
             _spinning = true;
+            _spinElapsed = 0f;
             _result.text = "SPINNING...";
             _result.color = UiFactory.TextSecondary;
             _totalWin.color = UiFactory.TextSecondary;
@@ -488,10 +548,29 @@ namespace LustHouse.Slots
             // Feature rounds (free spins, hold & spin, and later bonus games) play after the
             // base spin, from the exact steps the engine produced. The maths already scored
             // them; this only animates what was decided.
+            //
+            // A feature round is long. A free-spins round is dozens of spins and a
+            // retriggering strip runs to hundreds — measured at an average of 27 and a
+            // worst case over 160 on the shipped content. Animating each one at the full
+            // spin length is forty seconds to four minutes of the player watching reels
+            // turn with every control disabled, which reads as a freeze rather than a
+            // bonus. So the steps play fast, and a round longer than the animation budget
+            // is resolved to its final grid instead of being dragged out spin by spin.
+            // Nothing about the maths changes: the payout was already credited.
             if (result.featureSteps != null && _reels != null)
             {
-                bool turbo = controller.runner.turboMode > 0;
                 _reels.ClearHighlights();
+
+                float spinSeconds = controller.runner.definition != null
+                    ? controller.runner.definition.spinDurationSeconds
+                    : 1.5f;
+                float scale = featureSpinSeconds / Mathf.Max(0.05f, spinSeconds);
+                if (controller.runner.turboMode > 0) scale *= 0.35f;
+
+                int animated = 0;
+                var lastSpin = default(SpinResult);
+                bool haveLastSpin = false;
+
                 foreach (var step in result.featureSteps)
                 {
                     switch (step.kind)
@@ -504,9 +583,29 @@ namespace LustHouse.Slots
 
                         case FeatureStepKind.Spin:
                             if (step.spin.stops == null) break;
-                            yield return StartCoroutine(
-                                _reels.PlaySpin(step.spin.stops, turbo ? 0.35f : 1f));
+                            lastSpin = step.spin;
+                            haveLastSpin = true;
+
+                            if (animated >= maxAnimatedFeatureSpins)
+                            {
+                                // Past the budget: the reel lands on this spin's stops and
+                                // the round moves on.
+                                _reels.ShowStops(step.spin.stops);
+                                break;
+                            }
+
+                            animated++;
+                            yield return StartCoroutine(_reels.PlaySpin(step.spin.stops, scale));
                             _reels.ShowWinHighlights(step.spin);
+                            break;
+
+                        case FeatureStepKind.Pick:
+                        case FeatureStepKind.Reveal:
+                            // The picks were made before this round resolved (the engine took
+                            // the player's choice, or seeded the same draw), so this is a
+                            // playback of a result that already exists. Each reveal is folded
+                            // into the round total the result line shows below; a dedicated
+                            // pick-grid view would render them as a separate overlay.
                             break;
 
                         case FeatureStepKind.Award:
@@ -514,6 +613,11 @@ namespace LustHouse.Slots
                             break;
                     }
                 }
+
+                // The round resolved to its final grid, so the last thing the player sees is
+                // what the maths paid out on.
+                if (haveLastSpin && animated < maxAnimatedFeatureSpins)
+                    _reels.ShowWinHighlights(lastSpin);
             }
 
             if (result.bet > 0)

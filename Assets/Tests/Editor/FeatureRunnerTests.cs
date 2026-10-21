@@ -80,8 +80,8 @@ namespace LustHouse.Tests
                 "Free spins has a shipped handler and must resolve.");
             Assert.IsNotNull(SlotFeatureRegistry.Create(new HoldAndSpinFeature()),
                 "Hold & spin has a shipped handler and must resolve.");
-            Assert.IsNull(SlotFeatureRegistry.Create(new BonusGameFeature()),
-                "Bonus games have no handler yet; an unregistered feature must not run.");
+            Assert.IsNotNull(SlotFeatureRegistry.Create(new BonusGameFeature()),
+                "Bonus games have a shipped handler and must resolve.");
             Assert.IsNull(SlotFeatureRegistry.Create(null));
         }
 

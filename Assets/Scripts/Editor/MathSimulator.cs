@@ -158,10 +158,26 @@ namespace LustHouse.EditorTools
         /// police. The expectation is linear in the outcome, so enumerating symbol types
         /// per reel gives the true RTP deterministically and instantly.
         ///
+        /// The total is <see cref="LineRtp"/> plus <see cref="BonusRtp"/>. The bonus pays a
+        /// fixed expected amount per trigger that does not scale with the paytable, so
+        /// keeping it as a separate affine term is what stops the retune from counting it
+        /// once per paytable entry instead of once per spin.
+        ///
         /// This is the number the ship gate must use. Simulation stays useful for hit
         /// rate, variance and max-win behaviour, which have no closed form here.
         /// </summary>
         public static double ExactRtp(SlotMachineDefinition def)
+        {
+            double line = LineRtp(def);
+            if (double.IsNaN(line)) return double.NaN;
+            return line + BonusRtp(def);
+        }
+
+        /// <summary>
+        /// Exact RTP from paylines alone, excluding every feature round. This is what the
+        /// retune measures, so its weights stay linear in the payouts.
+        /// </summary>
+        public static double LineRtp(SlotMachineDefinition def)
         {
             if (def == null || def.reelCount <= 0) return double.NaN;
             if (def.reelStrips == null || def.reelStrips.Count != def.reelCount) return double.NaN;
@@ -194,6 +210,116 @@ namespace LustHouse.EditorTools
             int width = def.paylines[0].rows?.Length ?? def.reelCount;
             var ids = new int[width];
             return def.paylines.Count * SumLine(def, probs, 0, width, ids, 1.0);
+        }
+
+        /// <summary>
+        /// Exact RTP contribution of a pick-a-prize bonus, in bet-multiples per spin:
+        ///
+        ///     B = P(trigger) × picks × weightedMean(prize)
+        ///
+        /// Every factor is independent of the paytable, which is what makes this an affine
+        /// term the retune can subtract from the target and leave alone:
+        ///
+        ///   * The trigger is a count of one symbol id anywhere on the grid, so its chance
+        ///     depends only on the strips. It is <em>not</em> a payline expectation: the
+        ///     cells a reel shows are consecutive stops of one strip, so they are not
+        ///     independent draws. Each reel's distribution of "how many triggers in my
+        ///     visible window" is built by walking that reel's stop positions, then the
+        ///     reels are convolved. Treating the 15 cells as i.i.d. would be wrong here in
+        ///     a way it is not for paylines.
+        ///   * Each prize behind each option is an independent draw from the weighted
+        ///     list, and the player picks blind, so the expected total of N picks is
+        ///     exactly N × weightedMean regardless of strategy.
+        ///
+        /// Returns 0 when the game declares no bonus, so games without one are unaffected.
+        /// </summary>
+        public static double BonusRtp(SlotMachineDefinition def)
+        {
+            var bonus = def?.Find<BonusGameFeature>();
+            if (bonus == null || bonus.picks <= 0 || bonus.triggerCount <= 0) return 0.0;
+
+            double mean = WeightedMeanPrize(bonus.prizes);
+            if (mean <= 0.0) return 0.0;
+
+            return TriggerChance(def, bonus) * bonus.picks * mean;
+        }
+
+        /// <summary>Expected prize per pick, in bet-multiples, from the weighted prize list.</summary>
+        private static double WeightedMeanPrize(List<BonusPrize> prizes)
+        {
+            if (prizes == null || prizes.Count == 0) return 0.0;
+
+            double total = 0.0, weight = 0.0;
+            for (int i = 0; i < prizes.Count; i++)
+            {
+                var prize = prizes[i];
+                if (prize == null || prize.weight <= 0f) continue;
+                total += prize.payout * prize.weight;
+                weight += prize.weight;
+            }
+            return weight > 0.0 ? total / weight : 0.0;
+        }
+
+        /// <summary>
+        /// P(at least <c>triggerCount</c> trigger symbols on the grid).
+        ///
+        /// A reel shows one contiguous window of its strip, so its cells are correlated:
+        /// two triggers in the window means two triggers within <c>rowCount</c> consecutive
+        /// stops. Each reel therefore contributes a histogram over "triggers in my window"
+        /// — one entry per stop position — and the exact grid distribution is the
+        /// convolution of those histograms across reels. Independent cells would overcount
+        /// clustered triggers badly on strips this short.
+        /// </summary>
+        private static double TriggerChance(SlotMachineDefinition def, BonusGameFeature bonus)
+        {
+            if (def.reelStrips == null || def.reelStrips.Count != def.reelCount) return 0.0;
+
+            // distribution[n] = P(exactly n triggers on the grid so far).
+            var distribution = new double[1];
+            distribution[0] = 1.0;
+
+            for (int r = 0; r < def.reelCount; r++)
+            {
+                var strip = def.reelStrips[r]?.symbols;
+                if (strip == null || strip.Count == 0) return 0.0;
+
+                int length = strip.Count;
+                int window = Mathf.Max(1, def.rowCount);
+
+                // histogram[k] = P(this reel's window holds k triggers).
+                var histogram = new double[window + 1];
+                for (int stop = 0; stop < length; stop++)
+                {
+                    int count = 0;
+                    for (int row = 0; row < window; row++)
+                        if (IsTrigger(strip[(stop + row) % length], bonus, def)) count++;
+
+                    if (count > window) count = window;
+                    histogram[count] += 1.0 / length;
+                }
+
+                var convolved = new double[distribution.Length + window];
+                for (int a = 0; a < distribution.Length; a++)
+                {
+                    if (distribution[a] == 0.0) continue;
+                    for (int b = 0; b < histogram.Length; b++)
+                        convolved[a + b] += distribution[a] * histogram[b];
+                }
+                distribution = convolved;
+            }
+
+            double chance = 0.0;
+            for (int n = bonus.triggerCount; n < distribution.Length; n++)
+                chance += distribution[n];
+
+            return chance > 1.0 ? 1.0 : chance;
+        }
+
+        /// <summary>Is this symbol id a bonus trigger? -1 means "count any scatter".</summary>
+        private static bool IsTrigger(int symbolId, BonusGameFeature bonus, SlotMachineDefinition def)
+        {
+            if (bonus.triggerSymbolId >= 0) return symbolId == bonus.triggerSymbolId;
+            return def.SymbolById(symbolId)?.isScatter == true;
         }
 
         /// <summary>
