@@ -72,6 +72,14 @@ namespace LustHouse.Core
             // change and the player's volume settings survive with it.
             _audio = _root.AddComponent<AudioService>();
 
+            // The house bank is the always-on one: the lobby's music and any other
+            // cue no game claims. It is loaded from Resources rather than assigned in
+            // a scene because this whole root is constructed in code — there is no
+            // inspector here to put a reference on. A missing bank is not an error:
+            // every cue falls back to the synthesiser, which is the point of it.
+            var houseBank = Resources.Load<AudioBank>("Audio/AudioBank_House");
+            if (houseBank != null) _audio.SetHouseBank(houseBank);
+
             avatar.SetCatalog(cosmeticCatalog, fallbackBaseId);
 
             wallet.MarkedDirty = MarkDirty;

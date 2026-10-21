@@ -19,6 +19,16 @@ namespace LustHouse.Audio
 
         /// <summary>Stops a looping cue, with a short fade so it does not click off.</summary>
         void StopLoop(AudioCue cue);
+
+        /// <summary>
+        /// Starts a music bed on the music channel. A bed that is already playing is
+        /// left playing — music restarting on every call is the same stutter a loop
+        /// restarting would be.
+        /// </summary>
+        void PlayMusic(AudioCue cue);
+
+        /// <summary>Fades the music out and stops it, over the service's music fade.</summary>
+        void StopMusic(AudioCue cue);
     }
 
     /// <summary>
@@ -36,5 +46,7 @@ namespace LustHouse.Audio
         public void Play(AudioCue cue, float pitch = 1f) { }
         public void PlayLoop(AudioCue cue) { }
         public void StopLoop(AudioCue cue) { }
+        public void PlayMusic(AudioCue cue) { }
+        public void StopMusic(AudioCue cue) { }
     }
 }

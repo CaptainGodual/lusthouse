@@ -206,9 +206,10 @@ Assets/Tests/Editor/   EditMode suite
 
 ## Sound
 
-The game has no audio files. Every sound is **synthesised at runtime** from maths —
-the same way the UI builds its own sprites — so the project ships with a voice without
-shipping a single `.wav`:
+Most sound is **synthesised at runtime** from maths — the same way the UI builds its
+own sprites — so the project ships with a voice without shipping a `.wav` for every
+cue. Music is the exception: a bed is a real track when one is on the bank, and the
+synthesised loop when one is not.
 
 | Cue | When |
 |---|---|
@@ -219,19 +220,26 @@ shipping a single `.wav`:
 | `ReelStop` | one reel lands, a little lower in pitch each time |
 | `WinSmall` / `WinMedium` / `WinBig` | a payout, tiered off the game's own celebration thresholds |
 | `BonusTrigger` | a free-spins, hold & spin or bonus round starts |
+| `LobbyMusic` | the lobby's background bed; fades out as the player leaves for a game |
 
 - **`Assets/Scripts/Audio/`** holds the system. `AudioService` is the live output
-  (a pool of eight voices, a loop channel, master/music/sfx buses); `SlotAudio` maps
-  game events to cues; `ProceduralAudio` makes the sounds.
+  (a pool of eight voices, a loop channel, a music channel, master/music/sfx buses);
+  `SlotAudio` maps game events to cues; `ProceduralAudio` makes the sounds.
+- **Music has its own channel**, with its own volume (saved with the player's
+  settings) and its own fade — a bed fades in on arrival and out on departure,
+  because music that cuts is worse than no music.
 - **Recorded audio replaces any of it without touching code.** Put a clip on an
-  `AudioBank` entry (`Assets/Audio/Banks/`) and the game plays that instead. A cue
-  with no entry falls back to the synthesised sound, so a half-filled bank is a good
+  `AudioBank` entry (`Assets/Audio/Banks/`) and the game plays that instead. Two
+  banks: the **house bank** (`Assets/Resources/Audio/AudioBank_House.asset`, always
+  loaded — the lobby's bed lives here, authored by *LustHouse ▸ Audio ▸ Author house
+  music bank*) and a **game's own bank** for per-title overrides. Anything neither
+  bank mentions falls back to the synthesised sound, so a half-filled bank is a good
   bank.
 - The sounds are **deterministic** — a fixed-seed generator, never
   `UnityEngine.Random` — so a build always sounds the same and a QA report about a
   sound is a report about *that* sound.
-- The reel loop is **periodic by construction**, so it joins up with itself and does
-  not click once a revolution.
+- The reel loop and the synthesised music bed are **periodic by construction**, so
+  they join up with themselves and do not click once a loop.
 - **Every scene gets an audio listener.** The cameras here are built in code, and a
   camera built in code is not given one; a scene without a listener is completely
   silent while looking perfectly normal.
@@ -239,5 +247,5 @@ shipping a single `.wav`:
 ## Known gaps
 
 Tracked in plan §0.2 and §6. Not yet built: IAP/store integration, tournaments,
-missions, daily gift, Club screen, localisation, a continuous music bed, and a
+missions, daily gift, Club screen, localisation, per-game music beds, and a
 settings screen for the volumes (the volumes themselves apply and persist).

@@ -43,5 +43,14 @@ namespace LustHouse.Audio
 
         /// <summary>A feature round has been triggered.</summary>
         BonusTrigger,
+
+        /// <summary>
+        /// A bed of background music, on the music bus rather than the sfx one.
+        ///
+        /// Music is not a sound effect played loudly: it has its own channel, its own
+        /// volume in the player's settings, and its own fade, so leaving the room it
+        /// belongs to takes it down gently rather than cutting it off.
+        /// </summary>
+        LobbyMusic,
     }
 }

@@ -220,6 +220,12 @@ namespace LustHouse.Tests
             public void PlayLoop(AudioCue cue) => loops.Add(cue);
             public void StopLoop(AudioCue cue) => stopped.Add(cue);
 
+            public readonly List<AudioCue> music = new List<AudioCue>();
+            public readonly List<AudioCue> musicStopped = new List<AudioCue>();
+
+            public void PlayMusic(AudioCue cue) => music.Add(cue);
+            public void StopMusic(AudioCue cue) => musicStopped.Add(cue);
+
             public bool Played(AudioCue cue) => played.Contains(cue);
 
             public int TimesPlayed(AudioCue cue)

@@ -78,12 +78,15 @@ namespace LustHouse.Audio
                 case AudioCue.WinMedium: samples = BuildWinMedium(); break;
                 case AudioCue.WinBig: samples = BuildWinBig(); break;
                 case AudioCue.BonusTrigger: samples = BuildBonusTrigger(); break;
+                case AudioCue.LobbyMusic: samples = BuildLobbyMusic(); break;
                 default: return null;
             }
 
-            // The loop is left exactly as built: a fade at its end would put a hole in
-            // it, and the whole point of it is that it joins up with itself.
-            if (cue != AudioCue.ReelSpinLoop) ApplyTailFade(samples);
+            // The loops are left exactly as built: a fade at their end would put a
+            // hole in them, and the whole point of them is that they join up with
+            // themselves.
+            if (cue != AudioCue.ReelSpinLoop && cue != AudioCue.LobbyMusic)
+                ApplyTailFade(samples);
 
             return MakeClip(cue, samples);
         }
@@ -270,6 +273,76 @@ namespace LustHouse.Audio
                 if (i < 0 || i >= buffer.Length) continue;
                 float t = (float)(i - (riseSamples - fadeSamples)) / fadeSamples;
                 buffer[i] *= 1f - t;
+            }
+
+            return buffer;
+        }
+
+        /// <summary>
+        /// The lobby's music bed: a short funk loop — kick, syncopated bass, clav-ish
+        /// stabs, hats — that the recorded track (or any track on a bank) replaces.
+        ///
+        /// It obeys the same two rules as the reel loop. It is deterministic: every
+        /// noise burst comes from a fixed seed. And it is seamless: the buffer is a
+        /// whole number of seconds, the pad underneath is whole-number hertz so it
+        /// comes back round to where it started, and every hit — kick, pluck, stab,
+        /// hat — is over and gone before the buffer ends. A music bed that clicks
+        /// every four bars is a music bed nobody can listen to.
+        /// </summary>
+        private static float[] BuildLobbyMusic()
+        {
+            const float loopSeconds = 4f;               // two bars of 4/4 at 120 bpm
+            var buffer = Buffer(loopSeconds);
+
+            // The pad: whole-number hertz so it is periodic across the loop. F2 and
+            // C3, felt more than heard, holding the room together under the hits.
+            AddSustained(buffer, 87.0, 0.05f);
+            AddSustained(buffer, 131.0, 0.035f);
+
+            // The kick: low and short, on the beat with a couple of off-beat pushes
+            // so it grooves rather than marches.
+            double[] kicks = { 0.0, 0.75, 1.5, 2.0, 2.75, 3.5 };
+            foreach (double at in kicks)
+            {
+                AddTone(buffer, 58.0, at, 0.18f, 0.85f, 26f);
+                AddNoise(buffer, at, 0.012f, 0.30f, 200f, 7u, 1f);
+            }
+
+            // The bass: a syncopated line in F minor pentatonic. Each pluck decays to
+            // nothing well inside its window, so none of them straddles the seam.
+            double[] bassNotes =
+            {
+                0.0, 0.25, 0.75, 1.25, 1.5,           // bar one
+                2.0, 2.25, 2.75, 3.25, 3.5,           // bar two
+            };
+            double[] bassTones = { 87.31, 87.31, 130.81, 103.83, 87.31,
+                                   87.31, 87.31, 155.56, 130.81, 87.31 };
+            for (int i = 0; i < bassNotes.Length; i++)
+            {
+                AddTone(buffer, bassTones[i], bassNotes[i], 0.30f, 0.42f, 14f);
+                AddTone(buffer, bassTones[i] * 2.0, bassNotes[i], 0.12f, 0.12f, 26f);
+            }
+
+            // The stabs: an Fm7 chord on the off-beats, bright and quick, like a clav
+            // with the lid on it. Higher and shorter than the bass so the two never
+            // mud each other.
+            double[] stabs = { 0.375, 1.375, 2.375, 3.375 };
+            foreach (double at in stabs)
+            {
+                AddTone(buffer, 349.23, at, 0.16f, 0.20f, 30f);   // F4
+                AddTone(buffer, 415.30, at, 0.16f, 0.16f, 30f);   // Ab4
+                AddTone(buffer, 523.25, at, 0.16f, 0.14f, 32f);   // C5
+                AddTone(buffer, 622.25, at, 0.14f, 0.10f, 34f);   // Eb5
+            }
+
+            // The hats: a tick every eighth, louder on the beat. Over and gone in
+            // thirty milliseconds each — the last one lands at 3.75s and is silent
+            // long before the loop comes round.
+            for (int tick = 0; tick < 16; tick++)
+            {
+                float at = tick * 0.25f;
+                float amplitude = tick % 2 == 0 ? 0.16f : 0.09f;
+                AddNoise(buffer, at, 0.030f, amplitude, 130f, (uint)(201 + tick), 1f);
             }
 
             return buffer;

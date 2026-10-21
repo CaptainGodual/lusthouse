@@ -42,18 +42,31 @@ namespace LustHouse.Audio
                  "reel sound ends on a click.")]
         public float loopFadeSeconds = 0.08f;
 
+        [Header("Music")]
+        [Tooltip("How long a music bed takes to fade in and out. Music that cuts is " +
+                 "worse than no music: the room the player is in should change gently.")]
+        public float musicFadeSeconds = 0.8f;
+
         [Header("Content")]
         [Tooltip("Sound overrides for the current game. Cues with no entry fall back " +
                  "to the synthesised clip.")]
         public AudioBank bank;
+
+        [Tooltip("The always-on bank: music and other house-wide cues. Games override " +
+                 "their own cues through `bank`; anything they do not cover comes from " +
+                 "here before the synthesiser.")]
+        public AudioBank houseBank;
 
         private AudioSource[] _voices;
         private int _nextVoice;
         private AudioSource _loop;
         private AudioSource _music;
         private Coroutine _loopFade;
+        private Coroutine _musicFade;
         private AudioCue _loopCue = AudioCue.None;
+        private AudioCue _musicCue = AudioCue.None;
         private float _loopBaseVolume = 1f;
+        private float _musicBaseVolume = 1f;
         private float _sweepTimer;
 
         // ---- lifecycle -------------------------------------------------------
@@ -195,6 +208,100 @@ namespace LustHouse.Audio
             _loopFade = StartCoroutine(FadeOutLoop());
         }
 
+        // ---- the music channel ----------------------------------------------
+
+        /// <summary>
+        /// Starts a music bed, fading it in.
+        ///
+        /// Music lives on its own channel with its own volume because it is not a
+        /// sound effect played loudly: it is the room the player is standing in. It
+        /// resolves clips the same way a one-shot does — the game's bank, then the
+        /// house bank, then the synthesiser — so a title can bring its own theme
+        /// without a programmer, and a build with no clips at all still has music.
+        /// </summary>
+        public void PlayMusic(AudioCue cue)
+        {
+            if (cue == AudioCue.None || _music == null) return;
+
+            var clip = ClipFor(cue);
+            if (clip == null) return;
+
+            // A bed that is already running is left running. Restarting it on every
+            // call is a stutter — and the lobby can re-assert itself more than once.
+            if (_music.isPlaying && _music.clip == clip) return;
+
+            CancelMusicFade();
+            _music.clip = clip;
+            _music.loop = true;
+            _musicCue = cue;
+            _musicBaseVolume = Mathf.Clamp01(musicVolume) * EntryVolume(cue);
+            _music.volume = 0f;                       // the fade brings it up
+            _music.Play();
+            _musicFade = StartCoroutine(FadeInMusic());
+        }
+
+        /// <summary>Fades the music out and stops it.</summary>
+        public void StopMusic(AudioCue cue)
+        {
+            if (_music == null || !_music.isPlaying) return;
+
+            CancelMusicFade();
+            _musicFade = StartCoroutine(FadeOutMusic());
+        }
+
+        /// <summary>
+        /// Fades the bed in from silence. Music that starts at full volume announces
+        /// itself; one that arrives over a second changes the room quietly.
+        /// </summary>
+        private IEnumerator FadeInMusic()
+        {
+            float elapsed = 0f;
+            float duration = Mathf.Max(0.01f, musicFadeSeconds);
+
+            while (elapsed < duration && _music != null)
+            {
+                elapsed += Time.unscaledDeltaTime;
+                float t = Mathf.Clamp01(elapsed / duration);
+                if (_music != null) _music.volume = _musicBaseVolume * t;
+                yield return null;
+            }
+
+            if (_music != null) _music.volume = _musicBaseVolume;
+            _musicFade = null;
+        }
+
+        /// <summary>Fades the bed out and stops it, so leaving a room is not a cut.</summary>
+        private IEnumerator FadeOutMusic()
+        {
+            float elapsed = 0f;
+            float duration = Mathf.Max(0.01f, musicFadeSeconds);
+            float startVolume = _music != null ? _music.volume : 0f;
+
+            while (elapsed < duration && _music != null && _music.isPlaying)
+            {
+                elapsed += Time.unscaledDeltaTime;
+                float t = Mathf.Clamp01(elapsed / duration);
+                if (_music != null) _music.volume = startVolume * (1f - t);
+                yield return null;
+            }
+
+            if (_music != null)
+            {
+                _music.Stop();
+                _music.volume = _musicBaseVolume;
+            }
+
+            _musicCue = AudioCue.None;
+            _musicFade = null;
+        }
+
+        private void CancelMusicFade()
+        {
+            if (_musicFade == null) return;
+            StopCoroutine(_musicFade);
+            _musicFade = null;
+        }
+
         /// <summary>
         /// Fades the loop out and stops it. A loop that stops dead ends on a step, and
         /// the step is heard over the top of whatever the game does next.
@@ -238,23 +345,40 @@ namespace LustHouse.Audio
             return source;
         }
 
-        /// <summary>The clip for a cue: the game's own if it has one, else the
-        /// synthesised one.</summary>
+        /// <summary>
+        /// The clip for a cue: the game's bank if it has an entry, else the house bank,
+        /// else the synthesised one.
+        ///
+        /// The two banks exist because a game should be able to bring its own voice
+        /// without also having to re-declare the house's. Music is the common case: a
+        /// slot brings its own theme, and whatever it does not mention — the lobby
+        /// bed, the clicks — is still there.
+        /// </summary>
         public AudioClip ClipFor(AudioCue cue)
         {
-            var entry = bank != null ? bank.Find(cue) : null;
+            var entry = FindEntry(cue);
             if (entry != null && entry.clip != null) return entry.clip;
             return ProceduralAudio.ClipFor(cue);
         }
 
-        private float EntryVolume(AudioCue cue)
+        private AudioBank.Entry FindEntry(AudioCue cue)
         {
             var entry = bank != null ? bank.Find(cue) : null;
+            if (entry != null && entry.clip != null) return entry;
+            return houseBank != null ? houseBank.Find(cue) : null;
+        }
+
+        private float EntryVolume(AudioCue cue)
+        {
+            var entry = FindEntry(cue);
             return entry != null ? Mathf.Clamp01(entry.volume) : 1f;
         }
 
         /// <summary>Switches the game whose sound overrides are in use.</summary>
         public void SetBank(AudioBank next) => bank = next;
+
+        /// <summary>Sets the always-on bank: music and other house-wide cues.</summary>
+        public void SetHouseBank(AudioBank next) => houseBank = next;
 
         // ---- volume ----------------------------------------------------------
 
@@ -310,7 +434,14 @@ namespace LustHouse.Audio
                 if (_loopFade == null) _loop.volume = _loopBaseVolume;
             }
 
-            if (_music != null) _music.volume = Mathf.Clamp01(musicVolume);
+            if (_music != null)
+            {
+                // Same for the bed: a volume change mid-fade leaves the fade's own
+                // ramp alone (it is already carrying the level somewhere), and the
+                // base is re-read so the change is in force when the fade ends.
+                _musicBaseVolume = Mathf.Clamp01(musicVolume) * EntryVolume(_musicCue);
+                if (_musicFade == null) _music.volume = _musicBaseVolume;
+            }
         }
 
         /// <summary>Copies the volumes into a save document's settings.</summary>

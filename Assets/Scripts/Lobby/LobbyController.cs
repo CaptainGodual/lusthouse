@@ -1,5 +1,6 @@
 using System.Collections;
 using System.Collections.Generic;
+using LustHouse.Audio;
 using LustHouse.Catalog;
 using LustHouse.Core;
 using LustHouse.Economy;
@@ -53,6 +54,23 @@ namespace LustHouse.Lobby
             EnsurePresenter();
             EnsureLoadingScreen();
             EnsureContentService();
+        }
+
+        private void Start()
+        {
+            // The lobby has a room tone: a bed of music that starts when the player
+            // arrives and fades when they leave for a game. It is asked for by cue, so
+            // what the bed actually is — a recorded track on the house bank, or the
+            // synthesised fallback — is decided by the audio system, not here.
+            AudioFeedback.PlayMusic(AudioCue.LobbyMusic);
+        }
+
+        private void OnDestroy()
+        {
+            // Leaving for a game unloads this scene. The bed fades rather than cuts:
+            // the music channel outlives the lobby, so without this the funk would
+            // follow the player all the way into the slot screen.
+            AudioFeedback.StopMusic(AudioCue.LobbyMusic);
         }
 
         /// <summary>

@@ -52,6 +52,20 @@ namespace LustHouse.Audio
             Output.StopLoop(cue);
         }
 
+        /// <summary>Starts a music bed on the music channel.</summary>
+        public static void PlayMusic(AudioCue cue)
+        {
+            if (cue == AudioCue.None) return;
+            Output.PlayMusic(cue);
+        }
+
+        /// <summary>Fades the music out and stops it.</summary>
+        public static void StopMusic(AudioCue cue)
+        {
+            if (cue == AudioCue.None) return;
+            Output.StopMusic(cue);
+        }
+
         /// <summary>
         /// Gives a button a click sound.
         ///
