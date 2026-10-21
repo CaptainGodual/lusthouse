@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using LustHouse.Avatar;
+using LustHouse.Audio;
 using LustHouse.Economy;
 using UnityEngine;
 
@@ -52,6 +53,7 @@ namespace LustHouse.Core
         public string LoadWarning { get; private set; }
 
         private GameObject _root;
+        private AudioService _audio;
         private float _dirtyTimer = float.MaxValue;
         private bool _dirty;
 
@@ -65,6 +67,10 @@ namespace LustHouse.Core
             var avatar = _root.AddComponent<AvatarComposer>();
             var progression = _root.AddComponent<PlayerProgression>();
             var dailyBonus = _root.AddComponent<DailyBonusService>();
+
+            // The sound system rides on the same root, so it survives every scene
+            // change and the player's volume settings survive with it.
+            _audio = _root.AddComponent<AudioService>();
 
             avatar.SetCatalog(cosmeticCatalog, fallbackBaseId);
 
@@ -143,6 +149,10 @@ namespace LustHouse.Core
             InventoryService.Instance.RestoreState(result.document.inventory);
             PlayerProgression.Instance.RestoreFrom(result.document.player);
 
+            // The volumes were in the save all along and nothing ever read them, so
+            // they reset to full every launch. They are read now.
+            if (_audio != null) _audio.ApplyVolumesFrom(result.document.settings);
+
             LoadedFromCorruptSave = !string.IsNullOrEmpty(result.warning);
             LoadWarning = result.warning;
         }
@@ -195,6 +205,11 @@ namespace LustHouse.Core
             doc.inventory = InventoryService.Instance != null
                 ? InventoryService.Instance.CaptureState()
                 : doc.inventory;
+
+            // The settings block was never written, so the volumes were thrown away
+            // on every save. Only the volume fields are touched — the rest of the
+            // settings belong to whatever else owns them.
+            if (_audio != null) _audio.CopyVolumesInto(doc.settings);
 
             Save.Save(doc);
             _dirty = false;

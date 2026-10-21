@@ -1,6 +1,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using LustHouse.Audio;
 using LustHouse.Core;
 using UnityEngine;
 
@@ -264,6 +265,12 @@ namespace LustHouse.Boot
         }
     }
 
+    /// <summary>
+    /// Makes the sound set. The game's sounds are synthesised rather than streamed
+    /// from files, so this is real work: the clips are generated here rather than on
+    /// the first press, which would put a hitch in the middle of the player's very
+    /// first tap.
+    /// </summary>
     public sealed class TaskLoadAudio : LoadingTaskBase
     {
         public override int Weight => 5;
@@ -271,6 +278,11 @@ namespace LustHouse.Boot
 
         public override IEnumerator Run(Action<float> report)
         {
+            report(0.2f);
+            yield return null;
+
+            AudioService.WarmUp();
+
             report(1f);
             yield return null;
         }

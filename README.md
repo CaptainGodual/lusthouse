@@ -194,6 +194,7 @@ setting from drifting.
 Assets/Scripts/
   Core/        wallet, ledger, inventory, save + migrations, event bus, logging
   Slots/       seeded RNG, reel engine, payline evaluator, game runner
+  Audio/       the sound system: cue vocabulary, voice pool, synthesised sounds
   Avatar/      composer + loadout
   Economy/     cosmetic definitions, level + 7-tier VIP progression
   Catalog/     GameCatalog (the lobby grid's data source)
@@ -203,7 +204,40 @@ Assets/Scripts/
 Assets/Tests/Editor/   EditMode suite
 ```
 
+## Sound
+
+The game has no audio files. Every sound is **synthesised at runtime** from maths —
+the same way the UI builds its own sprites — so the project ships with a voice without
+shipping a single `.wav`:
+
+| Cue | When |
+|---|---|
+| `UiClick` | any button press |
+| `SpinPress` | the spin button (heavier than a click: it spends the player's money) |
+| `GameWelcome` | a game opens and its content is valid |
+| `ReelSpinLoop` | loops while the reels turn, and fades out when they stop |
+| `ReelStop` | one reel lands, a little lower in pitch each time |
+| `WinSmall` / `WinMedium` / `WinBig` | a payout, tiered off the game's own celebration thresholds |
+| `BonusTrigger` | a free-spins, hold & spin or bonus round starts |
+
+- **`Assets/Scripts/Audio/`** holds the system. `AudioService` is the live output
+  (a pool of eight voices, a loop channel, master/music/sfx buses); `SlotAudio` maps
+  game events to cues; `ProceduralAudio` makes the sounds.
+- **Recorded audio replaces any of it without touching code.** Put a clip on an
+  `AudioBank` entry (`Assets/Audio/Banks/`) and the game plays that instead. A cue
+  with no entry falls back to the synthesised sound, so a half-filled bank is a good
+  bank.
+- The sounds are **deterministic** — a fixed-seed generator, never
+  `UnityEngine.Random` — so a build always sounds the same and a QA report about a
+  sound is a report about *that* sound.
+- The reel loop is **periodic by construction**, so it joins up with itself and does
+  not click once a revolution.
+- **Every scene gets an audio listener.** The cameras here are built in code, and a
+  camera built in code is not given one; a scene without a listener is completely
+  silent while looking perfectly normal.
+
 ## Known gaps
 
-Tracked in plan §0.2 and §6. Not yet built: lobby UI, art, audio, IAP/store integration,
-tournaments, missions, daily gift, Club screen, localisation.
+Tracked in plan §0.2 and §6. Not yet built: IAP/store integration, tournaments,
+missions, daily gift, Club screen, localisation, a continuous music bed, and a
+settings screen for the volumes (the volumes themselves apply and persist).

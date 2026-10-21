@@ -1,3 +1,4 @@
+using LustHouse.Audio;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
@@ -382,6 +383,10 @@ namespace LustHouse.UI
 
             // Legible on the default raised panel colour.
             StyleButton(button);
+
+            // Every button the player can press says something. A button that is
+            // silent is a button the player has to look at to find.
+            AudioFeedback.AttachClickSound(button);
 
             labelText = NewText("Label", go.transform, label, fontSize, FontStyle.Bold, textColor);
             Stretch(labelText.rectTransform);

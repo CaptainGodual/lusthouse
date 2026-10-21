@@ -1,3 +1,4 @@
+using LustHouse.Audio;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -301,6 +302,7 @@ namespace LustHouse.UI
             var button = image.gameObject.AddComponent<Button>();
             button.targetGraphic = image;
             UiFactory.StyleButton(button);
+            AudioFeedback.AttachClickSound(button);
             return button;
         }
 

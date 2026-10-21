@@ -579,6 +579,10 @@ namespace LustHouse.Slots
             _scroll = _travelTo;
             _spinning = false;
             _routine = null;
+
+            // The reel has landed. One knock per reel, so the row of reels stopping
+            // is heard as a run rather than a single thud.
+            SlotAudio.ReelStopped(_reelIndex);
         }
 
         // ---- introspection (tests + the presenter's debug readout) ----------

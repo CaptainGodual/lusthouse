@@ -1,3 +1,4 @@
+using LustHouse.Audio;
 using LustHouse.Core;
 using UnityEngine;
 
@@ -58,6 +59,12 @@ namespace LustHouse.Slots
 
             // The presenter's OnEnable ran before the definition arrived, so refresh it now.
             GetComponent<SlotPresenter>()?.Refresh();
+
+            // The game is open and its content is valid: this is the moment to greet
+            // the player. It is also the moment the game's own sounds, if it has any,
+            // take over from whatever was playing before.
+            AudioService.Instance?.SetBank(_definition.audioBank);
+            SlotAudio.GameEntered();
         }
 
         private void OnDestroy()

@@ -1,4 +1,5 @@
 using System.Collections;
+using LustHouse.Audio;
 using LustHouse.Core;
 using LustHouse.Economy;
 using LustHouse.Slots;
@@ -102,6 +103,10 @@ namespace LustHouse.Slots
         {
             EventBus.Unsubscribe<WalletChanged>(OnWalletChanged);
             EventBus.Unsubscribe<LevelUp>(OnLevelUp);
+
+            // Leaving the screen mid-spin takes the reels with it, so it takes the
+            // loop with it too.
+            SlotAudio.SpinEnded();
         }
 
         private void OnWalletChanged(WalletChanged change)
@@ -329,6 +334,10 @@ namespace LustHouse.Slots
 
             _spinButton.onClick.AddListener(OnSpinClicked);
 
+            // The spin press is heavier than a button click. It is the one press that
+            // spends the player's money, and it should not sound like tapping a label.
+            AudioFeedback.AttachClickSound(_spinButton, AudioCue.SpinPress);
+
             // ---- session stats (§2.10) ----
             _lifetime = UiFactory.NewText("Lifetime", bar.transform, "", 12, FontStyle.Normal,
                 UiFactory.TextSecondary, TextAnchor.MiddleRight);
@@ -376,6 +385,8 @@ namespace LustHouse.Slots
                 UiFactory.TextPrimary);
             UiFactory.Stretch(text.rectTransform);
 
+            AudioFeedback.AttachClickSound(button);
+
             return button;
         }
 
@@ -414,6 +425,8 @@ namespace LustHouse.Slots
             labelText = UiFactory.NewText("Label", go.transform, label, fontSize, FontStyle.Bold,
                 UiFactory.TextPrimary);
             UiFactory.Stretch(labelText.rectTransform);
+
+            AudioFeedback.AttachClickSound(button);
 
             return button;
         }
@@ -505,6 +518,11 @@ namespace LustHouse.Slots
 
             LustLog.Error($"[LustHouse] A spin ran for {_spinElapsed:F0}s; the reels were " +
                           "stopped and the controls released.");
+
+            // The reel sound has to stop with the reels, or it plays on over a
+            // machine that has just given up.
+            SlotAudio.SpinEnded();
+
             _spinning = false;
             if (_reels != null) _reels.StopSpin();
             Refresh();
@@ -537,8 +555,18 @@ namespace LustHouse.Slots
             if (result.stops != null && _reels != null)
             {
                 bool turbo = controller.runner.turboMode > 0;
+
+                // The reels are turning: the loop runs until they stop, across the base
+                // spin and every feature spin that follows it. Restarting it per spin
+                // would turn a feature round into a stutter.
+                SlotAudio.SpinStarted();
+
                 yield return StartCoroutine(_reels.PlaySpin(result.stops, turbo ? 0.35f : 1f));
                 _reels.ShowWinHighlights(result);
+
+                // The feature is announced now, when the trigger is lit up on screen.
+                // The maths found it a second ago; the player has only just seen it.
+                SlotAudio.FeatureTriggered(result);
             }
             else
             {
@@ -637,10 +665,15 @@ namespace LustHouse.Slots
                 _result.text = "NOT ENOUGH COINS";
             }
 
+            // The payout is announced once the round has resolved and the numbers on
+            // screen are the ones that were actually paid.
+            SlotAudio.WinResolved(result, controller != null ? controller.Definition : null);
+
             RenderLifetime(betBefore, lustBefore, xpBefore);
 
             // Refresh before clearing _spinning would keep the spin button disabled, so clear
             // the guard first and let Refresh restore every control in one place.
+            SlotAudio.SpinEnded();
             _spinning = false;
             Refresh();
         }
