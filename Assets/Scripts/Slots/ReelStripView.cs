@@ -1,6 +1,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using LustHouse.Core;
 using LustHouse.UI;
 using UnityEngine;
 using UnityEngine.UI;
@@ -268,6 +269,11 @@ namespace LustHouse.Slots
         /// Called when the next spin clears the highlights. An animation that outlives
         /// its win leaves a symbol pulsing on a losing spin, which is the sort of thing
         /// that makes a player stop trusting the machine.
+        ///
+        /// Stopping the pulse is not enough on its own. An authored clip drives the
+        /// icon's sprite and loops, so the <c>Animation</c> component has to be stopped
+        /// too — and the clip leaves the icon on whatever frame it stopped on, so the
+        /// symbol's own frame goes back on.
         /// </summary>
         public void StopWinAnimations()
         {
@@ -279,8 +285,27 @@ namespace LustHouse.Slots
 
             for (int i = 0; i < _cells.Count; i++)
             {
-                _cells[i].icon.rectTransform.localScale = Vector3.one;
-                _cells[i].glow.color = new Color(1f, 0.86f, 0.55f, 0f);
+                var cell = _cells[i];
+                cell.icon.rectTransform.localScale = Vector3.one;
+                cell.glow.color = new Color(1f, 0.86f, 0.55f, 0f);
+
+                // The clip drove the icon's sprite too, and it loops. Stopping the pulse
+                // is not enough: the clip has to be stopped as well.
+                var animation = cell.icon.GetComponent<Animation>();
+                if (animation != null)
+                {
+                    animation.Stop();
+                    animation.clip = null;
+                }
+
+                // The symbol's own frame goes back on. A sprite-sheet animation owns the
+                // icon's sprite while it plays, and the clip leaves it on whatever frame
+                // it stopped on — so this is not just for the frames.
+                if (_strip == null || _definition == null || StopCount == 0) continue;
+
+                int position = Mod(cell.stripIndex, StopCount);
+                cell.painted = position;
+                Paint(cell, _strip[position]);
             }
         }
 
@@ -306,6 +331,11 @@ namespace LustHouse.Slots
         /// <summary>
         /// The standard win pulse: the symbol punches up and the halo behind it lights.
         ///
+        /// Two ways to animate a winning symbol. The frames are the simple one: a sprite
+        /// sheet imported as Multiple sprites, dragged into the symbol, played here. The
+        /// clip is the older path — it needs a legacy AnimationClip, which the editor
+        /// does not make for you any more — so it is only used when there are no frames.
+        ///
         /// A symbol with its own clip plays that instead — an authored animation can
         /// swap the sprite for a frame sequence, which is how a symbol that really does
         /// have an animation in it shows it.
@@ -319,7 +349,10 @@ namespace LustHouse.Slots
             Vector3 baseScale = iconRect.localScale;
             Color glowOff = new Color(1f, 0.86f, 0.55f, 0f);
 
-            if (symbol.winAnimation != null)
+            Sprite[] frames = symbol.winAnimationFrames;
+            bool frameAnimation = frames != null && frames.Length > 1;
+
+            if (!frameAnimation && symbol.winAnimation != null)
             {
                 var animation = cell.icon.gameObject.GetComponent<Animation>();
                 if (animation == null)
@@ -327,13 +360,43 @@ namespace LustHouse.Slots
                     animation = cell.icon.gameObject.AddComponent<Animation>();
                     animation.wrapMode = WrapMode.Loop;
                 }
-                animation.clip = symbol.winAnimation;
-                animation.Play();
+
+                // The legacy Animation component only plays a legacy clip, and the editor
+                // no longer makes one for you: an AnimationClip authored in the Animation
+                // window is a Mecanim clip, and handing it here does nothing but log
+                // "must be marked as Legacy". The frames above are the path that works.
+                if (!symbol.winAnimation.legacy)
+                {
+                    LustLog.Warn($"[LustHouse] '{symbol.symbolName}' has a win animation " +
+                                 "clip that is not a legacy clip, so it cannot play. Use " +
+                                 "'Win Animation Frames' instead, or mark the clip legacy.");
+                }
+                else
+                {
+                    animation.clip = symbol.winAnimation;
+                    animation.Play();
+                }
             }
+
+            int frameIndex = 0;
+            float frameClock = 0f;
+            float frameDuration = 1f / Mathf.Max(1f, symbol.winAnimationFramesPerSecond);
 
             while (elapsed < seconds)
             {
                 elapsed += Time.unscaledDeltaTime;
+
+                if (frameAnimation)
+                {
+                    frameClock += Time.unscaledDeltaTime;
+                    while (frameClock >= frameDuration)
+                    {
+                        frameClock -= frameDuration;
+                        frameIndex = (frameIndex + 1) % frames.Length;
+                    }
+
+                    cell.icon.sprite = frames[frameIndex];
+                }
 
                 // One up-and-down per half of the window, so the symbol punches twice
                 // inside the time it is given.
@@ -348,6 +411,9 @@ namespace LustHouse.Slots
 
             iconRect.localScale = baseScale;
             cell.glow.color = glowOff;
+
+            // The frames took over the icon's sprite; the symbol's own frame goes back on.
+            if (frameAnimation && symbol.sprite != null) cell.icon.sprite = symbol.sprite;
         }
 
         // ---- layout ---------------------------------------------------------

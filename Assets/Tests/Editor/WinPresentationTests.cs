@@ -20,7 +20,7 @@ namespace LustHouse.Tests
         private const int Reels = 5;
         private const int Rows = 3;
 
-        private readonly List<GameObject> _spawned = new List<GameObject>();
+        private readonly List<UnityEngine.Object> _spawned = new List<UnityEngine.Object>();
 
         [TearDown]
         public void TearDown()
@@ -166,6 +166,120 @@ namespace LustHouse.Tests
             var symbol = new SymbolDefinition { id = 1, symbolName = "Ace" };
             Assert.IsTrue(symbol.animatesOnWin,
                 "Symbols must animate on a win unless they explicitly opt out.");
+        }
+
+        [Test]
+        public void ClearingTheHighlights_StopsTheWinAnimation()
+        {
+            // An authored clip loops, and it drives the symbol's sprite. If it is not
+            // stopped when the highlights are cleared, the symbol keeps animating over
+            // the next spin — and it is left on whatever frame the clip stopped on.
+            var def = BuildFixture(animatesOnWin: true);
+
+            var clip = new AnimationClip { name = "WinClip" };
+            clip.legacy = true;      // the legacy Animation component only plays these
+            clip.SetCurve("", typeof(Transform), "localScale.x",
+                AnimationCurve.Constant(0f, 1f, 1f));
+            def.symbols[0].winAnimation = clip;
+
+            var view = MakeView(def);
+
+            var reel = view.GetComponentInChildren<ReelStripView>();
+            Assert.IsNotNull(reel, "The view built no reel.");
+
+            var cell = reel.transform.Find("Strip/Cell0");
+            Assert.IsNotNull(cell, "The reel built no cell.");
+
+            var icon = cell.Find("Icon");
+            Assert.IsNotNull(icon, "The cell built no icon.");
+
+            reel.AnimateWin(0);
+
+            var animation = icon.GetComponent<Animation>();
+            Assert.IsNotNull(animation,
+                "The win animation added no Animation component to the symbol, so an " +
+                "authored clip has nothing to play on.");
+
+            Assert.AreSame(clip, animation.clip,
+                "The authored clip should be attached to the symbol while it celebrates.");
+
+            view.ClearHighlights();
+
+            Assert.IsNull(animation.clip,
+                "The win animation is still attached to the symbol after the highlights " +
+                "were cleared, so it keeps animating over the next spin.");
+        }
+
+        [Test]
+        public void ASymbolWithFrames_PlaysThemOnAWin()
+        {
+            // A sprite sheet is frames, not a clip. This is the path that needs no
+            // authored AnimationClip at all: the frames go in the symbol and they play.
+            var def = BuildFixture(animatesOnWin: true);
+
+            var still = MakeSprite("Still");
+            var frameA = MakeSprite("FrameA");
+            var frameB = MakeSprite("FrameB");
+
+            def.symbols[0].sprite = still;
+            def.symbols[0].winAnimationFrames = new[] { frameA, frameB };
+
+            var view = MakeView(def);
+
+            var reel = view.GetComponentInChildren<ReelStripView>();
+            Assert.IsNotNull(reel, "The view built no reel.");
+
+            var cell = reel.transform.Find("Strip/Cell0");
+            Assert.IsNotNull(cell, "The reel built no cell.");
+
+            var icon = cell.Find("Icon")?.GetComponent<Image>();
+            Assert.IsNotNull(icon, "The cell built no icon.");
+
+            reel.AnimateWin(0);
+
+            Assert.IsTrue(icon.sprite == frameA || icon.sprite == frameB,
+                "The win animation did not put one of the frames on the symbol, so the " +
+                "sprite sheet is not being played.");
+
+            // The frames own the icon's sprite while they play, and the symbol's own
+            // frame has to come back when they stop.
+            view.ClearHighlights();
+
+            Assert.AreSame(still, icon.sprite,
+                "The symbol is still on an animation frame after the win ended.");
+        }
+
+        [Test]
+        public void ASymbolWithNoFramesAndNoClip_JustPulses()
+        {
+            // The fallback: no artwork to animate, so the symbol scales and lights up
+            // rather than swapping sprites.
+            var def = BuildFixture(animatesOnWin: true);
+            def.symbols[0].winAnimationFrames = new Sprite[0];
+
+            var view = MakeView(def);
+            var reel = view.GetComponentInChildren<ReelStripView>();
+            Assert.IsNotNull(reel, "The view built no reel.");
+
+            var cell = reel.transform.Find("Strip/Cell0");
+            var icon = cell.Find("Icon");
+            Assert.IsNotNull(icon, "The cell built no icon.");
+
+            reel.AnimateWin(0);
+
+            Assert.IsNull(icon.GetComponent<Animation>(),
+                "A symbol with no clip should not get an Animation component.");
+        }
+
+        private Sprite MakeSprite(string name)
+        {
+            var texture = new Texture2D(4, 4) { name = name + "Texture" };
+            _spawned.Add(texture);
+
+            var sprite = Sprite.Create(texture, new Rect(0, 0, 4, 4), new Vector2(0.5f, 0.5f), 100f);
+            sprite.name = name;
+            _spawned.Add(sprite);
+            return sprite;
         }
 
         [Test]

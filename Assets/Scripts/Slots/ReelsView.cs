@@ -247,6 +247,12 @@ namespace LustHouse.Slots
                 if (_winFrames[i].go != null) SafeDestroy(_winFrames[i].go);
             _winFrames.Clear();
             ClearWinLines();
+
+            // The symbols stop celebrating too. A win animation that outlives its win
+            // leaves a symbol animating over the next spin, which is the sort of thing
+            // that makes a player stop trusting the machine.
+            for (int i = 0; i < _reels.Count; i++)
+                _reels[i]?.StopWinAnimations();
         }
 
         /// <summary>Number of paying lines currently drawn. Exposed for tests and debug UI.</summary>

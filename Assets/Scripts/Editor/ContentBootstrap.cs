@@ -523,6 +523,9 @@ namespace LustHouse.EditorTools
                     holdSpinValue = symbol.holdSpinValue,
                     animatesOnWin = symbol.animatesOnWin,
                     winAnimation = symbol.winAnimation,
+                    winAnimationFrames = symbol.winAnimationFrames != null
+                        ? (Sprite[])symbol.winAnimationFrames.Clone() : new Sprite[0],
+                    winAnimationFramesPerSecond = symbol.winAnimationFramesPerSecond,
                     winAnimationSeconds = symbol.winAnimationSeconds
                 });
             }
