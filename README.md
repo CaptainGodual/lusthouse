@@ -108,10 +108,14 @@ distribution, reel engine and payline evaluation, the RTP simulator, feature rou
 reel view.
 
 **EditMode** covers components in isolation. **PlayMode** (`Assets/Tests/PlayMode`) covers the
-seams between scenes — currently the lobby → slot launch, which no EditMode test can reach:
-every component can pass while the player cannot tap anything, because a tap is a raycast
-through a canvas, a listener firing, and a static surviving a scene load, and each link breaks
-independently.
+seams between scenes — currently the lobby → slot launch, the age gate, and the music bed,
+none of which no EditMode test can reach: every component can pass while the player cannot
+tap anything, because a tap is a raycast through a canvas, a listener firing, and a static
+surviving a scene load, and each link breaks independently.
+
+**As of 2026-10-21: EditMode 184/184 and PlayMode 24/24 passing**, run headless with
+`Unity.exe -batchmode -runTests -testPlatform EditMode -projectPath .` (the editor must
+not have the project open — Unity holds the lock).
 
 ```
 Unity.exe -batchmode -runTests -testPlatform PlayMode -projectPath .
@@ -221,6 +225,7 @@ synthesised loop when one is not.
 | `WinSmall` / `WinMedium` / `WinBig` | a payout, tiered off the game's own celebration thresholds |
 | `BonusTrigger` | a free-spins, hold & spin or bonus round starts |
 | `LobbyMusic` | the lobby's background bed; fades out as the player leaves for a game |
+| `SlotMusic` | the game screen's own bed; it comes up with the reels and fades away a few seconds after they stop |
 
 - **`Assets/Scripts/Audio/`** holds the system. `AudioService` is the live output
   (a pool of eight voices, a loop channel, a music channel, master/music/sfx buses);
@@ -238,14 +243,49 @@ synthesised loop when one is not.
 - The sounds are **deterministic** — a fixed-seed generator, never
   `UnityEngine.Random` — so a build always sounds the same and a QA report about a
   sound is a report about *that* sound.
-- The reel loop and the synthesised music bed are **periodic by construction**, so
+- The reel loop and the synthesised music beds are **periodic by construction**, so
   they join up with themselves and do not click once a loop.
 - **Every scene gets an audio listener.** The cameras here are built in code, and a
   camera built in code is not given one; a scene without a listener is completely
   silent while looking perfectly normal.
+- **The music channel is cue-aware.** The lobby's bed and the game's bed share one
+  channel, so a room that unloads late cannot take the next room's bed down with it,
+  and a bed that is fading out comes back if it is asked for again.
+
+## Age gate
+
+The store requirement that this game is 18+ (plan §2.3a).
+
+- **Nothing in the game is reachable until the player has confirmed they are 18.**
+  The gate comes up in the boot, between `TAP TO ENTER` and the lobby, and the lobby
+  is not entered until the answer has been written to the save.
+- The answer is **kept**: `PlayerState.ageConfirmed` was already in the save shape,
+  so this needed no schema bump, and the confirmation is saved immediately rather
+  than left to the autosave.
+- The `18+` chip in the lobby's top tier opens the same gate again, for a player who
+  wants to re-check it.
+- Saying you are under 18 shows a refusal screen and closes the game. **On Web the
+  refusal screen is shown but the game does not close** — that is a known gap.
 
 ## Known gaps
 
-Tracked in plan §0.2 and §6. Not yet built: IAP/store integration, tournaments,
-missions, daily gift, Club screen, localisation, per-game music beds, and a
-settings screen for the volumes (the volumes themselves apply and persist).
+Tracked in plan §0.2 and §6. Not yet built: IAP/store integration, the tournament
+simulator, missions, the Club screen, localisation, a music bed per title (the game
+screen has one shared bed; the mechanism for a title to bring its own is in place),
+the Web refusal screen for the age gate, and a settings screen for the volumes (the
+volumes themselves apply and persist).
+
+> The **daily gift is built** (`DailyBonusService`, its lobby chip and sheet) — the older
+> list of gaps predated it.
+>
+> The **age gate is built** (`AgeGate`, `AgeGateOverlay`, the boot flow and the lobby's
+> `18+` chip) — the older list of gaps predated it too.
+
+Plans:
+
+| Plan | What it covers |
+|---|---|
+| `lusthouse-casino.md` | The design bible — loading screen, lobby, slots, economy, milestones. **§0** is the repo state; **§4.4** is the derived earn/sink table. |
+| `lusthouse-economy.md` | The economy model: per-level earn/sink, stake-independent progression, the measurement tooling and the tests that keep it true. |
+| `lusthouse-jackpots-responsive.md` | The Mini/Minor/Major progressive on **Velvet Room**, and the device-responsive layout core. |
+| `lusthouse-audio.md` | The sound system, as built. |

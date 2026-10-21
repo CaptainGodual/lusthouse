@@ -44,6 +44,12 @@ namespace LustHouse.Slots
                  "button to press has no way out.")]
         public float spinWatchdogSeconds = 60f;
 
+        [Header("Music")]
+        [Tooltip("How long the bed stays up after the reels stop before it fades away, " +
+                 "seconds. The bed comes up with the reels and goes down once the " +
+                 "player has been still for a moment.")]
+        public float musicIdleSeconds = 6f;
+
         /// <summary>The reel grid. Exposed so a test can assert what the player is shown.</summary>
         public ReelsView Reels => _reels;
 
@@ -66,6 +72,8 @@ namespace LustHouse.Slots
         private bool _built;
         private Coroutine _bannerRoutine;
         private float _spinElapsed;
+        private float _musicIdleElapsed;
+        private bool _musicBedUp;
 
         /// <summary>True while a spin is in flight. The controls are disabled until it ends.</summary>
         public bool IsSpinning => _spinning;
@@ -97,6 +105,10 @@ namespace LustHouse.Slots
                 _built = true;
             }
             Refresh();
+
+            // The room has a bed, and it fades away on its own if the player never
+            // touches it. The reels bring it back the moment they turn.
+            BringTheBedUp();
         }
 
         private void OnDisable()
@@ -107,6 +119,10 @@ namespace LustHouse.Slots
             // Leaving the screen mid-spin takes the reels with it, so it takes the
             // loop with it too.
             SlotAudio.SpinEnded();
+
+            // And the bed goes with it. The music channel outlives the scene, so a bed
+            // left behind would follow the player back into the lobby.
+            TakeTheBedDown();
         }
 
         private void OnWalletChanged(WalletChanged change)
@@ -511,6 +527,10 @@ namespace LustHouse.Slots
         /// </summary>
         private void Update()
         {
+            // The bed's clock runs whether or not a spin is in flight, so it comes
+            // first: a bed that only counted down during a spin would never fade.
+            TickMusicIdle();
+
             if (!_spinning) return;
 
             _spinElapsed += Time.unscaledDeltaTime;
@@ -526,6 +546,9 @@ namespace LustHouse.Slots
             _spinning = false;
             if (_reels != null) _reels.StopSpin();
             Refresh();
+
+            // The bed follows the reels down, the same way.
+            ScheduleMusicIdle();
         }
 
         private IEnumerator SpinRoutine()
@@ -560,6 +583,11 @@ namespace LustHouse.Slots
                 // spin and every feature spin that follows it. Restarting it per spin
                 // would turn a feature round into a stutter.
                 SlotAudio.SpinStarted();
+
+                // The bed comes up with the reels. If it was on its way out — the
+                // player spun again before it had faded — it is brought back rather
+                // than left in a gap.
+                BringTheBedUp();
 
                 yield return StartCoroutine(_reels.PlaySpin(result.stops, turbo ? 0.35f : 1f));
                 _reels.ShowWinHighlights(result);
@@ -676,6 +704,64 @@ namespace LustHouse.Slots
             SlotAudio.SpinEnded();
             _spinning = false;
             Refresh();
+
+            // The reels have stopped, but the bed does not go the instant they do: the
+            // player is still in the middle of a round they are about to play again.
+            // It fades away once they have been still for a moment.
+            ScheduleMusicIdle();
+        }
+
+        // ---- the music bed -------------------------------------------------------
+
+        /// <summary>
+        /// Brings the bed up and restarts its clock.
+        ///
+        /// The bed is asked for, not restarted: asking for a bed that is already up
+        /// leaves it up, so a player who spins again before it has faded away gets
+        /// the bed back rather than a gap where it used to be.
+        /// </summary>
+        private void BringTheBedUp()
+        {
+            _musicBedUp = true;
+            _musicIdleElapsed = 0f;
+            SlotAudio.MusicStarted();
+        }
+
+        /// <summary>Takes the bed down, if it was up.</summary>
+        private void TakeTheBedDown()
+        {
+            if (!_musicBedUp) return;
+            _musicBedUp = false;
+            SlotAudio.MusicIdle();
+        }
+
+        /// <summary>
+        /// Starts the clock on the bed fading away.
+        ///
+        /// The clock is counted down in <see cref="Update"/> rather than in a
+        /// coroutine, so it cannot outlive the screen and so a test can shorten it.
+        /// </summary>
+        private void ScheduleMusicIdle()
+        {
+            _musicIdleElapsed = 0f;
+        }
+
+        /// <summary>
+        /// Counts the bed down to nothing.
+        ///
+        /// The clock only runs while the reels are still. A spin takes the bed up and
+        /// holds it there for as long as the round lasts, and the clock starts again
+        /// when the round ends.
+        /// </summary>
+        private void TickMusicIdle()
+        {
+            if (_spinning) return;
+            if (!_musicBedUp) return;
+
+            _musicIdleElapsed += Time.unscaledDeltaTime;
+            if (_musicIdleElapsed < Mathf.Max(0.01f, musicIdleSeconds)) return;
+
+            TakeTheBedDown();
         }
 
         private void RenderLifetime(long coinsBefore, long lustBefore, long xpBefore)

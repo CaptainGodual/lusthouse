@@ -33,6 +33,22 @@ namespace LustHouse.Slots
         /// <summary>The reels have stopped.</summary>
         public static void SpinEnded() => AudioFeedback.StopLoop(AudioCue.ReelSpinLoop);
 
+        /// <summary>
+        /// The game screen's bed, asked for when the reels start turning.
+        ///
+        /// A machine that is being played has a pulse, and a machine that is being
+        /// looked at should not keep making the player feel they are late for
+        /// something. The bed comes up with the reels and goes away again after the
+        /// player has been still for a moment.
+        /// </summary>
+        public static void MusicStarted() => AudioFeedback.PlayMusic(AudioCue.SlotMusic);
+
+        /// <summary>
+        /// The bed, let go. It fades rather than stops: the music channel outlives the
+        /// screen, so cutting it would be a click in the middle of the quiet.
+        /// </summary>
+        public static void MusicIdle() => AudioFeedback.StopMusic(AudioCue.SlotMusic);
+
         /// <summary>One reel has landed.</summary>
         public static void ReelStopped(int reelIndex)
         {

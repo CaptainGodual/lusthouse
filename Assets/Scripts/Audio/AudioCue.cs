@@ -52,5 +52,16 @@ namespace LustHouse.Audio
         /// belongs to takes it down gently rather than cutting it off.
         /// </summary>
         LobbyMusic,
+
+        /// <summary>
+        /// The game screen's own bed, and a different room from the lobby's.
+        ///
+        /// It comes up when the reels start turning and fades away a few seconds after
+        /// they stop: a machine that is being played has a pulse, and a machine that is
+        /// being looked at should not keep making the player feel like they are late
+        /// for something. The lobby bed stays on the lobby's channel and the two never
+        /// play at once.
+        /// </summary>
+        SlotMusic,
     }
 }

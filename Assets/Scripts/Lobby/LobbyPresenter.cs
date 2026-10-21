@@ -85,6 +85,7 @@ namespace LustHouse.Lobby
         private LobbyGrid _grid;
         private FeaturedRow _featuredRow;
         private ModalSheet _sheet;
+        private UI.AgeGateOverlay _ageGate;
         private RectTransform _root;
 
         private void Awake()
@@ -205,7 +206,42 @@ namespace LustHouse.Lobby
             UiFactory.PlaceTopLeft(casino.rectTransform, Margin + 12f, 52f, 160f, 20f);
 
             BuildPlayerChip(root);
+            BuildAgeChip(root);
             BuildStoreWidget(root);
+        }
+
+        /// <summary>
+        /// The age chip (plan §2.3a): the 18+ mark, and the way back into the age
+        /// gate.
+        ///
+        /// The gate itself blocks the player before the lobby is ever entered, but the
+        /// confirmation has to be re-checkable without taking the player out of the
+        /// game — so the chip opens the same overlay again, and this time it sits over
+        /// the lobby with a way back in.
+        /// </summary>
+        private void BuildAgeChip(RectTransform root)
+        {
+            var chip = UiChrome.NewPillButton("AgeChip", root, "18+", 20,
+                UiFactory.TextSecondary, out Text chipText);
+            UiFactory.PlaceTopLeft(chip.GetComponent<RectTransform>(), 800f, 16f, 88f, 48f);
+            chip.onClick.AddListener(OpenAgeGate);
+        }
+
+        /// <summary>
+        /// Opens the age gate over the lobby. Declining here closes the game, exactly
+        /// as it does at first launch.
+        /// </summary>
+        private void OpenAgeGate()
+        {
+            if (_ageGate != null) return;
+
+            _ageGate = UI.AgeGateOverlay.Create(_root, () =>
+            {
+                if (_ageGate == null) return;
+                _ageGate.Hide();
+                _ageGate = null;
+            });
+            _ageGate.transform.SetAsLastSibling();
         }
 
         /// <summary>

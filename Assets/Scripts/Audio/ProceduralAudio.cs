@@ -79,17 +79,31 @@ namespace LustHouse.Audio
                 case AudioCue.WinBig: samples = BuildWinBig(); break;
                 case AudioCue.BonusTrigger: samples = BuildBonusTrigger(); break;
                 case AudioCue.LobbyMusic: samples = BuildLobbyMusic(); break;
+                case AudioCue.SlotMusic: samples = BuildSlotMusic(); break;
                 default: return null;
             }
 
             // The loops are left exactly as built: a fade at their end would put a
             // hole in them, and the whole point of them is that they join up with
             // themselves.
-            if (cue != AudioCue.ReelSpinLoop && cue != AudioCue.LobbyMusic)
+            if (!IsLoop(cue))
                 ApplyTailFade(samples);
 
             return MakeClip(cue, samples);
         }
+
+        /// <summary>
+        /// The cues that are meant to loop.
+        ///
+        /// Kept as a list rather than as a comparison inside <see cref="Build"/> so
+        /// that a new loop cannot be added without being told about here — a loop
+        /// with a fade at its end has a hole in it, and a hole in a bed that plays
+        /// every four seconds is a click every four seconds.
+        /// </summary>
+        private static bool IsLoop(AudioCue cue) =>
+            cue == AudioCue.ReelSpinLoop ||
+            cue == AudioCue.LobbyMusic ||
+            cue == AudioCue.SlotMusic;
 
         private static AudioClip MakeClip(AudioCue cue, float[] samples)
         {
@@ -344,6 +358,52 @@ namespace LustHouse.Audio
                 float amplitude = tick % 2 == 0 ? 0.16f : 0.09f;
                 AddNoise(buffer, at, 0.030f, amplitude, 130f, (uint)(201 + tick), 1f);
             }
+
+            return buffer;
+        }
+
+        /// <summary>
+        /// The game screen's bed: a slow, glassy figure over a low pad.
+        ///
+        /// It is the same species of thing as the lobby's funk and nothing like it.
+        /// The lobby is a room full of people; a machine is a machine. The figure is a
+        /// D-minor arpeggio with a bell on every note, deliberately slower than the
+        /// lobby's beat so the two beds cannot be mistaken for one another.
+        ///
+        /// It obeys the same two rules as every other loop in here. It is
+        /// deterministic: every noise burst comes from a fixed seed. And it is
+        /// seamless: the buffer is a whole number of seconds, the pad underneath is
+        /// whole-number hertz so it comes back round to where it started, and every
+        /// note is over and gone before the buffer ends.
+        /// </summary>
+        private static float[] BuildSlotMusic()
+        {
+            const float loopSeconds = 4f;
+            var buffer = Buffer(loopSeconds);
+
+            // The pad: D3, A3, D4. Whole-number hertz, so it is periodic across the
+            // loop, and felt rather than heard.
+            AddSustained(buffer, 147.0, 0.045f);
+            AddSustained(buffer, 220.0, 0.030f);
+            AddSustained(buffer, 294.0, 0.020f);
+
+            // The figure: a D minor arpeggio, one note every half second. Each note is
+            // written over 0.42 seconds and decays to nothing inside that, so none of
+            // them is still ringing when the loop comes round.
+            double[] notes = { 587.0, 698.0, 880.0, 1046.0, 1175.0, 880.0, 698.0, 587.0 };
+            for (int i = 0; i < notes.Length; i++)
+            {
+                double at = i * 0.5;
+                AddTone(buffer, notes[i], at, 0.42f, 0.30f, 12f);
+                AddTone(buffer, notes[i] * 2.76, at, 0.30f, 0.06f, 16f);   // the bell's overtone
+                AddNoise(buffer, at, 0.08f, 0.05f, 40f, (uint)(401 + i), 0.85f);
+            }
+
+            // The pulse: a soft heartbeat under the figure, once a second. It is what
+            // makes the bed feel like a machine that is on rather than a recording
+            // that happens to be playing.
+            for (int beat = 0; beat < 4; beat++)
+                AddTone(buffer, 55.0, beat, 0.18f, 0.26f, 20f);
 
             return buffer;
         }

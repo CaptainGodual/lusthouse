@@ -204,6 +204,11 @@ namespace LustHouse.Audio
         {
             if (_loop == null || !_loop.isPlaying) return;
 
+            // Only the loop that is actually running may be stopped. A loop that is
+            // asked for again after it was stopped would otherwise be taken down by
+            // the stale stop of the one before it.
+            if (_loopCue != cue) return;
+
             CancelFade();
             _loopFade = StartCoroutine(FadeOutLoop());
         }
@@ -218,6 +223,10 @@ namespace LustHouse.Audio
         /// resolves clips the same way a one-shot does — the game's bank, then the
         /// house bank, then the synthesiser — so a title can bring its own theme
         /// without a programmer, and a build with no clips at all still has music.
+        ///
+        /// Asking for a bed that is already up does not restart it. It brings it back
+        /// up if it was on its way down: a player who spins again before the bed has
+        /// faded away should get the bed back, not a gap where it used to be.
         /// </summary>
         public void PlayMusic(AudioCue cue)
         {
@@ -226,52 +235,57 @@ namespace LustHouse.Audio
             var clip = ClipFor(cue);
             if (clip == null) return;
 
-            // A bed that is already running is left running. Restarting it on every
-            // call is a stutter — and the lobby can re-assert itself more than once.
-            if (_music.isPlaying && _music.clip == clip) return;
+            _musicCue = cue;
+            _musicBaseVolume = Mathf.Clamp01(musicVolume) * EntryVolume(cue);
 
+            if (_music.isPlaying && _music.clip == clip)
+            {
+                // Already up, or on its way up. Either way it keeps playing — and if it
+                // was fading away, the fade is cancelled and the bed comes back.
+                FadeMusicTo(_musicBaseVolume, false);
+                return;
+            }
+
+            // A different bed: the old one goes and the new one comes up from nothing.
             CancelMusicFade();
             _music.clip = clip;
             _music.loop = true;
-            _musicCue = cue;
-            _musicBaseVolume = Mathf.Clamp01(musicVolume) * EntryVolume(cue);
             _music.volume = 0f;                       // the fade brings it up
             _music.Play();
-            _musicFade = StartCoroutine(FadeInMusic());
-        }
-
-        /// <summary>Fades the music out and stops it.</summary>
-        public void StopMusic(AudioCue cue)
-        {
-            if (_music == null || !_music.isPlaying) return;
-
-            CancelMusicFade();
-            _musicFade = StartCoroutine(FadeOutMusic());
+            FadeMusicTo(_musicBaseVolume, false);
         }
 
         /// <summary>
-        /// Fades the bed in from silence. Music that starts at full volume announces
-        /// itself; one that arrives over a second changes the room quietly.
+        /// Fades the music out and stops it.
+        ///
+        /// Only the bed that is actually playing may be stopped. The lobby's bed and
+        /// the game's bed share one channel, and a scene that unloads after the next
+        /// one has already started must not take the new bed down with it — which is
+        /// exactly what happens when a lobby hands over to a game.
         /// </summary>
-        private IEnumerator FadeInMusic()
+        public void StopMusic(AudioCue cue)
         {
-            float elapsed = 0f;
-            float duration = Mathf.Max(0.01f, musicFadeSeconds);
+            if (_music == null || !_music.isPlaying) return;
+            if (_musicCue != cue) return;
 
-            while (elapsed < duration && _music != null)
-            {
-                elapsed += Time.unscaledDeltaTime;
-                float t = Mathf.Clamp01(elapsed / duration);
-                if (_music != null) _music.volume = _musicBaseVolume * t;
-                yield return null;
-            }
-
-            if (_music != null) _music.volume = _musicBaseVolume;
-            _musicFade = null;
+            FadeMusicTo(0f, true);
         }
 
-        /// <summary>Fades the bed out and stops it, so leaving a room is not a cut.</summary>
-        private IEnumerator FadeOutMusic()
+        /// <summary>
+        /// Fades the bed to a volume, and optionally stops it there.
+        ///
+        /// Every fade goes through one coroutine and one target, so a fade that is
+        /// interrupted is replaced rather than fought with. Two fades on one channel —
+        /// a bed fading down while the same bed is asked for again — would otherwise
+        /// fight over the same volume and the bed would stutter on its way out.
+        /// </summary>
+        private void FadeMusicTo(float target, bool stopAtEnd)
+        {
+            CancelMusicFade();
+            _musicFade = StartCoroutine(FadeMusic(target, stopAtEnd));
+        }
+
+        private IEnumerator FadeMusic(float target, bool stopAtEnd)
         {
             float elapsed = 0f;
             float duration = Mathf.Max(0.01f, musicFadeSeconds);
@@ -281,17 +295,20 @@ namespace LustHouse.Audio
             {
                 elapsed += Time.unscaledDeltaTime;
                 float t = Mathf.Clamp01(elapsed / duration);
-                if (_music != null) _music.volume = startVolume * (1f - t);
+                if (_music != null) _music.volume = Mathf.Lerp(startVolume, target, t);
                 yield return null;
             }
 
             if (_music != null)
             {
-                _music.Stop();
-                _music.volume = _musicBaseVolume;
+                _music.volume = target;
+                if (stopAtEnd && target <= 0.001f)
+                {
+                    _music.Stop();
+                    _musicCue = AudioCue.None;
+                }
             }
 
-            _musicCue = AudioCue.None;
             _musicFade = null;
         }
 

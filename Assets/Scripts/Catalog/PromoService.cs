@@ -110,7 +110,7 @@ namespace LustHouse.Catalog
                         kind = PromoSlideKind.Jackpot,
                         gameId = jackpot.id,
                         headline = "T H E   J A C K P O T",
-                        subline = "House Edge · progressive",
+                        subline = $"{jackpot.Title} · progressive",
                         ctaLabel = "PLAY",
                         accent = new Color32(0xFF, 0x3D, 0x8B, 0xFF)
                     });

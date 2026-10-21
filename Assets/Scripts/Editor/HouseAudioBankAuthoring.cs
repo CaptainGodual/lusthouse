@@ -55,6 +55,17 @@ namespace LustHouse.EditorTools
 
             entry.clip = clip;
 
+            // The game screen's own bed. It has no clip of its own yet: the
+            // synthesised figure plays until a title brings one on its own bank. The
+            // level is set here so the bed sits under the reel loop and the wins
+            // rather than over them.
+            var slot = bank.Find(AudioCue.SlotMusic);
+            if (slot == null)
+            {
+                slot = new AudioBank.Entry { cue = AudioCue.SlotMusic, volume = 0.5f };
+                bank.entries.Add(slot);
+            }
+
             EditorUtility.SetDirty(bank);
             AssetDatabase.SaveAssets();
 

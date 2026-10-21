@@ -313,7 +313,7 @@ MonoBehaviour:
   rtpStatus: 1
   targetRtp: 0.962
   maxWinMultiplier: 2293
-  progressive: 0
+  progressive: 1
   progressiveSeed: 250000
   features:
   - rid: 8387632629979807744

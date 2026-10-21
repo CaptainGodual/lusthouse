@@ -127,7 +127,7 @@ MonoBehaviour:
   maxBet: 2400000
   targetRtp: 0.945
   maxWinMultiplier: 10000
-  progressive: 1
+  progressive: 0
   progressiveSeed: 250000
   cascadeClusterSize: 5
   hasFreeSpins: 1

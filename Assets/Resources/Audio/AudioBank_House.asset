@@ -17,3 +17,7 @@ MonoBehaviour:
     clip: {fileID: 8300000, guid: 22d4df8f0a810b545b5e6f49a1a5d032, type: 3}
     volume: 0.6
     pitch: 1
+  - cue: 11
+    clip: {fileID: 0}
+    volume: 0.5
+    pitch: 1

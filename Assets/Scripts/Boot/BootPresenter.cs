@@ -42,6 +42,7 @@ namespace LustHouse.Boot
         private CanvasGroup _enterGroup;
         private Button _enterButton;
         private Canvas _canvas;
+        private UI.AgeGateOverlay _ageGate;
 
         private bool _ready;
 
@@ -50,6 +51,12 @@ namespace LustHouse.Boot
         private void Awake()
         {
             if (sequence == null) sequence = GetComponent<BootSequence>();
+
+            // The age gate asks the player whether they are 18, and it can only know
+            // the answer if the save has been read. The services are the save: without
+            // them there is no player to record an answer against, and the gate would
+            // ask the same question on every launch.
+            Core.ServicesBootstrap.EnsureExists();
 
             UI.UiFactory.EnsureEventSystem();
             _canvas = UI.UiFactory.ResolveCanvas(transform, "BootCanvas", 100);
@@ -194,7 +201,39 @@ namespace LustHouse.Boot
         {
             if (!_ready || sequence == null) return;
             _enterButton.interactable = false;
-            sequence.EnterLobby();
+
+            // The age gate comes before the lobby, not inside it (plan §2.3a). Nothing
+            // in the game — not the lobby, not a game, not a purchase — is reachable
+            // until the player has said they are 18 or over, and the only way into
+            // the lobby is through here.
+            if (!Core.AgeGate.IsConfirmed)
+            {
+                if (_ageGate == null)
+                {
+                    _ageGate = UI.AgeGateOverlay.Create(_canvas.transform, OnAgeConfirmed);
+                    _ageGate.transform.SetAsLastSibling();
+                }
+                return;
+            }
+
+            EnterLobby();
+        }
+
+        /// <summary>The player answered the age question. On to the lobby.</summary>
+        private void OnAgeConfirmed()
+        {
+            if (_ageGate != null)
+            {
+                _ageGate.Hide();
+                _ageGate = null;
+            }
+
+            EnterLobby();
+        }
+
+        private void EnterLobby()
+        {
+            if (sequence != null) sequence.EnterLobby();
         }
 
         private void Update()

@@ -379,6 +379,95 @@ namespace LustHouse.Tests
         }
 
         [Test]
+        public void TheGameScreenHasItsOwnBed()
+        {
+            // The game asks for its bed by cue. What answers — the recorded track on
+            // the house bank, or the synthesised fallback — is the audio system's
+            // business; this protects the ask itself.
+            var recorder = new Recorder();
+            AudioFeedback.SetOutput(recorder);
+
+            SlotAudio.MusicStarted();
+            Assert.AreEqual(new[] { AudioCue.SlotMusic }, recorder.music,
+                "The game screen came up and asked for no music.");
+
+            SlotAudio.MusicIdle();
+            Assert.AreEqual(new[] { AudioCue.SlotMusic }, recorder.musicStopped,
+                "The game screen went idle and did not take its music with it.");
+        }
+
+        [Test]
+        public void TheGameBedHasNoSeam()
+        {
+            // The bed loops for as long as the player is in the game. Same rule as
+            // the reel loop and the lobby bed: a bed that clicks every four seconds
+            // is worse than silence.
+            var clip = ProceduralAudio.ClipFor(AudioCue.SlotMusic);
+            Assert.IsNotNull(clip, "There is no game bed.");
+
+            var data = new float[clip.samples];
+            clip.GetData(data, 0);
+            Assert.Greater(data.Length, 2, "The game bed is too short to loop.");
+
+            float seam = Mathf.Abs(data[0] - data[data.Length - 1]);
+            Assert.Less(seam, 0.15f,
+                "The game bed does not join up with itself. It will click every loop — " +
+                seam.ToString("F3") + " of a jump at the seam.");
+        }
+
+        [Test]
+        public void TheGameBedIsTheSameEveryTime()
+        {
+            // Music that changes from launch to launch cannot be QA'd, same as any
+            // other sound.
+            var first = ProceduralAudio.ClipFor(AudioCue.SlotMusic);
+            var firstData = new float[first.samples];
+            first.GetData(firstData, 0);
+
+            ProceduralAudio.Clear();
+
+            var second = ProceduralAudio.ClipFor(AudioCue.SlotMusic);
+            var secondData = new float[second.samples];
+            second.GetData(secondData, 0);
+
+            Assert.AreEqual(firstData.Length, secondData.Length,
+                "The game bed came out a different length the second time.");
+            for (int i = 0; i < firstData.Length; i++)
+            {
+                Assert.AreEqual(firstData[i], secondData[i],
+                    $"The game bed is not reproducible: sample {i} differs between runs.");
+            }
+        }
+
+        [Test]
+        public void TheGameBedIsNotTheLobbyBed()
+        {
+            // Two beds that sound the same are one bed with a name on it. The lobby
+            // is a room full of people; a machine is a machine.
+            var lobby = ProceduralAudio.ClipFor(AudioCue.LobbyMusic);
+            var game = ProceduralAudio.ClipFor(AudioCue.SlotMusic);
+            Assert.IsNotNull(lobby, "There is no lobby bed.");
+            Assert.IsNotNull(game, "There is no game bed.");
+
+            var lobbyData = new float[lobby.samples];
+            lobby.GetData(lobbyData, 0);
+            var gameData = new float[game.samples];
+            game.GetData(gameData, 0);
+
+            int samples = Mathf.Min(lobbyData.Length, gameData.Length);
+            Assert.Greater(samples, 2, "The beds are too short to tell apart.");
+
+            float difference = 0f;
+            for (int i = 0; i < samples; i++)
+                difference += Mathf.Abs(lobbyData[i] - gameData[i]);
+            difference /= samples;
+
+            Assert.Greater(difference, 0.01f,
+                "The game bed and the lobby bed are the same sound. The player moves " +
+                "between two rooms and hears no change at all.");
+        }
+
+        [Test]
         public void TheBankOutranksTheSynthesiser()
         {
             // A recorded clip on a bank entry replaces the synthesised sound without
