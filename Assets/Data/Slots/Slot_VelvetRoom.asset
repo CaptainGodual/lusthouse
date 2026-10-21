@@ -20,15 +20,17 @@ MonoBehaviour:
   themeTint: {r: 0.9098039, g: 0.7647059, b: 0.41960785, a: 1}
   keyArt: {fileID: 0}
   addressableKey: Slots/velvet_room
-  audioBank: 
+  audioBankId: 
+  audioBank: {fileID: 0}
   reelCount: 5
   rowCount: 3
   symbols:
   - id: 0
     symbolName: Wild
     sprite: {fileID: 21300000, guid: 913364910e8bf2d4ba7e55643b3cab00, type: 3}
-    payoutsByMatch: 120000000000000037000000000000008900000000000000
+    payoutsByMatch: 110000000000000033000000000000008000000000000000
     clusterPayouts: 
+    megaBlockMultiplier: 0
     isWild: 1
     isScatter: 0
     isSpecial: 0
@@ -43,6 +45,7 @@ MonoBehaviour:
     sprite: {fileID: 21300000, guid: ce8496af92af87947998c84f647c76c8, type: 3}
     payoutsByMatch: 000000000000000000000000000000000000000000000000
     clusterPayouts: 
+    megaBlockMultiplier: 0
     isWild: 0
     isScatter: 1
     isSpecial: 0
@@ -55,8 +58,9 @@ MonoBehaviour:
   - id: 10
     symbolName: Ace
     sprite: {fileID: 21300000, guid: ad3685c2172adc0499e3fde3157171dc, type: 3}
-    payoutsByMatch: 050000000000000012000000000000003700000000000000
+    payoutsByMatch: 040000000000000011000000000000003300000000000000
     clusterPayouts: 
+    megaBlockMultiplier: 0
     isWild: 0
     isScatter: 0
     isSpecial: 0
@@ -69,8 +73,9 @@ MonoBehaviour:
   - id: 11
     symbolName: King
     sprite: {fileID: 21300000, guid: c52dbc0776b3bfd46a34d0bf7a87b3a9, type: 3}
-    payoutsByMatch: 03000000000000000e000000000000002e00000000000000
+    payoutsByMatch: 03000000000000000d000000000000002b00000000000000
     clusterPayouts: 
+    megaBlockMultiplier: 0
     isWild: 0
     isScatter: 0
     isSpecial: 0
@@ -83,8 +88,9 @@ MonoBehaviour:
   - id: 12
     symbolName: Queen
     sprite: {fileID: 21300000, guid: 8731c62073aec4e468c568e7ee39047c, type: 3}
-    payoutsByMatch: 03000000000000000b000000000000002400000000000000
+    payoutsByMatch: 03000000000000000a000000000000002200000000000000
     clusterPayouts: 
+    megaBlockMultiplier: 0
     isWild: 0
     isScatter: 0
     isSpecial: 0
@@ -97,8 +103,9 @@ MonoBehaviour:
   - id: 13
     symbolName: Jack
     sprite: {fileID: 21300000, guid: c1e48bab902d58e4ab7d1316e5dc239f, type: 3}
-    payoutsByMatch: 010000000000000007000000000000001700000000000000
+    payoutsByMatch: 010000000000000008000000000000001400000000000000
     clusterPayouts: 
+    megaBlockMultiplier: 0
     isWild: 0
     isScatter: 0
     isSpecial: 0
@@ -111,8 +118,9 @@ MonoBehaviour:
   - id: 14
     symbolName: Ten
     sprite: {fileID: 21300000, guid: d7305cdbb6453cd4ca85a0313cc828dc, type: 3}
-    payoutsByMatch: 010000000000000005000000000000000e00000000000000
+    payoutsByMatch: 020000000000000004000000000000000d00000000000000
     clusterPayouts: 
+    megaBlockMultiplier: 0
     isWild: 0
     isScatter: 0
     isSpecial: 0
@@ -125,8 +133,9 @@ MonoBehaviour:
   - id: 15
     symbolName: Grape
     sprite: {fileID: 21300000, guid: a8f573506f15256429f6d72681a642ad, type: 3}
-    payoutsByMatch: 020000000000000003000000000000000b00000000000000
+    payoutsByMatch: 010000000000000003000000000000000a00000000000000
     clusterPayouts: 
+    megaBlockMultiplier: 0
     isWild: 0
     isScatter: 0
     isSpecial: 0
@@ -139,8 +148,9 @@ MonoBehaviour:
   - id: 16
     symbolName: Mango
     sprite: {fileID: -630371904, guid: 9402f20a4ae737e41b06116519c95135, type: 3}
-    payoutsByMatch: 12000000000000004a00000000000000e400000000000000
+    payoutsByMatch: 12000000000000004400000000000000d500000000000000
     clusterPayouts: 
+    megaBlockMultiplier: 0.15
     isWild: 0
     isScatter: 0
     isSpecial: 0
@@ -168,8 +178,9 @@ MonoBehaviour:
   - id: 18
     symbolName: Nine
     sprite: {fileID: 21300000, guid: d0236ae586396584a8c67c8f92b9c2ce, type: 3}
-    payoutsByMatch: 020000000000000005000000000000000c00000000000000
+    payoutsByMatch: 010000000000000004000000000000000b00000000000000
     clusterPayouts: 
+    megaBlockMultiplier: 0
     isWild: 0
     isScatter: 0
     isSpecial: 0
@@ -182,8 +193,9 @@ MonoBehaviour:
   - id: 19
     symbolName: Eight
     sprite: {fileID: 21300000, guid: 82c5de81bef8a6c4a955c46cec661abb, type: 3}
-    payoutsByMatch: 020000000000000003000000000000000900000000000000
+    payoutsByMatch: 010000000000000003000000000000000900000000000000
     clusterPayouts: 
+    megaBlockMultiplier: 0
     isWild: 0
     isScatter: 0
     isSpecial: 0
@@ -196,8 +208,9 @@ MonoBehaviour:
   - id: 20
     symbolName: Cherry
     sprite: {fileID: 21300000, guid: 6a7d26a88d8c6b14b8ebc2661d844796, type: 3}
-    payoutsByMatch: 020000000000000005000000000000000f00000000000000
+    payoutsByMatch: 010000000000000004000000000000000e00000000000000
     clusterPayouts: 
+    megaBlockMultiplier: 0
     isWild: 0
     isScatter: 0
     isSpecial: 0
@@ -210,8 +223,9 @@ MonoBehaviour:
   - id: 21
     symbolName: Lemon
     sprite: {fileID: 21300000, guid: 75ac82c4d68ee314b9f19bedd4f9756c, type: 3}
-    payoutsByMatch: 030000000000000006000000000000001200000000000000
+    payoutsByMatch: 030000000000000006000000000000001100000000000000
     clusterPayouts: 
+    megaBlockMultiplier: 0
     isWild: 0
     isScatter: 0
     isSpecial: 0
@@ -224,8 +238,9 @@ MonoBehaviour:
   - id: 22
     symbolName: Orange
     sprite: {fileID: 21300000, guid: 06e6ea56958c0374f8602e21f267172c, type: 3}
-    payoutsByMatch: 030000000000000009000000000000001b00000000000000
+    payoutsByMatch: 030000000000000009000000000000001a00000000000000
     clusterPayouts: 
+    megaBlockMultiplier: 0
     isWild: 0
     isScatter: 0
     isSpecial: 0
@@ -238,8 +253,9 @@ MonoBehaviour:
   - id: 23
     symbolName: Plum
     sprite: {fileID: 21300000, guid: 5f49c19e76186e34db0bb5e3fd2ce36c, type: 3}
-    payoutsByMatch: 05000000000000000c000000000000002400000000000000
+    payoutsByMatch: 04000000000000000b000000000000002200000000000000
     clusterPayouts: 
+    megaBlockMultiplier: 0
     isWild: 0
     isScatter: 0
     isSpecial: 0
@@ -254,6 +270,7 @@ MonoBehaviour:
     sprite: {fileID: 21300000, guid: b00c0d0633222ff478ccd35e204121d5, type: 3}
     payoutsByMatch: 000000000000000000000000000000000000000000000000
     clusterPayouts: 
+    megaBlockMultiplier: 0
     isWild: 0
     isScatter: 0
     isSpecial: 0
@@ -295,7 +312,7 @@ MonoBehaviour:
   maxBet: 2400000
   rtpStatus: 1
   targetRtp: 0.962
-  maxWinMultiplier: 2355
+  maxWinMultiplier: 2293
   progressive: 0
   progressiveSeed: 250000
   features:

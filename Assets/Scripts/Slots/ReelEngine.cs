@@ -15,6 +15,7 @@ namespace LustHouse.Slots
         public long totalWin;            // in currency units (already multiplied by bet)
         public long bet;
         public List<LineWin> lineWins;
+        public List<BlockWin> blockWins;
         public int scatterCount;
         public bool triggeredFreeSpins;
         public bool triggeredBonusBuy;
@@ -52,6 +53,19 @@ namespace LustHouse.Slots
     {
         public int paylineIndex;
         public int count;       // matching symbols
+        public int symbolId;
+        public long payout;     // in bet-multiples
+    }
+
+    /// <summary>
+    /// One 2x2 mega block that paid: the top-left cell it covers, the symbol it is made of,
+    /// and its payout. Blocks are exact matches only — a wild in the quad breaks it — so
+    /// there is no substituted symbol id to record, unlike a <see cref="LineWin"/>.
+    /// </summary>
+    public struct BlockWin
+    {
+        public int reel;        // top-left cell of the 2x2
+        public int row;
         public int symbolId;
         public long payout;     // in bet-multiples
     }

@@ -103,6 +103,8 @@ def parse_asset(path):
                 return raw == "1"
             if cast is int:
                 return int(raw)
+            if cast is float:
+                return float(raw)
             return raw
         payouts = field("payoutsByMatch")
         symbols.append({
@@ -111,6 +113,7 @@ def parse_asset(path):
             "pays": _decode_int64_hex(payouts) if payouts else [],
             "wild": field("isWild", bool, False),
             "scatter": field("isScatter", bool, False),
+            "block": field("megaBlockMultiplier", float, 0.0) or 0.0,
         })
 
     paylines = []
@@ -320,6 +323,10 @@ def evaluate(model, stops, rng=None):
             win, _ = evaluate_line(model, grid, rows, top_symbol)
             total += win
 
+    # Mega blocks: every exact 2x2 of an opted-in symbol pays on top of the lines.
+    # Mirrors PaylineEvaluator.EvaluateBlocks — exact match, no wild substitution.
+    total += evaluate_blocks(model, grid)
+
     scatters = 0
     for reel in grid:
         for symbol_id in reel:
@@ -334,6 +341,31 @@ def evaluate(model, stops, rng=None):
     if feature and rng is not None:
         total += play_bonus_round(model, feature, grid, rng)
 
+    return total
+
+
+def evaluate_blocks(model, grid):
+    """PaylineEvaluator.EvaluateBlocks: bet-multiples won by 2x2 mega blocks.
+
+    Exact match only — all four cells the same symbol id, and that symbol must
+    have opted in with megaBlockMultiplier > 0. A wild in the quad breaks it.
+    Overlapping windows each pay: a 2x3 slab is two blocks.
+    """
+    by_id = model["by_id"]
+    total = 0
+    for reel in range(len(grid) - 1):
+        for row in range(len(grid[reel]) - 1):
+            symbol_id = grid[reel][row]
+            if grid[reel][row + 1] != symbol_id:
+                continue
+            if grid[reel + 1][row] != symbol_id:
+                continue
+            if grid[reel + 1][row + 1] != symbol_id:
+                continue
+            symbol = by_id.get(symbol_id)
+            if not symbol or symbol["block"] <= 0:
+                continue
+            total += payout_for_match(symbol, 4) * symbol["block"]
     return total
 
 
@@ -528,10 +560,47 @@ def exact_report(model, reel_probs):
     B = P(trigger) x picks x weightedMean(prize). The bonus does not scale with
     the paytable, so it is kept apart — folding it into the line sum would make
     the retune count it once per paytable entry instead of once per spin.
+
+    Mega blocks live in the line term, not the bonus one: their pay is
+    four-of-a-kind x a multiplier, i.e. linear in one paytable entry, so the
+    retune's weights carry them (mirrors MathSimulator.BlockRtp inside LineRtp).
     """
     line = len(model["paylines"]) * expected_line_win_dp(model, reel_probs)
+    line += block_rtp(model)
     bonus = bonus_rtp(model)
     return {"rtp": line + bonus, "line": line, "bonus": bonus, "exact": True}
+
+
+def block_rtp(model):
+    """Exact 2x2 mega-block RTP, in bet-multiples per spin:
+
+        B = (rows-1) x SUM_r a(r) x a(r+1) x four-of-a-kind x multiplier
+
+    summed over every symbol that opted in. a(r) is the fraction of cyclically
+    adjacent stop pairs on reel r that are both the symbol — a reel's visible
+    rows are consecutive stops, so "rows j and j+1 are both s" is an adjacent
+    pair, and the chance is the same for every window row. The two reels of a
+    block window are independent, and overlapping windows each pay (mirrors
+    MathSimulator.BlockRtp).
+    """
+    strips = model["reelStrips"]
+    rows = max(1, model["rowCount"])
+    total = 0.0
+    for symbol in model["symbols"]:
+        if symbol["block"] <= 0:
+            continue
+        pay = payout_for_match(symbol, 4) * symbol["block"]
+        if pay <= 0:
+            continue
+        ratios = []
+        for strip in strips:
+            length = len(strip)
+            pairs = sum(1 for i in range(length)
+                        if strip[i] == symbol["id"] and strip[(i + 1) % length] == symbol["id"])
+            ratios.append(pairs / length if length else 0.0)
+        reel_pairs = sum(ratios[r] * ratios[r + 1] for r in range(len(ratios) - 1))
+        total += (rows - 1) * reel_pairs * pay
+    return total
 
 
 def bonus_rtp(model):

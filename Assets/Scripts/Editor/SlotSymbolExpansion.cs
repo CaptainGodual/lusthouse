@@ -224,6 +224,64 @@ namespace LustHouse.EditorTools
         }
 
         /// <summary>
+        /// Gives Velvet Room its 2x2 mega block on Mango: the symbol opts in with a
+        /// multiplier, and every exact 2x2 of Mango pays four-of-a-kind x that multiplier
+        /// on top of the lines. Then retunes, since the block's RTP is linear in the same
+        /// paytable the retune scales.
+        ///
+        /// The multiplier is the whole design knob. Mango sits one stop per reel on reels
+        /// 0-1 and one adjacent pair on reels 2-4, so blocks can only form on the reel
+        /// pairs (2,3) and (3,4): about one per 180 spins. At 0.15 the feature carries
+        /// roughly four percentage points of RTP pre-retune — a real win without turning
+        /// the paytable into the block's appendix. Idempotent like the others: re-running
+        /// restores the authored baselines and re-applies the same multiplier.
+        /// </summary>
+        [MenuItem("LustHouse/Content/Author Velvet Room mega block", priority = 55)]
+        public static void AuthorVelvetRoomMegaBlock()
+        {
+            const int mangoId = 16;
+            const float multiplier = 0.15f;
+
+            var def = AssetDatabase.LoadAssetAtPath<SlotMachineDefinition>(
+                ContentBootstrap.VelvetRoomPath);
+            if (def == null)
+            {
+                LustLog.Error($"[LustHouse] Velvet Room not found at {ContentBootstrap.VelvetRoomPath}.");
+                return;
+            }
+
+            // Back to authored shapes and strips first — the strips already carry the
+            // adjacent Mango pairs a block needs, so a reset restores them.
+            ResetToAuthoredBaselines(def);
+
+            var mango = def.SymbolById(mangoId);
+            if (mango == null)
+            {
+                LustLog.Error("[LustHouse] Velvet Room has no Mango (id 16) to opt into blocks.");
+                return;
+            }
+            mango.megaBlockMultiplier = multiplier;
+
+            string report;
+            bool tuned = RetuneToDeclaredTarget(def, out report);
+            ReconcileMaxWin(def);
+
+            EditorUtility.SetDirty(def);
+            AssetDatabase.SaveAssets();
+            AssetDatabase.Refresh();
+
+            string status = def.IsValid(out var error) ? "valid" : $"INVALID ({error})";
+            double blocks = SimulationEngine.BlockRtp(def);
+            LustLog.Info($"[LustHouse] Velvet Room mega block authored: {mango.symbolName} " +
+                         $"x{multiplier}, block RTP {blocks:P3}, max win {def.maxWinMultiplier}x, " +
+                         $"{status}. {report}");
+
+            if (!tuned)
+                LustLog.Error("[LustHouse] Velvet Room did not land on its declared target " +
+                              "RTP — it is no longer ship-gated. " + report);
+        }
+
+        /// <summary>
         /// Puts the paytable and the strips back to the shape the designer authored, so the
         /// retune always starts from the same place.
         ///
@@ -758,7 +816,22 @@ namespace LustHouse.EditorTools
                 bonus = feature.picks * topPrize;
             }
 
-            def.maxWinMultiplier = (int)Math.Max(1, def.paylines.Count * top + bonus);
+            // Mega blocks too. Every 2x2 window on the grid is a block at most once, so the
+            // bound is windows x the largest single block pay — again additive, since a
+            // block pays on top of whatever the paylines through its cells also won.
+            long blocks = 0;
+            if (def.reelCount > 1 && def.rowCount > 1)
+            {
+                long windows = (def.reelCount - 1) * (def.rowCount - 1);
+                long topBlock = 0;
+                foreach (var symbol in def.symbols)
+                    if (symbol != null)
+                        topBlock = Math.Max(topBlock,
+                            (long)Math.Ceiling(symbol.MegaBlockPayoutExact()));
+                blocks = windows * topBlock;
+            }
+
+            def.maxWinMultiplier = (int)Math.Max(1, def.paylines.Count * top + bonus + blocks);
         }
 
         // --------------------------------------------------------------------- art ---

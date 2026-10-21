@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using LustHouse.Audio;
 using UnityEngine;
 
 namespace LustHouse.Slots
@@ -42,6 +43,29 @@ namespace LustHouse.Slots
                  "symbols. Required for PayType.Cluster: a 9-cell cluster would otherwise " +
                  "index 6 into payoutsByMatch and pay nothing at all.")]
         public long[] clusterPayouts = new long[0];
+
+        [Header("Mega block (2x2)")]
+        [Tooltip("0 = this symbol never forms a mega block. Above 0 = a 2x2 of exactly " +
+                 "this symbol (no wild substitution) morphs into one big sprite and pays " +
+                 "four-of-a-kind x this multiplier on top of any line wins.")]
+        public float megaBlockMultiplier = 0f;
+
+        /// <summary>
+        /// What one 2x2 block of this symbol pays, in bet-multiples, before currency
+        /// rounding. Zero when the symbol has not opted in.
+        ///
+        /// Deliberately a double and not a rounded long: the retune probes each paytable
+        /// entry at a unit value, and rounding the product at the probe would silently
+        /// zero the block term for any multiplier below 0.5 — the weight would miss the
+        /// block entirely and the game would ship over target. The spin rounds the
+        /// currency product to the nearest whole unit instead, off by at most half a
+        /// currency unit per block.
+        /// </summary>
+        public double MegaBlockPayoutExact()
+        {
+            if (megaBlockMultiplier <= 0f) return 0.0;
+            return PayoutForMatch(4) * (double)megaBlockMultiplier;
+        }
 
         [Tooltip("Substitutes for any non-scatter symbol when counting lines.")]
         public bool isWild = false;
@@ -135,7 +159,11 @@ namespace LustHouse.Slots
         public Color themeTint = Color.white;
         public Sprite keyArt;
         public string addressableKey = "";
-        public string audioBank = "";
+        public string audioBankId = "";
+
+        [Tooltip("This game's own sound overrides. Cues with no entry fall back to the " +
+                 "synthesised sound, so an empty bank is a perfectly good bank.")]
+        public AudioBank audioBank;
 
         [Header("Grid")]
         public int reelCount = 3;

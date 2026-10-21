@@ -174,8 +174,10 @@ namespace LustHouse.EditorTools
         }
 
         /// <summary>
-        /// Exact RTP from paylines alone, excluding every feature round. This is what the
-        /// retune measures, so its weights stay linear in the payouts.
+        /// Exact RTP from the base game — paylines plus 2x2 mega blocks — excluding every
+        /// feature round. This is what the retune measures, so its weights stay linear in
+        /// the payouts. Blocks live here and not in the affine bonus term because their
+        /// pay is four-of-a-kind × a multiplier, i.e. linear in one paytable entry.
         /// </summary>
         public static double LineRtp(SlotMachineDefinition def)
         {
@@ -209,7 +211,67 @@ namespace LustHouse.EditorTools
             // payline visits does not change its expectation: all lines share one value.
             int width = def.paylines[0].rows?.Length ?? def.reelCount;
             var ids = new int[width];
-            return def.paylines.Count * SumLine(def, probs, 0, width, ids, 1.0);
+            return def.paylines.Count * SumLine(def, probs, 0, width, ids, 1.0) + BlockRtp(def);
+        }
+
+        /// <summary>
+        /// Exact RTP contribution of 2x2 mega blocks, in bet-multiples per spin:
+        ///
+        ///     B = (rows−1) × Σ_r a(r)×a(r+1) × four-of-a-kind × multiplier
+        ///
+        /// summed over every symbol that opted in with <c>megaBlockMultiplier &gt; 0</c>.
+        ///
+        /// A reel's visible rows are consecutive stops, so "rows j and j+1 are both symbol
+        /// s" means two cyclically adjacent stops are both s — and that chance is the same
+        /// for every window row, since shifting the stop just cyclically shifts which
+        /// adjacent pair is sampled. Hence a(r) = (adjacent s-pairs on reel r) / (strip
+        /// length), and the two reels of a block window are independent.
+        ///
+        /// Like the payline term this is linear in the paytable (four-of-a-kind is one
+        /// entry), so it belongs in the weight the retune measures rather than in the
+        /// affine bonus constant. It also counts overlapping windows each on their own —
+        /// a 2x3 slab of one symbol is two blocks — matching PaylineEvaluator.EvaluateBlocks.
+        ///
+        /// The evaluator rounds each block's currency product; this uses the unrounded
+        /// value, so the two differ by at most half a currency unit per block per spin.
+        /// </summary>
+        public static double BlockRtp(SlotMachineDefinition def)
+        {
+            if (def?.reelStrips == null || def.reelStrips.Count != def.reelCount) return 0.0;
+            if (def.rowCount <= 1 || def.reelCount <= 1) return 0.0;
+
+            double total = 0.0;
+            for (int i = 0; i < def.symbols.Count; i++)
+            {
+                var symbol = def.symbols[i];
+                if (symbol == null) continue;
+
+                double pay = symbol.MegaBlockPayoutExact();
+                if (pay <= 0.0) continue;
+
+                double reelPairs = 0.0;
+                for (int r = 0; r + 1 < def.reelCount; r++)
+                    reelPairs += AdjacentPairRatio(def, r, symbol.id) *
+                                 AdjacentPairRatio(def, r + 1, symbol.id);
+
+                total += (def.rowCount - 1) * reelPairs * pay;
+            }
+
+            return total;
+        }
+
+        /// <summary>Fraction of cyclically adjacent stop pairs on one reel that are both <paramref name="id"/>.</summary>
+        private static double AdjacentPairRatio(SlotMachineDefinition def, int reel, int id)
+        {
+            var strip = def.reelStrips[reel]?.symbols;
+            if (strip == null || strip.Count == 0) return 0.0;
+
+            int length = strip.Count;
+            int pairs = 0;
+            for (int i = 0; i < length; i++)
+                if (strip[i] == id && strip[(i + 1) % length] == id) pairs++;
+
+            return (double)pairs / length;
         }
 
         /// <summary>

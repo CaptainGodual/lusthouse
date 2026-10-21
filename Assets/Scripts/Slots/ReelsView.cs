@@ -70,11 +70,15 @@ namespace LustHouse.Slots
             public GameObject go;
             public int reelIndex;
             public int row;
+            /// <summary>True for a merged 2x2 mega-block overlay rather than a single cell.</summary>
+            public bool isBlock;
         }
 
         private readonly List<WinFrame> _winFrames = new List<WinFrame>();
         private readonly List<GameObject> _locks = new List<GameObject>();
         private RectTransform _winLinesRoot;
+        /// <summary>Parent of the merged 2x2 mega-block overlays, in view space like the win lines.</summary>
+        private RectTransform _blocksRoot;
         private SlotMachineDefinition _definition;
         private float _lastWidth = -1f;
         private float _lastHeight = -1f;
@@ -247,6 +251,7 @@ namespace LustHouse.Slots
                 if (_winFrames[i].go != null) SafeDestroy(_winFrames[i].go);
             _winFrames.Clear();
             ClearWinLines();
+            ClearBlockOverlays();
 
             // The symbols stop celebrating too. A win animation that outlives its win
             // leaves a symbol animating over the next spin, which is the sort of thing
@@ -261,11 +266,30 @@ namespace LustHouse.Slots
         /// <summary>Number of win frames currently drawn. Exposed for tests and debug UI.</summary>
         public int WinFrameCount => _winFrames.Count;
 
+        /// <summary>Number of merged 2x2 mega-block overlays currently drawn.</summary>
+        public int BlockOverlayCount
+        {
+            get
+            {
+                int n = 0;
+                for (int i = 0; i < _winFrames.Count; i++)
+                    if (_winFrames[i].isBlock) n++;
+                return n;
+            }
+        }
+
         private void ClearWinLines()
         {
             if (_winLinesRoot == null) return;
             SafeDestroy(_winLinesRoot.gameObject);
             _winLinesRoot = null;
+        }
+
+        private void ClearBlockOverlays()
+        {
+            if (_blocksRoot == null) return;
+            SafeDestroy(_blocksRoot.gameObject);
+            _blocksRoot = null;
         }
 
         // ---- hold & spin ----------------------------------------------------
@@ -382,6 +406,15 @@ namespace LustHouse.Slots
 
                     DrawWinLine(win.paylineIndex, count);
                 }
+            }
+
+            // Mega blocks: one merged sprite spanning the 2x2, standing in for the four
+            // cells it covers. The per-cell frames underneath still draw — those symbols
+            // also won on the paylines through them, and the block sits on top.
+            if (result.blockWins != null)
+            {
+                for (int b = 0; b < result.blockWins.Count; b++)
+                    DrawBlockOverlay(result.blockWins[b]);
             }
 
             // Scatters: highlight every scatter on the grid, but only when they actually
@@ -544,6 +577,76 @@ namespace LustHouse.Slots
         }
 
         /// <summary>
+        /// Draws one merged sprite spanning a 2x2 mega block: the symbol's own art, scaled
+        /// up over the four cells it covers, inside a gold rim.
+        ///
+        /// It lives in this view's space rather than in a reel column, because a block
+        /// crosses the gap between two reels and a reel's mask would clip it in half. Its
+        /// geometry is derived from the two reels' live cell sizes, so the re-fit pass that
+        /// corrects frames after the canvas resolves corrects blocks the same way.
+        /// </summary>
+        private void DrawBlockOverlay(BlockWin win)
+        {
+            if (_definition == null) return;
+            if (win.reel < 0 || win.reel + 1 >= _reels.Count) return;
+            if (win.row < 0 || win.row + 1 >= _definition.rowCount) return;
+
+            var left = _reels[win.reel];
+            var right = _reels[win.reel + 1];
+            if (left == null || right == null) return;
+
+            if (_blocksRoot == null)
+            {
+                var rootGo = new GameObject("BlockOverlays", typeof(RectTransform));
+                rootGo.transform.SetParent(transform, false);
+                _blocksRoot = (RectTransform)rootGo.transform;
+                UiFactory.Stretch(_blocksRoot);
+            }
+
+            var go = new GameObject("Block", typeof(RectTransform));
+            go.transform.SetParent(_blocksRoot, false);
+            _winFrames.Add(new WinFrame { go = go, reelIndex = win.reel, row = win.row, isBlock = true });
+
+            FitBlockOverlay(go, win.reel, left, right, win.row);
+
+            var symbol = _definition.SymbolById(win.symbolId);
+            var image = go.AddComponent<Image>();
+            image.sprite = symbol != null ? symbol.sprite : null;
+            image.color = Color.white;
+            image.preserveAspect = true;
+            image.raycastTarget = false;
+
+            var rim = go.AddComponent<Outline>();
+            rim.effectColor = UiFactory.GoldPrimary;
+            rim.effectDistance = new Vector2(6f, -6f);
+        }
+
+        /// <summary>Sizes and centres one block overlay over its 2x2 window on the live reels.</summary>
+        private void FitBlockOverlay(GameObject go, int reel, ReelStripView left,
+                                     ReelStripView right, int row)
+        {
+            var rt = (RectTransform)go.transform;
+            rt.anchorMin = new Vector2(0.5f, 0.5f);
+            rt.anchorMax = new Vector2(0.5f, 0.5f);
+            rt.pivot = new Vector2(0.5f, 0.5f);
+
+            // Spans the two cell widths plus the gap between the reels, and two rows plus
+            // the row gap — with the same shade the single-cell frame wears, so a block
+            // reads as four framed cells fused, not as a differently-padded box.
+            float pitchX = ((RectTransform)right.transform).anchoredPosition.x -
+                           ((RectTransform)left.transform).anchoredPosition.x;
+            if (pitchX <= 0f) pitchX = left.cellSize + left.cellGap;
+            float pitchY = left.cellSize + left.cellGap;
+
+            rt.sizeDelta = new Vector2(pitchX + left.cellSize * 0.1f,
+                                       pitchY + left.cellSize * 1.1f);
+            // Centre of the 2x2: half a pitch right and half a pitch down from the
+            // top-left cell's centre.
+            rt.anchoredPosition = CellCentreInView(reel, row) +
+                                  new Vector2(pitchX * 0.5f, -pitchY * 0.5f);
+        }
+
+        /// <summary>
         /// Re-fits the win frames to the reels.
         ///
         /// The reels resize when the canvas finally resolves, and a frame sized against the
@@ -560,6 +663,17 @@ namespace LustHouse.Slots
 
                 var reel = _reels[frame.reelIndex];
                 if (reel == null) continue;
+
+                // A block overlay lives in view space and spans two reels; re-fitting it
+                // like a single cell would yank it into the left reel's column.
+                if (frame.isBlock)
+                {
+                    if (frame.reelIndex + 1 >= _reels.Count) continue;
+                    var right = _reels[frame.reelIndex + 1];
+                    if (right == null) continue;
+                    FitBlockOverlay(frame.go, frame.reelIndex, reel, right, frame.row);
+                    continue;
+                }
 
                 var rt = (RectTransform)frame.go.transform;
                 float size = reel.cellSize * 1.1f;

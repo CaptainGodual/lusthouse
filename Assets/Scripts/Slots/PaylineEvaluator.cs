@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 
 namespace LustHouse.Slots
@@ -24,6 +25,8 @@ namespace LustHouse.Slots
 
             var grid = result.grid;
             long totalMultiples = 0;
+            result.blockWins = new List<BlockWin>();
+            long blockWin = 0;
 
             if (def.payType == PayType.Lines)
             {
@@ -44,11 +47,58 @@ namespace LustHouse.Slots
                 }
             }
 
+            blockWin = EvaluateBlocks(def, grid, bet, result.blockWins);
+
             result.scatterCount = ReelEngine.CountScatters(def, grid);
             // Features are not scored here: FeatureRunner runs them after the base game so a
             // free-spin round is actually played rather than folded into one lump.
-            result.totalWin = totalMultiples * bet;
+            result.totalWin = totalMultiples * bet + blockWin;
             return result;
+        }
+
+        /// <summary>
+        /// Scans every 2x2 window on the grid for a mega block and pays the ones that land.
+        ///
+        /// The match is exact: all four cells must be the same symbol id, and that symbol
+        /// must have opted in with <c>megaBlockMultiplier &gt; 0</c>. A wild does not
+        /// substitute — a block is a shape, not a line, and "any four symbols" would turn
+        /// every wild-heavy spin into a block. Overlapping windows each pay on their own
+        /// (a 2x3 slab of mangoes is two blocks), which is what the closed-form term in
+        /// MathSimulator.BlockRtp assumes.
+        ///
+        /// Returns the total in currency units, rounding each block once so a fractional
+        /// bet-multiple cannot leak a sub-unit win into the total.
+        /// </summary>
+        public static long EvaluateBlocks(SlotMachineDefinition def, int[][] grid, long bet,
+                                          List<BlockWin> into)
+        {
+            if (def == null || grid == null || into == null) return 0L;
+
+            long total = 0L;
+            for (int r = 0; r + 1 < grid.Length; r++)
+            {
+                for (int row = 0; row + 1 < grid[r].Length; row++)
+                {
+                    int id = grid[r][row];
+                    if (grid[r][row + 1] != id) continue;
+                    if (grid[r + 1][row] != id) continue;
+                    if (grid[r + 1][row + 1] != id) continue;
+
+                    var symbol = def.SymbolById(id);
+                    if (symbol == null) continue;
+
+                    double exact = symbol.MegaBlockPayoutExact();
+                    if (exact <= 0.0) continue;
+
+                    long pay = (long)Math.Round(exact * bet, MidpointRounding.AwayFromZero);
+                    if (pay <= 0) continue;
+
+                    into.Add(new BlockWin { reel = r, row = row, symbolId = id, payout = pay });
+                    total += pay;
+                }
+            }
+
+            return total;
         }
 
         /// <summary>
