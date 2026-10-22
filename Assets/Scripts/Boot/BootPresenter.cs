@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using LustHouse.Lobby;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
@@ -43,6 +44,8 @@ namespace LustHouse.Boot
         private Button _enterButton;
         private Canvas _canvas;
         private UI.AgeGateOverlay _ageGate;
+        private ProbabilityDisclosureSheet _disclosure;
+        private FirstRunPackPrompt _prompt;
 
         private bool _ready;
 
@@ -210,16 +213,17 @@ namespace LustHouse.Boot
             {
                 if (_ageGate == null)
                 {
-                    _ageGate = UI.AgeGateOverlay.Create(_canvas.transform, OnAgeConfirmed);
+                    _ageGate = UI.AgeGateOverlay.Create(_canvas.transform, OnAgeConfirmed,
+                        null, OpenDisclosureOverGate);
                     _ageGate.transform.SetAsLastSibling();
                 }
                 return;
             }
 
-            EnterLobby();
+            RunFirstRunSequence();
         }
 
-        /// <summary>The player answered the age question. On to the lobby.</summary>
+        /// <summary>The player answered the age question. On to the disclosure and the offer.</summary>
         private void OnAgeConfirmed()
         {
             if (_ageGate != null)
@@ -228,11 +232,107 @@ namespace LustHouse.Boot
                 _ageGate = null;
             }
 
+            RunFirstRunSequence();
+        }
+
+        /// <summary>
+        /// The first-run sequence (plan §1.1, §1.3): the probability disclosure, then
+        /// the free start pack, then the lobby.
+        ///
+        /// Both steps are once-only, and both are derived from persisted state rather
+        /// than from a flag that could drift: the disclosure from the player's
+        /// disclosure flag, the offer from the ledger. A returning player goes straight
+        /// to the lobby.
+        /// </summary>
+        private void RunFirstRunSequence()
+        {
+            var progression = Economy.PlayerProgression.Instance;
+            bool disclosurePending = progression == null || !progression.DisclosureSeen;
+
+            var services = Core.ServicesBootstrap.Instance;
+            bool promptPending = services == null || !services.FirstRunPromptAnswered;
+
+            Core.LustLog.Info($"[LustHouse] First-run sequence: disclosurePending={disclosurePending} " +
+                         $"promptPending={promptPending} " +
+                         $"disclosureSeen={progression?.DisclosureSeen} " +
+                         $"offerAnswered={services?.FirstRunPromptAnswered}");
+
+            if (disclosurePending)
+            {
+                OpenDisclosure(AfterDisclosure);
+                return;
+            }
+
+            if (promptPending)
+            {
+                OpenPrompt(EnterLobby);
+                return;
+            }
+
             EnterLobby();
+        }
+
+        /// <summary>
+        /// Opens the probability disclosure.
+        ///
+        /// The sheet measures the games it publishes, so it is opened with the catalogue
+        /// rather than with a list of names: a disclosure that lists a game the build
+        /// does not contain is a disclosure that lies.
+        /// </summary>
+        private void OpenDisclosure(System.Action onClosed)
+        {
+            var services = Core.ServicesBootstrap.Instance;
+            var catalog = services != null ? services.catalog : null;
+            var games = ProbabilityDisclosureSheet.ShippableGames(catalog);
+
+            _disclosure = ProbabilityDisclosureSheet.Create(_canvas.transform, games, onClosed);
+            _disclosure.transform.SetAsLastSibling();
+            _disclosure.Open();
+            Core.LustLog.Info($"[LustHouse] The probability disclosure is up ({games.Count} games).");
+        }
+
+        /// <summary>The gate's link. The gate stays up behind the sheet.</summary>
+        private void OpenDisclosureOverGate()
+        {
+            OpenDisclosure(null);
+        }
+
+        private void AfterDisclosure()
+        {
+            _disclosure = null;
+
+            var progression = Economy.PlayerProgression.Instance;
+            if (progression != null)
+            {
+                progression.MarkDisclosureSeen();
+                Core.ServicesBootstrap.Instance?.SaveNow();
+            }
+
+            // On to the offer, if it is still outstanding.
+            RunFirstRunSequence();
+        }
+
+        /// <summary>
+        /// Opens the free start pack.
+        ///
+        /// Declining it is a real answer: the player still gets a stake they can bet,
+        /// and the offer is never asked again.
+        /// </summary>
+        private void OpenPrompt(System.Action onClosed)
+        {
+            var services = Core.ServicesBootstrap.Instance;
+            long minimumBet = FirstRunPackPrompt.MinimumBetFor(services != null ? services.catalog : null);
+
+            _prompt = FirstRunPackPrompt.Create(_canvas.transform, minimumBet, onClosed);
+            _prompt.transform.SetAsLastSibling();
+            _prompt.Open();
+            Core.LustLog.Info("[LustHouse] The free start pack offer is up.");
         }
 
         private void EnterLobby()
         {
+            Core.LustLog.Info($"[LustHouse] EnterLobby: sequence={sequence != null} " +
+                              $"ready={sequence != null && sequence.ReadyToEnter}");
             if (sequence != null) sequence.EnterLobby();
         }
 

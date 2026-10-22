@@ -138,6 +138,11 @@ namespace LustHouse.Lobby
             var entry = catalog != null ? catalog.Find(gameId) : null;
             if (entry == null || entry.definition == null) return;
 
+            // A self-excluded player cannot open a game. The check comes before the
+            // tile is even looked at: an exclusion that only blocks some of the doors
+            // is not an exclusion.
+            if (BlockedBySelfExclusion()) return;
+
             int level = PlayerProgression.Instance != null ? PlayerProgression.Instance.Level : 1;
 
             // Locked (coming soon): teaser, never a purchase path.
@@ -199,6 +204,7 @@ namespace LustHouse.Lobby
         public void Launch(GameCatalog.Entry entry)
         {
             if (entry == null || entry.definition == null) return;
+            if (BlockedBySelfExclusion()) return;
             Launch(entry.definition, entry.Title);
         }
 
@@ -206,7 +212,36 @@ namespace LustHouse.Lobby
         public void Launch(SlotMachineDefinition definition)
         {
             if (definition == null) return;
+            if (BlockedBySelfExclusion()) return;
             Launch(definition, definition.title);
+        }
+
+        /// <summary>
+        /// Is this player excluded from playing?
+        ///
+        /// Both launch paths check it — the tile press and the launch itself — because
+        /// a launch can be started from somewhere other than a tile press (a deep
+        /// link, a test, a script), and an exclusion that only guards one door is
+        /// guarding the wrong one.
+        /// </summary>
+        private bool BlockedBySelfExclusion()
+        {
+            var service = ResponsiblePlayService.Instance;
+            if (service == null || !service.IsExcluded) return false;
+
+            LustLog.Info("[LustHouse] The player is self-excluded; the game will not open.");
+
+            string body = service.IsPermanentlyExcluded
+                ? "You have excluded yourself from Lust House permanently.\n\n" +
+                  "No title will open. This cannot be changed from inside the game."
+                : "You have excluded yourself from Lust House.\n\n" +
+                  $"No title will open until the exclusion lifts on its own" +
+                  (service.ExclusionEndsUtc.HasValue
+                      ? $" ({service.ExclusionEndsUtc.Value:yyyy-MM-dd HH:mm} UTC)."
+                      : ".");
+
+            _presenter?.ShowEntryBlocked("PLAYING IS PAUSED", body);
+            return true;
         }
 
         private void Launch(SlotMachineDefinition definition, string title)

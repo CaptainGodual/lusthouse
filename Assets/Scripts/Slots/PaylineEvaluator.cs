@@ -114,25 +114,55 @@ namespace LustHouse.Slots
 
             int reelCount = line.rows.Length;
 
-            // The base symbol is whatever reel 0 shows that is not a wild.
-            int baseSymbol = grid[0][line.rows[0]];
+            // The base symbol is the first non-wild, non-scatter symbol on the line.
+            // A wild on reel 0 must not invalidate the whole line -- it substitutes.
+            int baseSymbol = -1;
+            for (int r = 0; r < reelCount; r++)
+            {
+                int id = grid[r][line.rows[r]];
+                var d = def.SymbolById(id);
+                if (d == null) break;
+                if (d.isScatter) return 0;   // scatters never pay on a line
+                if (d.isWild) continue;
+                baseSymbol = id;
+                break;
+            }
+
+            // All wilds: pay as the wild itself.
+            if (baseSymbol == -1)
+            {
+                int w = grid[0][line.rows[0]];
+                var wd = def.SymbolById(w);
+                if (wd == null || !wd.isWild) return 0;
+                baseSymbol = w;
+            }
+
             var baseDef = def.SymbolById(baseSymbol);
             if (baseDef == null) return 0;
-            if (baseDef.isScatter) return 0;   // scatters never pay on a line
 
-            bool sawWild = baseDef.isWild;
-            int matched = 1;
+            bool sawWild = false;
+            for (int r = 0; r < reelCount; r++)
+            {
+                int id = grid[r][line.rows[r]];
+                var d = def.SymbolById(id);
+                if (d != null && d.isWild) sawWild = true;
+            }
 
-            for (int r = 1; r < reelCount; r++)
+            var reel0Def = def.SymbolById(grid[0][line.rows[0]]);
+            if (reel0Def != null && reel0Def.isScatter) return 0;
+
+            int matched = 0;
+            for (int r = 0; r < reelCount; r++)
             {
                 int symbol = grid[r][line.rows[r]];
                 var def2 = def.SymbolById(symbol);
                 if (def2 == null) break;
 
-                if (symbol == baseSymbol) { matched++; continue; }
-                if (def2.isWild) { matched++; sawWild = true; continue; }
+                if (symbol == baseSymbol || def2.isWild) { matched++; continue; }
                 break;
             }
+
+            if (matched == 0) return 0;
 
             // Report the run length even when the line does not pay, so a near miss is
             // distinguishable from no match at all. Harmless to payout maths: callers

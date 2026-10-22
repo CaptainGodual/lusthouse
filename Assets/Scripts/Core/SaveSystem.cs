@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.IO;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
@@ -135,7 +136,19 @@ namespace LustHouse.Core
             string parseError = null;
             try
             {
-                root = JObject.Parse(json);
+                // DateParseHandling.None. Newtonsoft's default turns any ISO-looking string
+                // into a DateTime token, and handing that token to a string field formats
+                // it with the current culture — so "9999-12-31T23:59:59Z" came back as
+                // "12/31/9999 23:59:59" and every timestamp in the save was mangled on
+                // the way in. The save stores timestamps as strings, so they must be
+                // parsed as strings.
+                using (var reader = new JsonTextReader(new StringReader(json))
+                {
+                    DateParseHandling = DateParseHandling.None
+                })
+                {
+                    root = JObject.Load(reader);
+                }
             }
             catch (Exception e)
             {
@@ -175,6 +188,17 @@ namespace LustHouse.Core
             SaveDocument doc;
             try
             {
+                // A malformed progressive block is dropped rather than allowed to fail the
+                // whole load. The pots are the one part of the save that can be rebuilt
+                // from the content (a missing key falls back to the tier's seed), so a
+                // broken block must not cost the player their wallet or their level.
+                if (root["progressive"] != null && root["progressive"].Type != JTokenType.Object)
+                {
+                    LustLog.Warn("[LustHouse] The progressive pot block was unreadable; " +
+                                 "the pots fall back to their seeds.");
+                    root["progressive"] = new JObject();
+                }
+
                 doc = root.ToObject<SaveDocument>();
             }
             catch (Exception e)
@@ -201,6 +225,7 @@ namespace LustHouse.Core
             doc.wallet = doc.wallet ?? WalletState.CreateNew();
             doc.inventory = doc.inventory ?? new InventoryState();
             doc.settings = doc.settings ?? new SettingsState();
+            doc.progressive = doc.progressive ?? new Dictionary<string, long>();
             result.document = doc;
             result.ok = true;
             return result;

@@ -34,3 +34,26 @@ can be exercised without the editor. The slot maths and RTP simulator depend on
 ```
 
 Exit code is non-zero if any check fails.
+
+## `run_verify.ps1`
+
+Builds `VerifyRunner.cs` and executes it under Unity's bundled mono.
+
+An exe linked against Unity's *reference-only* netstandard facades loads but dies with
+an access violation (0xC0000005) the moment it runs — a ref assembly has no IL to
+execute. This script therefore compiles against Mono's own 4.7.2-api BCL plus Mono's
+implementation `Facades\netstandard.dll`, which is what `LustHouse.Scripts` (a
+netstandard 2.1 assembly) actually resolves its core types through at run time.
+
+It links against the `LustHouse.Scripts.dll` / `LustHouse.Editor.dll` that
+`check_compile.ps1` already produced, so run that first.
+
+```powershell
+.\Tools\check_compile.ps1 -WithTests   # produces the assemblies this links against
+.\Tools\run_verify.ps1
+```
+
+Exit code is non-zero if any check fails. Mono prints a
+"runtime and class libraries are out of sync" notice referencing
+`UnityEngine.CoreModule.dll` *after* the result line; that is a known Unity-mono
+artefact from loading engine assemblies outside the editor, not a check failure.

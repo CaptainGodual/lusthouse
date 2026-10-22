@@ -104,15 +104,56 @@ namespace LustHouse.Tests
             confirm.onClick.Invoke();
             yield return null;
 
+            // The gate is only the first thing on the way in. The disclosure and the
+            // offer come next for a player who has not seen them (plan §1.1, §1.3),
+            // and the lobby waits behind those.
+            yield return CompleteFirstRunSequence();
+
             yield return WaitForScene(LobbyScene);
 
             Assert.AreEqual(LobbyScene, SceneManager.GetActiveScene().name,
-                "The player confirmed they are 18 and the lobby never opened. The gate " +
-                "is supposed to let them in, not strand them on the loading screen.");
+                "The player confirmed they are 18 and the lobby never opened. The gate is " +
+                "supposed to let them in, not strand them on the loading screen.");
 
             Assert.IsTrue(AgeGate.IsConfirmed,
                 "The player answered the gate and the answer was not kept, so they will " +
                 "be asked the same question on every launch.");
+        }
+
+        /// <summary>
+        /// Answers the disclosure and the offer if they are still outstanding.
+        ///
+        /// A profile that has already seen them skips straight through, so this works
+        /// whatever state the player's save is in.
+        /// </summary>
+        private static IEnumerator CompleteFirstRunSequence()
+        {
+            for (int i = 0; i < 60; i++)
+            {
+                var disclosure = Object.FindFirstObjectByType<LustHouse.Lobby.ProbabilityDisclosureSheet>();
+                if (disclosure != null)
+                {
+                    var close = FindButtonIn(disclosure.gameObject, "Close");
+                    if (close != null) close.onClick.Invoke();
+                    yield return null;
+                    continue;
+                }
+
+                var prompt = Object.FindFirstObjectByType<LustHouse.Lobby.FirstRunPackPrompt>();
+                if (prompt != null)
+                {
+                    var take = FindButtonByLabel(prompt.gameObject, "TAKE IT");
+                    if (take != null) take.onClick.Invoke();
+                    yield return null;
+
+                    var thanks = FindButtonByLabel(prompt.gameObject, "THANK YOU");
+                    if (thanks != null) thanks.onClick.Invoke();
+                    yield return null;
+                    continue;
+                }
+
+                yield break;
+            }
         }
 
         // ---- the lobby chip ----------------------------------------------------
@@ -245,6 +286,29 @@ namespace LustHouse.Tests
 
             foreach (var button in gate.GetComponentsInChildren<Button>(true))
                 if (button.name == name) return button;
+            return null;
+        }
+
+        /// <summary>Finds a button under any root, by name.</summary>
+        private static Button FindButtonIn(GameObject root, string name)
+        {
+            if (root == null) return null;
+
+            foreach (var button in root.GetComponentsInChildren<Button>(true))
+                if (button.name == name) return button;
+            return null;
+        }
+
+        /// <summary>Finds a button by the text on its label.</summary>
+        private static Button FindButtonByLabel(GameObject root, string label)
+        {
+            if (root == null) return null;
+
+            foreach (var button in root.GetComponentsInChildren<Button>(true))
+            {
+                foreach (var text in button.GetComponentsInChildren<Text>(true))
+                    if (text.text == label) return button;
+            }
             return null;
         }
     }

@@ -86,6 +86,8 @@ namespace LustHouse.Lobby
         private FeaturedRow _featuredRow;
         private ModalSheet _sheet;
         private UI.AgeGateOverlay _ageGate;
+        private ProbabilityDisclosureSheet _disclosure;
+        private ResponsiblePlaySheet _responsiblePlay;
         private RectTransform _root;
 
         private void Awake()
@@ -110,6 +112,12 @@ namespace LustHouse.Lobby
         {
             EventBus.Subscribe<WalletChanged>(OnWalletChanged);
             EventBus.Subscribe<LevelUp>(OnLevelUp);
+
+            // The reality check comes due on the service's own clock, so the lobby
+            // only has to be listening.
+            var responsiblePlay = ResponsiblePlayService.Instance;
+            if (responsiblePlay != null) responsiblePlay.RealityCheckDue += OnRealityCheckDue;
+
             Build();
             Refresh();
             AnnounceNewUnlocks();
@@ -122,6 +130,9 @@ namespace LustHouse.Lobby
         {
             EventBus.Unsubscribe<WalletChanged>(OnWalletChanged);
             EventBus.Unsubscribe<LevelUp>(OnLevelUp);
+
+            var responsiblePlay = ResponsiblePlayService.Instance;
+            if (responsiblePlay != null) responsiblePlay.RealityCheckDue -= OnRealityCheckDue;
         }
 
         private void Update()
@@ -207,6 +218,8 @@ namespace LustHouse.Lobby
 
             BuildPlayerChip(root);
             BuildAgeChip(root);
+            BuildOddsChip(root);
+            BuildResponsiblePlayChip(root);
             BuildStoreWidget(root);
         }
 
@@ -225,6 +238,86 @@ namespace LustHouse.Lobby
                 UiFactory.TextSecondary, out Text chipText);
             UiFactory.PlaceTopLeft(chip.GetComponent<RectTransform>(), 800f, 16f, 88f, 48f);
             chip.onClick.AddListener(OpenAgeGate);
+        }
+
+        /// <summary>
+        /// The odds button (plan §1.1).
+        ///
+        /// The disclosure is shown once, before the lobby, and then it has to stay
+        /// reachable for as long as the player wants it — a player who has read it in
+        /// the first minute and wants to check a payout in the fiftieth must be able
+        /// to, and a store listing that points at a panel which only exists in the
+        /// first minute is pointing at nothing.
+        /// </summary>
+        private void BuildOddsChip(RectTransform root)
+        {
+            var chip = UiChrome.NewPillButton("OddsChip", root, "ODDS", 20,
+                UiFactory.NeonCyan, out Text chipText);
+            UiFactory.PlaceTopLeft(chip.GetComponent<RectTransform>(), 900f, 16f, 116f, 48f);
+            chip.onClick.AddListener(OpenDisclosure);
+        }
+
+        /// <summary>
+        /// The responsible-play button (guardrail 4).
+        ///
+        /// It lives in the top tier rather than behind the menu, because the menu is a
+        /// placeholder sheet that says "everything ships in M4", and responsible play is
+        /// not something that may ship later.
+        /// </summary>
+        private void BuildResponsiblePlayChip(RectTransform root)
+        {
+            var chip = UiChrome.NewPillButton("ResponsiblePlayChip", root, "RESPONSIBLE PLAY", 18,
+                UiFactory.TextSecondary, out Text chipText);
+            UiFactory.PlaceTopLeft(chip.GetComponent<RectTransform>(), 1028f, 16f, 262f, 48f);
+            chip.onClick.AddListener(OpenResponsiblePlay);
+        }
+
+        /// <summary>Opens the probability disclosure over the lobby.</summary>
+        private void OpenDisclosure()
+        {
+            if (_disclosure != null) return;
+
+            var games = ProbabilityDisclosureSheet.ShippableGames(catalog);
+            _disclosure = ProbabilityDisclosureSheet.Create(_root, games);
+            _disclosure.transform.SetAsLastSibling();
+            _disclosure.Open();
+        }
+
+        /// <summary>Opens the responsible-play panel over the lobby.</summary>
+        private void OpenResponsiblePlay()
+        {
+            if (_responsiblePlay != null) return;
+
+            _responsiblePlay = ResponsiblePlaySheet.Create(_root, ResponsiblePlayMode.Panel,
+                null, OnSessionEnded);
+            _responsiblePlay.transform.SetAsLastSibling();
+            _responsiblePlay.Open();
+        }
+
+        /// <summary>
+        /// The reality check came due.
+        ///
+        /// It is shown over the lobby as a modal with two real answers. Continuing is
+        /// allowed — a check the player cannot decline is an obstacle, not a check.
+        /// </summary>
+        private void OnRealityCheckDue(int minutes)
+        {
+            if (_responsiblePlay != null) return;
+
+            _responsiblePlay = ResponsiblePlaySheet.Create(_root, ResponsiblePlayMode.RealityCheck,
+                null, OnSessionEnded);
+            _responsiblePlay.transform.SetAsLastSibling();
+            _responsiblePlay.Open();
+        }
+
+        /// <summary>The player ended the session at the reality check.</summary>
+        private void OnSessionEnded()
+        {
+            _responsiblePlay = null;
+            ShowSheet("SESSION ENDED",
+                "Thanks for playing. The session timer has been reset.\n\n" +
+                "Come back whenever you like — your balance and your progress are saved.",
+                "CLOSE");
         }
 
         /// <summary>
@@ -581,8 +674,18 @@ namespace LustHouse.Lobby
             _status.color = color;
         }
 
-        private void OnLockedTapped(string title) =>
-            ShowSheet(title.ToUpperInvariant(), "This title is marked coming soon.", "GOT IT");
+        private void OnLockedTapped(GameCatalog.Entry entry)
+        {
+            if (entry == null) return;
+
+            // The catalogue carries the message per entry; fall back to the generic
+            // line for a locked entry that has none.
+            string body = string.IsNullOrEmpty(entry.lockedMessage)
+                ? "This title is marked coming soon."
+                : entry.lockedMessage;
+
+            ShowSheet(entry.Title.ToUpperInvariant(), body, "GOT IT");
+        }
 
         private void OnPromoTapped(PromoSlide slide)
         {

@@ -209,8 +209,8 @@ namespace LustHouse.EditorTools
             PlayerSettings.SetApplicationIdentifier(NamedBuildTarget.Android, "com.lusthouse.casino");
             PlayerSettings.SetApplicationIdentifier(NamedBuildTarget.iOS, "com.lusthouse.casino");
 
-            PlayerSettings.defaultInterfaceOrientation = UIOrientation.AutoRotation;
-            PlayerSettings.allowedAutorotateToPortrait = true;
+            PlayerSettings.defaultInterfaceOrientation = UIOrientation.LandscapeLeft;
+            PlayerSettings.allowedAutorotateToPortrait = false;
             PlayerSettings.allowedAutorotateToPortraitUpsideDown = false;
             PlayerSettings.allowedAutorotateToLandscapeLeft = true;
             PlayerSettings.allowedAutorotateToLandscapeRight = true;
@@ -290,7 +290,7 @@ namespace LustHouse.EditorTools
             scaler.uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize;
             scaler.referenceResolution = new Vector2(1920, 1080);
             scaler.screenMatchMode = CanvasScaler.ScreenMatchMode.MatchWidthOrHeight;
-            scaler.matchWidthOrHeight = 0.5f;
+            scaler.matchWidthOrHeight = 1.0f;
 
             var eventSystemGo = new GameObject("EventSystem", typeof(EventSystem), typeof(StandaloneInputModule));
 
@@ -659,7 +659,7 @@ namespace LustHouse.EditorTools
             EnsureFolder("Assets", "Scenes");
             EnsureFolder("Assets", "Settings");
             EnsureFolder("Assets/Data", "Slots");
-            EnsureFolder("Assets/Data", "Catalog");
+            EnsureFolder("Assets/Resources", "Catalog");
             EnsureFolder("Assets/Data", "Economy");
             EnsureFolder("Assets/Data", "Cosmetics");
         }

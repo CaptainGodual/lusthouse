@@ -69,6 +69,15 @@ namespace LustHouse.EditorTools
             PlayerSettings.Android.targetSdkVersion = AndroidSdkVersions.AndroidApiLevelAuto;
             PlayerSettings.Android.bundleVersionCode = Math.Max(1, PlayerSettings.Android.bundleVersionCode);
             PlayerSettings.Android.useCustomKeystore = false;
+
+            // The device ships landscape-locked (plan Stage 2.1). ProjectSettings.asset
+            // carries the values for a fresh clone; this repeats them so a build that
+            // never ran ProjectSetup still lands on the right orientation.
+            PlayerSettings.defaultInterfaceOrientation = UIOrientation.LandscapeLeft;
+            PlayerSettings.allowedAutorotateToPortrait = false;
+            PlayerSettings.allowedAutorotateToPortraitUpsideDown = false;
+            PlayerSettings.allowedAutorotateToLandscapeLeft = true;
+            PlayerSettings.allowedAutorotateToLandscapeRight = true;
         }
 
         [MenuItem("LustHouse/Build/Validate Android setup", priority = 39)]

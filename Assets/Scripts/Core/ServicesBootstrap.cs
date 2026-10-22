@@ -43,6 +43,21 @@ namespace LustHouse.Core
         /// <summary>Ledger note that marks the once-ever first-run grant.</summary>
         public const string FirstRunPackNote = "first-run pack";
 
+        /// <summary>
+        /// Ledger note that marks the once-ever starting stake granted to a player who
+        /// declines the first-run offer.
+        ///
+        /// A different note from the pack's, so the two are distinguishable in the
+        /// ledger — and so "has the offer been answered?" can be answered from the
+        /// ledger alone.
+        /// </summary>
+        public const string FirstRunStakeNote = "first-run stake";
+
+        [Header("Content")]
+        [Tooltip("The catalogue. Loaded from Resources when it is not assigned, so the " +
+                 "boot screen can publish the probability disclosure before the lobby exists.")]
+        public Catalog.GameCatalog catalog;
+
         [Header("Autosave")]
         public bool autosave = true;
         public float autosaveDelaySeconds = 2f;
@@ -52,8 +67,18 @@ namespace LustHouse.Core
         public bool LoadedFromCorruptSave { get; private set; }
         public string LoadWarning { get; private set; }
 
+        /// <summary>
+        /// The live progressive pot balances, carried through the save (plan §3.2).
+        ///
+        /// Keyed "{gameId}:{tierName}". A key that is missing falls back to the tier's
+        /// seed value in the content, so the block only ever carries what has been won
+        /// away from the seed.
+        /// </summary>
+        public Dictionary<string, long> ProgressivePots { get; } = new Dictionary<string, long>();
+
         private GameObject _root;
         private AudioService _audio;
+        private ResponsiblePlayService _responsiblePlay;
         private float _dirtyTimer = float.MaxValue;
         private bool _dirty;
 
@@ -68,6 +93,12 @@ namespace LustHouse.Core
             var progression = _root.AddComponent<PlayerProgression>();
             var dailyBonus = _root.AddComponent<DailyBonusService>();
 
+            // The responsible-play service rides here too: the session timer has to
+            // keep counting across scene changes, and the self-exclusion has to be
+            // checked by every screen that can open a game.
+            _responsiblePlay = _root.AddComponent<ResponsiblePlayService>();
+
+
             // The sound system rides on the same root, so it survives every scene
             // change and the player's volume settings survive with it.
             _audio = _root.AddComponent<AudioService>();
@@ -80,6 +111,16 @@ namespace LustHouse.Core
             var houseBank = Resources.Load<AudioBank>("Audio/AudioBank_House");
             if (houseBank != null) _audio.SetHouseBank(houseBank);
 
+            // The catalogue comes from Resources when it is not assigned. The boot
+            // screen needs the games' maths to publish the probability disclosure, and
+            // the boot scene has no reference to the lobby's catalogue — without this
+            // the disclosure would have nothing to publish.
+            if (catalog == null) catalog = Resources.Load<Catalog.GameCatalog>("Catalog/GameCatalog");
+            if (catalog == null)
+                LustLog.Warn("[LustHouse] No game catalogue; the probability disclosure has " +
+                             "nothing to publish.");
+
+
             avatar.SetCatalog(cosmeticCatalog, fallbackBaseId);
 
             wallet.MarkedDirty = MarkDirty;
@@ -88,7 +129,6 @@ namespace LustHouse.Core
 
             Save = SaveSystem.Default;
             LoadProgress();
-            GrantFirstRunPack();
 
             Instance = this;
 
@@ -131,22 +171,72 @@ namespace LustHouse.Core
         /// Written straight to the ledger with <see cref="LedgerReason.DailyGift"/> so it
         /// is auditable and cannot be re-claimed. This is what makes guardrail 1 true — a
         /// fresh player can bet immediately without any purchase.
+        ///
+        /// The grant is not silent any more: the player is offered it once, in the
+        /// prompt that follows the age gate, and declining it grants a starting stake
+        /// instead. Either answer is recorded in the ledger, and either one means the
+        /// offer is never made again.
         /// </summary>
-        private void GrantFirstRunPack()
+        public bool GrantFirstRunPack()
         {
             var wallet = WalletService.Instance;
-            if (wallet == null) return;
+            if (wallet == null) return false;
 
             // Once ever, ever. Derived from the ledger rather than a saved boolean, so it
             // cannot drift out of sync and cannot be re-claimed by editing a flag.
-            var gems = wallet.Account(Currency.Gems);
-            if (gems != null && gems.ContainsEntry(LedgerReason.DailyGift, FirstRunPackNote)) return;
+            if (FirstRunPromptAnswered) return false;
 
             wallet.TryGrant(Currency.Coins, FirstRunCoins, LedgerReason.DailyGift, FirstRunPackNote);
             wallet.TryGrant(Currency.Gems, FirstRunGems, LedgerReason.DailyGift, FirstRunPackNote);
 
             MarkDirty();
             SaveNow();
+            return true;
+        }
+
+        /// <summary>
+        /// Grants the starting stake to a player who declined the first-run offer.
+        ///
+        /// The amount is one minimum bet — enough to place a bet, so declining cannot
+        /// leave the player at zero with nothing to do. Declining is a legitimate
+        /// answer and must not be a punishment.
+        /// </summary>
+        public bool GrantStartingStake(long minimumBet)
+        {
+            var wallet = WalletService.Instance;
+            if (wallet == null) return false;
+
+            if (FirstRunPromptAnswered) return false;
+
+            long amount = Math.Max(1L, minimumBet);
+            wallet.TryGrant(Currency.Coins, amount, LedgerReason.DailyGift, FirstRunStakeNote);
+
+            MarkDirty();
+            SaveNow();
+            return true;
+        }
+
+        /// <summary>
+        /// Has the player answered the first-run offer, either way?
+        ///
+        /// Answered from the ledger rather than from a saved flag, so it cannot drift
+        /// out of sync with the balance and cannot be reset by editing a field.
+        /// </summary>
+        public bool FirstRunPromptAnswered
+        {
+            get
+            {
+                var wallet = WalletService.Instance;
+                if (wallet == null) return false;
+
+                var gems = wallet.Account(Currency.Gems);
+                if (gems != null && gems.ContainsEntry(LedgerReason.DailyGift, FirstRunPackNote)) return true;
+
+                var coins = wallet.Account(Currency.Coins);
+                if (coins != null && coins.ContainsEntry(LedgerReason.DailyGift, FirstRunStakeNote)) return true;
+
+                return false;
+            }
         }
 
         private void LoadProgress()
@@ -156,6 +246,16 @@ namespace LustHouse.Core
             WalletService.Instance.RestoreState(result.document.wallet);
             InventoryService.Instance.RestoreState(result.document.inventory);
             PlayerProgression.Instance.RestoreFrom(result.document.player);
+
+            // The progressive pots come back with the rest of the profile. A missing
+            // key falls back to the tier's seed value in the content, so the block
+            // only ever carries what has been won away from the seed.
+            ProgressivePots.Clear();
+            if (result.document.progressive != null)
+            {
+                foreach (var pair in result.document.progressive)
+                    ProgressivePots[pair.Key] = pair.Value;
+            }
 
             // The volumes were in the save all along and nothing ever read them, so
             // they reset to full every launch. They are read now.
@@ -214,6 +314,10 @@ namespace LustHouse.Core
                 ? InventoryService.Instance.CaptureState()
                 : doc.inventory;
 
+            // The progressive pot block travels with the rest of the profile.
+            doc.progressive = new Dictionary<string, long>(ProgressivePots);
+
+
             // The settings block was never written, so the volumes were thrown away
             // on every save. Only the volume fields are touched — the rest of the
             // settings belong to whatever else owns them.
@@ -246,6 +350,7 @@ namespace LustHouse.Core
         public void LoadScene(string sceneName)
         {
             if (string.IsNullOrEmpty(sceneName)) return;
+            LustLog.Info($"[LustHouse] ServicesBootstrap.LoadScene('{sceneName}').");
             UnityEngine.SceneManagement.SceneManager.LoadScene(sceneName);
         }
     }

@@ -32,8 +32,8 @@ MonoBehaviour:
     category: 1
     keyArt: {fileID: 0}
     blurb: 
-    locked: 0
-    lockedMessage: 
+    locked: 1
+    lockedMessage: COMING SOON — Neon Nights is at the tailor's. It lands after Velvet Room ships.
     unlockLevel: 2
     releasedAtUtc: 2026-10-14T01:57:08.6886747Z
     isFeatured: 0
@@ -45,8 +45,8 @@ MonoBehaviour:
     category: 1
     keyArt: {fileID: 0}
     blurb: 
-    locked: 0
-    lockedMessage: 
+    locked: 1
+    lockedMessage: COMING SOON — Midnight Masquerade is still behind the mask. It lands after Velvet Room ships.
     unlockLevel: 3
     releasedAtUtc: 2026-10-09T01:57:08.6886747Z
     isFeatured: 0
@@ -58,8 +58,8 @@ MonoBehaviour:
     category: 1
     keyArt: {fileID: 0}
     blurb: 
-    locked: 0
-    lockedMessage: 
+    locked: 1
+    lockedMessage: COMING SOON — Diamond Hold is still being cut. It lands after Velvet Room ships.
     unlockLevel: 4
     releasedAtUtc: 2026-10-04T01:57:08.6886747Z
     isFeatured: 0
@@ -71,8 +71,8 @@ MonoBehaviour:
     category: 2
     keyArt: {fileID: 0}
     blurb: 
-    locked: 0
-    lockedMessage: 
+    locked: 1
+    lockedMessage: COMING SOON — House Edge has no signed-off maths yet, so it does not open. It lands after Velvet Room ships.
     unlockLevel: 5
     releasedAtUtc: 2026-09-29T01:57:08.6886747Z
     isFeatured: 0

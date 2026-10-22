@@ -498,13 +498,13 @@ namespace LustHouse.Lobby
 
             button.onClick.AddListener(() =>
             {
-                if (entry.locked) RaiseLockNotice?.Invoke(entry.Title);
+                if (entry.locked) RaiseLockNotice?.Invoke(entry);
                 else if (controller != null) controller.OnGameTilePressed(entry.id);
             });
         }
 
         /// <summary>Raised when a locked tile is tapped, so the lobby can show a sheet.</summary>
-        public event Action<string> RaiseLockNotice;
+        public event Action<GameCatalog.Entry> RaiseLockNotice;
 
         private bool IsAffordable(GameCatalog.Entry entry)
         {

@@ -28,7 +28,8 @@ namespace LustHouse.Core
     {
         private static readonly List<ISaveMigration> Migrations = new List<ISaveMigration>
         {
-            new Migration_0_To_1()
+            new Migration_0_To_1(),
+            new Migration_1_To_2()
         };
 
         public static IReadOnlyList<ISaveMigration> Registered => Migrations;
@@ -186,6 +187,39 @@ namespace LustHouse.Core
                 ["balanceAfter"] = balance + amount,
                 ["note"] = "migrated from pre-schema save"
             });
+        }
+    }
+
+    /// <summary>
+    /// v1 → v2. Adds the progressive pot block and the public build's player flags
+    /// (plan §Stage 0).
+    ///
+    /// Additive and idempotent by construction: the pot seeds live in the content, not
+    /// the save, so this creates nothing but an *empty* progressive block — a missing
+    /// key falls back to the tier's seedValue at read time. The new player flags are
+    /// left at their safe defaults (disclosure not seen, not excluded), which is what
+    /// a v1 player's state actually was.
+    /// </summary>
+    public sealed class Migration_1_To_2 : ISaveMigration
+    {
+        public int FromVersion => 1;
+        public int ToVersion => 2;
+        public string Name => "AddProgressiveBlockAndResponsiblePlayFlags";
+
+        public void Apply(JObject root)
+        {
+            if (root["progressive"] == null || root["progressive"].Type != JTokenType.Object)
+                root["progressive"] = new JObject();
+
+            if (root["player"] == null || root["player"].Type != JTokenType.Object)
+                root["player"] = new JObject();
+
+            var player = (JObject)root["player"];
+
+            // Safe defaults only — never invent an exclusion, never claim the
+            // disclosure was seen.
+            if (player["disclosureSeen"] == null) player["disclosureSeen"] = false;
+            if (player["selfExcludedUntilUtc"] == null) player["selfExcludedUntilUtc"] = "";
         }
     }
 }

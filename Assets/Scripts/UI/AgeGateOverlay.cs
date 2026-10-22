@@ -31,6 +31,7 @@ namespace LustHouse.UI
         private RectTransform _refusal;
         private Action _onConfirmed;
         private Action _onRefused;
+        private Action _onOpenDisclosure;
         private bool _answered;
 
         /// <summary>
@@ -39,14 +40,22 @@ namespace LustHouse.UI
         /// <paramref name="onConfirmed"/> runs once the player has confirmed and the
         /// answer has been kept; <paramref name="onRefused"/> runs when they have said
         /// they are under 18, just before the game closes.
+        ///
+        /// <paramref name="onOpenDisclosure"/> is the gate's link to the probability
+        /// disclosure. The gate's own copy promises the player that every game
+        /// publishes its prize tables and its return-to-player rate, and a promise with
+        /// no link behind it is the kind of thing a store review reads as a lie — so the
+        /// button is here, and it opens the real sheet.
         /// </summary>
         public static AgeGateOverlay Create(Transform parent, Action onConfirmed,
-                                            Action onRefused = null)
+                                            Action onRefused = null,
+                                            Action onOpenDisclosure = null)
         {
             var go = new GameObject("AgeGateOverlay", typeof(RectTransform));
             if (parent != null) go.transform.SetParent(parent, false);
 
             var overlay = go.AddComponent<AgeGateOverlay>();
+            overlay._onOpenDisclosure = onOpenDisclosure;
             overlay.Build(onConfirmed, onRefused);
             return overlay;
         }
@@ -138,6 +147,24 @@ namespace LustHouse.UI
                 new Vector2(340f, 72f), new Vector2(190f, 56f));
             refuse.GetComponent<Image>().color = UiFactory.VelvetRaised;
             refuse.onClick.AddListener(OnRefuseClicked);
+
+            // The link that makes the copy above true. The sentence says the prize
+            // tables and the return-to-player rate are published; this is where they
+            // are.
+            var disclosure = UiFactory.NewButton("OpenDisclosure", _question,
+                "SEE THE ODDS AND PRIZE TABLES", 16, UiFactory.NeonCyan, out Text disclosureText);
+            UiFactory.Place(disclosure.GetComponent<RectTransform>(), new Vector2(0.5f, 0f),
+                new Vector2(520f, 44f), new Vector2(0f, 138f));
+            disclosure.GetComponent<Image>().color = new Color(0f, 0f, 0f, 0.01f);
+            disclosureText.color = UiFactory.NeonCyan;
+            disclosure.onClick.AddListener(OnDisclosureClicked);
+        }
+
+        private void OnDisclosureClicked()
+        {
+            // The gate stays up behind the sheet: the player has not answered yet, and
+            // the sheet is a detour, not an answer.
+            _onOpenDisclosure?.Invoke();
         }
 
         // ---- the refusal ------------------------------------------------------

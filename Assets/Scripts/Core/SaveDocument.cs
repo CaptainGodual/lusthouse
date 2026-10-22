@@ -11,7 +11,7 @@ namespace LustHouse.Core
     public class SaveDocument
     {
         /// <summary>Bump when the shape changes and add a migration in <see cref="SaveMigration"/>.</summary>
-        public const int CurrentSchemaVersion = 1;
+        public const int CurrentSchemaVersion = 2;
 
         public int schemaVersion = CurrentSchemaVersion;
         public string savedAtUtc = "";
@@ -22,6 +22,13 @@ namespace LustHouse.Core
         public InventoryState inventory = new InventoryState();
         public SettingsState settings = new SettingsState();
 
+        /// <summary>
+        /// Live progressive pot balances, keyed "{gameId}:{tierName}". A key that is
+        /// missing falls back to the tier's seedValue in the content — the save carries
+        /// only what has been won away from the seed (plan §3.2).
+        /// </summary>
+        public Dictionary<string, long> progressive = new Dictionary<string, long>();
+
         public static SaveDocument CreateNew(DateTime nowUtc)
         {
             return new SaveDocument
@@ -31,7 +38,8 @@ namespace LustHouse.Core
                 player = PlayerState.CreateNew(nowUtc),
                 wallet = WalletState.CreateNew(),
                 inventory = new InventoryState(),
-                settings = new SettingsState()
+                settings = new SettingsState(),
+                progressive = new Dictionary<string, long>()
             };
         }
     }
@@ -57,6 +65,17 @@ namespace LustHouse.Core
         // Guardrail 3
         public bool ageConfirmed = false;
         public string ageConfirmedUtc = "";
+
+        // Public build: disclosure + responsible play (plan §1.1, §1.2)
+        /// <summary>True once the probability disclosure has been shown. Never re-shown.</summary>
+        public bool disclosureSeen = false;
+
+        /// <summary>
+        /// Self-exclusion window. Empty means not excluded. A permanent exclusion is
+        /// "9999-12-31T23:59:59Z" — one field, no special cases, and it is irreversible
+        /// because there is no in-game path that writes an empty string back.
+        /// </summary>
+        public string selfExcludedUntilUtc = "";
 
         public static PlayerState CreateNew(DateTime nowUtc) => new PlayerState
         {

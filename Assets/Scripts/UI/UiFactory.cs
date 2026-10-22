@@ -191,7 +191,9 @@ namespace LustHouse.UI
             scaler.uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize;
             scaler.referenceResolution = new Vector2(1920, 1080);   // plan §2.1
             scaler.screenMatchMode = CanvasScaler.ScreenMatchMode.MatchWidthOrHeight;
-            scaler.matchWidthOrHeight = 0.5f;
+            scaler.matchWidthOrHeight = 1.0f;   // plan Stage 2.4: height match, so the
+                                                // 1080 reference height is fixed on
+                                                // every device and only the width varies
 
             go.AddComponent<GraphicRaycaster>();
             return canvas;

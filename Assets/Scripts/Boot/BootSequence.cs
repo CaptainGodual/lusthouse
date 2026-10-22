@@ -199,6 +199,7 @@ namespace LustHouse.Boot
         /// <summary>Called by the "TAP TO ENTER" prompt.</summary>
         public void EnterLobby()
         {
+            LustLog.Info("[LustHouse] BootSequence.EnterLobby called.");
             if (!ReadyToEnter)
             {
                 LustLog.Warn("[LustHouse] EnterLobby called before the boot sequence was ready; ignored.");

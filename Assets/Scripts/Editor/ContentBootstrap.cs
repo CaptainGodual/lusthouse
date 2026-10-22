@@ -21,7 +21,18 @@ namespace LustHouse.EditorTools
     public static class ContentBootstrap
     {
         public const string SlotFolder = "Assets/Data/Slots";
-        public const string CatalogPath = "Assets/Data/Catalog/GameCatalog.asset";
+
+        /// <summary>
+        /// The catalogue lives under <c>Resources</c> so a runtime scene can load it
+        /// without a scene reference: the boot screen needs the games' maths to publish
+        /// the probability disclosure before the lobby exists. Moving the asset keeps
+        /// its GUID, so every scene that already references it still resolves.
+        /// </summary>
+        public const string CatalogPath = "Assets/Resources/Catalog/GameCatalog.asset";
+
+        /// <summary>The Resources path the catalogue is loaded from at run time.</summary>
+        public const string CatalogResourcePath = "Catalog/GameCatalog";
+
         public const string VelvetRoomPath = SlotFolder + "/Slot_VelvetRoom.asset";
 
         public const string ArtFolder = "Assets/Art/Slots";

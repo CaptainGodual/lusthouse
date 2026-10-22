@@ -57,6 +57,25 @@ namespace LustHouse.Economy
         public long TotalWagered { get; private set; }
         public long BiggestWin { get; private set; }
         public int LoginStreak { get; private set; }
+
+        /// <summary>
+        /// True once the probability disclosure has been shown (plan §1.1).
+        ///
+        /// The disclosure is shown once, before the lobby, and never re-shown — but it
+        /// stays reachable from the lobby for as long as the player wants it.
+        /// </summary>
+        public bool DisclosureSeen { get; private set; }
+
+        /// <summary>
+        /// When the self-exclusion lifts, or "" when the player is not excluded
+        /// (guardrail 4).
+        ///
+        /// The only way to change this field is to set it to a later date. There is no
+        /// way to clear it: an exclusion the player can undo by themselves is not an
+        /// exclusion, and an irreversible rule needs no second field to say so.
+        /// </summary>
+        public string SelfExcludedUntilUtc { get; private set; } = "";
+
         /// <summary>Non-persisted: highest level already announced in this session.</summary>
         public int LastAnnouncedLevel { get; private set; } = 1;
         public bool F2PPromptPending { get; private set; } = true;
@@ -162,6 +181,34 @@ namespace LustHouse.Economy
             MarkedDirty?.Invoke();
         }
 
+        /// <summary>
+        /// Records that the probability disclosure has been shown.
+        ///
+        /// It is written once and never cleared: the disclosure is a one-time thing
+        /// before the lobby, and the lobby keeps its own permanent entry point to it.
+        /// </summary>
+        public void MarkDisclosureSeen()
+        {
+            if (DisclosureSeen) return;
+            DisclosureSeen = true;
+            MarkedDirty?.Invoke();
+        }
+
+        /// <summary>
+        /// Records a self-exclusion.
+        ///
+        /// Only ever lengthens: an empty string is refused, and an earlier date than the
+        /// one already stored is refused. There is deliberately no method that clears
+        /// the exclusion — see <see cref="SelfExcludedUntilUtc"/>.
+        /// </summary>
+        public void SetSelfExclusion(string untilUtc)
+        {
+            if (!Core.SelfExclusion.CanApply(SelfExcludedUntilUtc, untilUtc)) return;
+
+            SelfExcludedUntilUtc = untilUtc;
+            MarkedDirty?.Invoke();
+        }
+
         public void SetDisplayName(string name)
         {
             if (string.IsNullOrWhiteSpace(name)) return;
@@ -219,6 +266,13 @@ namespace LustHouse.Economy
             LastDailyGiftUtc = state.lastDailyGiftUtc ?? "";
             LastAnnouncedLevel = Mathf.Max(1, Level);
 
+            DisclosureSeen = state.disclosureSeen;
+
+            // The save is the source of truth at load time, so the stored exclusion is
+            // taken as written. The "never shorten" rule protects the live state: it is
+            // about the session, not about a file the player edited.
+            SelfExcludedUntilUtc = state.selfExcludedUntilUtc ?? "";
+
             // A hand-edited save must not be able to grant a tier without the points.
             VipTierIndex = ResolveTier(LifetimeLustPoints);
         }
@@ -237,7 +291,9 @@ namespace LustHouse.Economy
             totalWagered = TotalWagered,
             biggestWin = BiggestWin,
             ageConfirmed = AgeConfirmed,
-            ageConfirmedUtc = AgeConfirmed ? DateTime.UtcNow.ToString("o") : ""
+            ageConfirmedUtc = AgeConfirmed ? DateTime.UtcNow.ToString("o") : "",
+            disclosureSeen = DisclosureSeen,
+            selfExcludedUntilUtc = SelfExcludedUntilUtc ?? ""
         };
     }
 }

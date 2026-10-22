@@ -110,6 +110,79 @@ public static class VerifyRunner
               migrated.document.wallet.Find(Currency.Coins).ledger.Count == 1 &&
               migrated.document.wallet.Find(Currency.Coins).ledger[0].delta == 5000);
 
+        // v1 -> v2: the progressive block and the responsible-play flags appear,
+        // at their safe defaults, and nothing else moves.
+        string dirV1 = NewSaveDir();
+        string pathV1 = Path.Combine(dirV1, "save.json");
+        File.WriteAllText(pathV1,
+            "{\"schemaVersion\":1,\"savedAtUtc\":\"2026-01-01T00:00:00Z\",\"migrated\":false," +
+            "\"player\":{\"displayName\":\"Old Player\",\"level\":4,\"ageConfirmed\":true," +
+            "\"totalSpins\":120}," +
+            "\"wallet\":{\"accounts\":[{\"currency\":\"Coins\",\"balance\":9000,\"ledger\":[]}]}}");
+        var v1 = new SaveSystem(pathV1).Load();
+        Check("v1 migration succeeds", v1.ok && v1.warning == null, v1.warning ?? "");
+        Check("v1 migrated to v2", v1.document.schemaVersion == 2);
+        Check("v1 player preserved", v1.document.player.displayName == "Old Player" &&
+                                     v1.document.player.level == 4 &&
+                                     v1.document.player.ageConfirmed);
+        Check("v1 wallet preserved", v1.document.wallet.Find(Currency.Coins).balance == 9000);
+        Check("v1 progressive block is empty", v1.document.progressive != null &&
+                                              v1.document.progressive.Count == 0);
+        Check("v1 disclosure not yet seen", !v1.document.player.disclosureSeen);
+        Check("v1 not self-excluded", v1.document.player.selfExcludedUntilUtc == "");
+
+        // A corrupt progressive block must not crash the load.
+        string dirCorruptPot = NewSaveDir();
+        string pathCorruptPot = Path.Combine(dirCorruptPot, "save.json");
+        File.WriteAllText(pathCorruptPot,
+            "{\"schemaVersion\":2,\"progressive\":\"not-a-block\",\"player\":{}}");
+        var corruptPot = new SaveSystem(pathCorruptPot).Load();
+        Check("corrupt progressive block recovers",
+              corruptPot.ok && corruptPot.document.progressive != null);
+
+        // v2 round trip keeps the pots.
+        string dirV2 = NewSaveDir();
+        string pathV2 = Path.Combine(dirV2, "save.json");
+        var v2 = new SaveSystem(pathV2);
+        var v2Doc = SaveDocument.CreateNew(DateTime.UtcNow);
+        v2Doc.progressive["velvet_room:Mini"] = 61000;
+        v2Doc.player.disclosureSeen = true;
+        v2.Save(v2Doc);
+        var v2Loaded = v2.Load();
+        Check("v2 pot round-trips", v2Loaded.ok &&
+                                    v2Loaded.document.progressive.TryGetValue("velvet_room:Mini", out var pot) &&
+                                    pot == 61000);
+        Check("v2 disclosure flag round-trips", v2Loaded.document.player.disclosureSeen);
+        Check("v2 schemaVersion round-trips",
+              v2Loaded.document.schemaVersion == SaveDocument.CurrentSchemaVersion);
+
+        // Timestamps are strings in the save, so they must come back as the strings
+        // that were written. Newtonsoft parses ISO-looking strings into DateTime
+        // tokens by default, which reformats them with the current culture.
+        var tsDoc = SaveDocument.CreateNew(DateTime.UtcNow);
+        tsDoc.player.selfExcludedUntilUtc = "9999-12-31T23:59:59Z";
+        tsDoc.player.ageConfirmedUtc = "2026-10-22T03:15:50.1234567Z";
+        string dirTimestamps = NewSaveDir();
+        var tsSave = new SaveSystem(Path.Combine(dirTimestamps, "save.json"));
+        tsSave.Save(tsDoc);
+        var tsLoaded = tsSave.Load().document;
+        Check("timestamps round-trip as written",
+              tsLoaded.player.selfExcludedUntilUtc == "9999-12-31T23:59:59Z" &&
+              tsLoaded.player.ageConfirmedUtc == "2026-10-22T03:15:50.1234567Z");
+
+        // A corrupt pot block must not take the rest of the profile with it.
+        string dirCorruptPotProfile = NewSaveDir();
+        string pathCorruptPotProfile = Path.Combine(dirCorruptPotProfile, "save.json");
+        File.WriteAllText(pathCorruptPotProfile,
+            "{\"schemaVersion\":2,\"progressive\":42," +
+            "\"player\":{\"displayName\":\"Veteran\",\"level\":6}," +
+            "\"wallet\":{\"accounts\":[{\"currency\":\"Coins\",\"balance\":240000,\"ledger\":[]}]}}");
+        var corruptPotProfile = new SaveSystem(pathCorruptPotProfile).Load();
+        Check("corrupt pot block keeps the profile",
+              corruptPotProfile.ok &&
+              corruptPotProfile.document.player.displayName == "Veteran" &&
+              corruptPotProfile.document.wallet.Find(Currency.Coins).balance == 240000);
+
         // Future schema must not be clobbered
         string dir5 = NewSaveDir();
         string path5 = Path.Combine(dir5, "save.json");
@@ -125,7 +198,7 @@ public static class VerifyRunner
         Check("delete removes save", !File.Exists(path));
         Check("delete keeps backup", File.Exists(path + ".bak"));
 
-        foreach (var d in new[] { dir, dir2, dir3, dir4, dir5 })
+        foreach (var d in new[] { dir, dir2, dir3, dir4, dir5, dirV1, dirCorruptPot, dirV2, dirTimestamps, dirCorruptPotProfile })
         {
             try { Directory.Delete(d, true); } catch { }
         }
