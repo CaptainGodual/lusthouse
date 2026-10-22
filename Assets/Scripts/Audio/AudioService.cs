@@ -391,8 +391,26 @@ namespace LustHouse.Audio
             return entry != null ? Mathf.Clamp01(entry.volume) : 1f;
         }
 
-        /// <summary>Switches the game whose sound overrides are in use.</summary>
-        public void SetBank(AudioBank next) => bank = next;
+        /// <summary>
+        /// Switches the game whose sound overrides are in use.
+        ///
+        /// The bed that is playing was resolved against the bank that was in force
+        /// when it was asked for, and the game's bank arrives after the room has
+        /// already asked — the room is built before the definition is read. A title
+        /// that brings its own theme would therefore play the house bed for the whole
+        /// game, which is the one thing a title's own bank is for. So the bed is
+        /// resolved again against the new bank.
+        ///
+        /// Only the bed is re-resolved. A one-shot has finished by the time the bank
+        /// changes, and the loop channel belongs to the reels rather than to the game.
+        /// </summary>
+        public void SetBank(AudioBank next)
+        {
+            bank = next;
+
+            if (_music != null && _music.isPlaying && _musicCue != AudioCue.None)
+                PlayMusic(_musicCue);
+        }
 
         /// <summary>Sets the always-on bank: music and other house-wide cues.</summary>
         public void SetHouseBank(AudioBank next) => houseBank = next;

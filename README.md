@@ -240,6 +240,13 @@ synthesised loop when one is not.
   music bank*) and a **game's own bank** for per-title overrides. Anything neither
   bank mentions falls back to the synthesised sound, so a half-filled bank is a good
   bank.
+- **A title can bring its own theme.** `Assets/Audio/Banks/AudioBank_VelvetRoom.asset`
+  is Velvet Room's bank: its bed is `Assets/Audio/Music/Velvet.wav`, and the other
+  four titles fall through to the house bed. Drop a new file in `Assets/Audio/Music/`
+  and run *LustHouse ▸ Audio ▸ Author Velvet Room music bank* (or
+  `GameAudioBankAuthoring.Author` for another id) to point a title at it — no C#.
+  A music file is **streamed**, not held in memory: a bed is minutes long, and
+  keeping it as PCM would put a hundred megabytes on a phone for one loop.
 - The sounds are **deterministic** — a fixed-seed generator, never
   `UnityEngine.Random` — so a build always sounds the same and a QA report about a
   sound is a report about *that* sound.
@@ -251,6 +258,10 @@ synthesised loop when one is not.
 - **The music channel is cue-aware.** The lobby's bed and the game's bed share one
   channel, so a room that unloads late cannot take the next room's bed down with it,
   and a bed that is fading out comes back if it is asked for again.
+- **A title's bank is taken up when it arrives.** The room asks for its music before
+  the game's definition has been read, so the bed is resolved again when the bank
+  lands — otherwise a title that brings its own theme would play the house bed for
+  the whole game.
 
 ## Age gate
 
@@ -270,10 +281,10 @@ The store requirement that this game is 18+ (plan §2.3a).
 ## Known gaps
 
 Tracked in plan §0.2 and §6. Not yet built: IAP/store integration, the tournament
-simulator, missions, the Club screen, localisation, a music bed per title (the game
-screen has one shared bed; the mechanism for a title to bring its own is in place),
-the Web refusal screen for the age gate, and a settings screen for the volumes (the
-volumes themselves apply and persist).
+bracket, missions, the Club screen, localisation, a music bed for each of the other
+four titles (Velvet Room has its own; the mechanism is in place), the Web refusal
+screen for the age gate, and a settings screen for the volumes (the volumes
+themselves apply and persist).
 
 > The **daily gift is built** (`DailyBonusService`, its lobby chip and sheet) — the older
 > list of gaps predated it.

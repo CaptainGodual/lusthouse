@@ -1,0 +1,1224 @@
+<?xml version="1.0" encoding="utf-8"?>
+<test-run id="2" testcasecount="185" result="Passed" total="185" passed="185" failed="0" inconclusive="0" skipped="0" asserts="0" engine-version="3.5.0.0" clr-version="4.0.30319.42000" start-time="2026-10-22 02:02:13Z" end-time="2026-10-22 02:02:18Z" duration="4.9279833">
+  <test-suite type="TestSuite" id="1000" name="Lust House" fullname="Lust House" runstate="Runnable" testcasecount="185" result="Passed" start-time="2026-10-22 02:02:13Z" end-time="2026-10-22 02:02:18Z" duration="4.927983" total="185" passed="185" failed="0" inconclusive="0" skipped="0" asserts="0">
+    <properties>
+      <property name="platform" value="EditMode" />
+    </properties>
+    <test-suite type="Assembly" id="1204" name="LustHouse.Tests.Editor.dll" fullname="C:/Users/Hammy/Documents/projects/lusthouse/Library/ScriptAssemblies/LustHouse.Tests.Editor.dll" runstate="Runnable" testcasecount="184" result="Passed" start-time="2026-10-22 02:02:13Z" end-time="2026-10-22 02:02:18Z" duration="4.915618" total="184" passed="184" failed="0" inconclusive="0" skipped="0" asserts="0">
+      <properties>
+        <property name="_PID" value="25548" />
+        <property name="_APPDOMAIN" value="Unity Child Domain" />
+        <property name="platform" value="EditMode" />
+        <property name="EditorOnly" value="True" />
+      </properties>
+      <test-suite type="TestSuite" id="1205" name="LustHouse" fullname="LustHouse" runstate="Runnable" testcasecount="184" result="Passed" start-time="2026-10-22 02:02:13Z" end-time="2026-10-22 02:02:18Z" duration="4.914741" total="184" passed="184" failed="0" inconclusive="0" skipped="0" asserts="0">
+        <properties />
+        <test-suite type="TestSuite" id="1206" name="Tests" fullname="LustHouse.Tests" runstate="Runnable" testcasecount="184" result="Passed" start-time="2026-10-22 02:02:13Z" end-time="2026-10-22 02:02:18Z" duration="4.914035" total="184" passed="184" failed="0" inconclusive="0" skipped="0" asserts="0">
+          <properties />
+          <test-suite type="TestFixture" id="1001" name="AgeGateTests" fullname="LustHouse.Tests.AgeGateTests" classname="LustHouse.Tests.AgeGateTests" runstate="Runnable" testcasecount="7" result="Passed" start-time="2026-10-22 02:02:13Z" end-time="2026-10-22 02:02:13Z" duration="0.204607" total="7" passed="7" failed="0" inconclusive="0" skipped="0" asserts="0">
+            <properties />
+            <test-case id="1004" name="TheConfirmationSurvivesASave" fullname="LustHouse.Tests.AgeGateTests.TheConfirmationSurvivesASave" methodname="TheConfirmationSurvivesASave" classname="LustHouse.Tests.AgeGateTests" runstate="Runnable" seed="855463507" result="Passed" start-time="2026-10-22 02:02:13Z" end-time="2026-10-22 02:02:13Z" duration="0.136936" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1006" name="TheGateBlocksWhateverIsBehindIt" fullname="LustHouse.Tests.AgeGateTests.TheGateBlocksWhateverIsBehindIt" methodname="TheGateBlocksWhateverIsBehindIt" classname="LustHouse.Tests.AgeGateTests" runstate="Runnable" seed="2112710605" result="Passed" start-time="2026-10-22 02:02:13Z" end-time="2026-10-22 02:02:13Z" duration="0.036767" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1007" name="TheGateCoversTheWholeScreen" fullname="LustHouse.Tests.AgeGateTests.TheGateCoversTheWholeScreen" methodname="TheGateCoversTheWholeScreen" classname="LustHouse.Tests.AgeGateTests" runstate="Runnable" seed="1250036151" result="Passed" start-time="2026-10-22 02:02:13Z" end-time="2026-10-22 02:02:13Z" duration="0.008047" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1002" name="TheGateIsClosedUntilSomebodyConfirms" fullname="LustHouse.Tests.AgeGateTests.TheGateIsClosedUntilSomebodyConfirms" methodname="TheGateIsClosedUntilSomebodyConfirms" classname="LustHouse.Tests.AgeGateTests" runstate="Runnable" seed="729509487" result="Passed" start-time="2026-10-22 02:02:13Z" end-time="2026-10-22 02:02:13Z" duration="0.000393" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1005" name="TheGateOffersBothAnswers" fullname="LustHouse.Tests.AgeGateTests.TheGateOffersBothAnswers" methodname="TheGateOffersBothAnswers" classname="LustHouse.Tests.AgeGateTests" runstate="Runnable" seed="1259351849" result="Passed" start-time="2026-10-22 02:02:13Z" end-time="2026-10-22 02:02:13Z" duration="0.001952" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1008" name="TheGateSaysWhatTheGameIsAndWhoMayPlay" fullname="LustHouse.Tests.AgeGateTests.TheGateSaysWhatTheGameIsAndWhoMayPlay" methodname="TheGateSaysWhatTheGameIsAndWhoMayPlay" classname="LustHouse.Tests.AgeGateTests" runstate="Runnable" seed="588875625" result="Passed" start-time="2026-10-22 02:02:13Z" end-time="2026-10-22 02:02:13Z" duration="0.001783" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1003" name="TheGateWillNotOpenWhenTheAnswerCannotBeKept" fullname="LustHouse.Tests.AgeGateTests.TheGateWillNotOpenWhenTheAnswerCannotBeKept" methodname="TheGateWillNotOpenWhenTheAnswerCannotBeKept" classname="LustHouse.Tests.AgeGateTests" runstate="Runnable" seed="2056614577" result="Passed" start-time="2026-10-22 02:02:13Z" end-time="2026-10-22 02:02:13Z" duration="0.003052" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+              <output><![CDATA[[LustHouse] The age gate was answered with no player loaded; the answer could not be kept.
+]]></output>
+            </test-case>
+          </test-suite>
+          <test-suite type="TestFixture" id="1009" name="AndroidBuildGuardTests" fullname="LustHouse.Tests.AndroidBuildGuardTests" classname="LustHouse.Tests.AndroidBuildGuardTests" runstate="Runnable" testcasecount="3" result="Passed" start-time="2026-10-22 02:02:13Z" end-time="2026-10-22 02:02:13Z" duration="0.012345" total="3" passed="3" failed="0" inconclusive="0" skipped="0" asserts="0">
+            <properties />
+            <test-case id="1012" name="ActiveInputHandling_UsesLegacyInputManager" fullname="LustHouse.Tests.AndroidBuildGuardTests.ActiveInputHandling_UsesLegacyInputManager" methodname="ActiveInputHandling_UsesLegacyInputManager" classname="LustHouse.Tests.AndroidBuildGuardTests" runstate="Runnable" seed="1698742158" result="Passed" start-time="2026-10-22 02:02:13Z" end-time="2026-10-22 02:02:13Z" duration="0.003769" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1011" name="AndroidPlayer_IsConfiguredForDeviceBuilds" fullname="LustHouse.Tests.AndroidBuildGuardTests.AndroidPlayer_IsConfiguredForDeviceBuilds" methodname="AndroidPlayer_IsConfiguredForDeviceBuilds" classname="LustHouse.Tests.AndroidBuildGuardTests" runstate="Runnable" seed="1498501728" result="Passed" start-time="2026-10-22 02:02:13Z" end-time="2026-10-22 02:02:13Z" duration="0.003199" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1010" name="Manifest_DeclaresAndroidJniModule" fullname="LustHouse.Tests.AndroidBuildGuardTests.Manifest_DeclaresAndroidJniModule" methodname="Manifest_DeclaresAndroidJniModule" classname="LustHouse.Tests.AndroidBuildGuardTests" runstate="Runnable" seed="1211306942" result="Passed" start-time="2026-10-22 02:02:13Z" end-time="2026-10-22 02:02:13Z" duration="0.000954" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+          </test-suite>
+          <test-suite type="TestFixture" id="1013" name="AudioTests" fullname="LustHouse.Tests.AudioTests" classname="LustHouse.Tests.AudioTests" runstate="Runnable" testcasecount="26" result="Passed" start-time="2026-10-22 02:02:13Z" end-time="2026-10-22 02:02:16Z" duration="2.152645" total="26" passed="26" failed="0" inconclusive="0" skipped="0" asserts="0">
+            <properties />
+            <test-case id="1025" name="ABigWin_MakesTheBigSound" fullname="LustHouse.Tests.AudioTests.ABigWin_MakesTheBigSound" methodname="ABigWin_MakesTheBigSound" classname="LustHouse.Tests.AudioTests" runstate="Runnable" seed="1088437727" result="Passed" start-time="2026-10-22 02:02:13Z" end-time="2026-10-22 02:02:13Z" duration="0.003107" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1027" name="AFeatureTrigger_MakesTheBonusSound" fullname="LustHouse.Tests.AudioTests.AFeatureTrigger_MakesTheBonusSound" methodname="AFeatureTrigger_MakesTheBonusSound" classname="LustHouse.Tests.AudioTests" runstate="Runnable" seed="686559976" result="Passed" start-time="2026-10-22 02:02:13Z" end-time="2026-10-22 02:02:13Z" duration="0.000273" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1022" name="ALosingSpin_MakesNoWinSound" fullname="LustHouse.Tests.AudioTests.ALosingSpin_MakesNoWinSound" methodname="ALosingSpin_MakesNoWinSound" classname="LustHouse.Tests.AudioTests" runstate="Runnable" seed="2107015455" result="Passed" start-time="2026-10-22 02:02:13Z" end-time="2026-10-22 02:02:13Z" duration="0.000224" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1024" name="AMiddleWin_MakesTheMiddleSound" fullname="LustHouse.Tests.AudioTests.AMiddleWin_MakesTheMiddleSound" methodname="AMiddleWin_MakesTheMiddleSound" classname="LustHouse.Tests.AudioTests" runstate="Runnable" seed="632016323" result="Passed" start-time="2026-10-22 02:02:13Z" end-time="2026-10-22 02:02:13Z" duration="0.000174" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1028" name="AnOrdinarySpin_MakesNoBonusSound" fullname="LustHouse.Tests.AudioTests.AnOrdinarySpin_MakesNoBonusSound" methodname="AnOrdinarySpin_MakesNoBonusSound" classname="LustHouse.Tests.AudioTests" runstate="Runnable" seed="1142906957" result="Passed" start-time="2026-10-22 02:02:13Z" end-time="2026-10-22 02:02:13Z" duration="0.000169" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1023" name="ASmallWin_MakesTheSmallSound" fullname="LustHouse.Tests.AudioTests.ASmallWin_MakesTheSmallSound" methodname="ASmallWin_MakesTheSmallSound" classname="LustHouse.Tests.AudioTests" runstate="Runnable" seed="2068916073" result="Passed" start-time="2026-10-22 02:02:13Z" end-time="2026-10-22 02:02:13Z" duration="0.000159" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1014" name="EveryCue_MakesAClip" fullname="LustHouse.Tests.AudioTests.EveryCue_MakesAClip" methodname="EveryCue_MakesAClip" classname="LustHouse.Tests.AudioTests" runstate="Runnable" seed="2052402606" result="Passed" start-time="2026-10-22 02:02:13Z" end-time="2026-10-22 02:02:14Z" duration="0.309173" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1019" name="MuteSilencesEverything" fullname="LustHouse.Tests.AudioTests.MuteSilencesEverything" methodname="MuteSilencesEverything" classname="LustHouse.Tests.AudioTests" runstate="Runnable" seed="987698998" result="Passed" start-time="2026-10-22 02:02:14Z" end-time="2026-10-22 02:02:14Z" duration="0.000332" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1016" name="NoSoundEndsOnAStep" fullname="LustHouse.Tests.AudioTests.NoSoundEndsOnAStep" methodname="NoSoundEndsOnAStep" classname="LustHouse.Tests.AudioTests" runstate="Runnable" seed="869151578" result="Passed" start-time="2026-10-22 02:02:14Z" end-time="2026-10-22 02:02:14Z" duration="0.002398" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1039" name="TheBankOutranksTheSynthesiser" fullname="LustHouse.Tests.AudioTests.TheBankOutranksTheSynthesiser" methodname="TheBankOutranksTheSynthesiser" classname="LustHouse.Tests.AudioTests" runstate="Runnable" seed="184799791" result="Passed" start-time="2026-10-22 02:02:14Z" end-time="2026-10-22 02:02:14Z" duration="0.001753" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1035" name="TheGameBedHasNoSeam" fullname="LustHouse.Tests.AudioTests.TheGameBedHasNoSeam" methodname="TheGameBedHasNoSeam" classname="LustHouse.Tests.AudioTests" runstate="Runnable" seed="1957961170" result="Passed" start-time="2026-10-22 02:02:14Z" end-time="2026-10-22 02:02:14Z" duration="0.000908" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1037" name="TheGameBedIsNotTheLobbyBed" fullname="LustHouse.Tests.AudioTests.TheGameBedIsNotTheLobbyBed" methodname="TheGameBedIsNotTheLobbyBed" classname="LustHouse.Tests.AudioTests" runstate="Runnable" seed="944606591" result="Passed" start-time="2026-10-22 02:02:14Z" end-time="2026-10-22 02:02:14Z" duration="0.002853" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1036" name="TheGameBedIsTheSameEveryTime" fullname="LustHouse.Tests.AudioTests.TheGameBedIsTheSameEveryTime" methodname="TheGameBedIsTheSameEveryTime" classname="LustHouse.Tests.AudioTests" runstate="Runnable" seed="1327864376" result="Passed" start-time="2026-10-22 02:02:14Z" end-time="2026-10-22 02:02:15Z" duration="0.805384" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1034" name="TheGameScreenHasItsOwnBed" fullname="LustHouse.Tests.AudioTests.TheGameScreenHasItsOwnBed" methodname="TheGameScreenHasItsOwnBed" classname="LustHouse.Tests.AudioTests" runstate="Runnable" seed="1706826345" result="Passed" start-time="2026-10-22 02:02:15Z" end-time="2026-10-22 02:02:15Z" duration="0.001088" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1032" name="TheLobbyBedHasNoSeam" fullname="LustHouse.Tests.AudioTests.TheLobbyBedHasNoSeam" methodname="TheLobbyBedHasNoSeam" classname="LustHouse.Tests.AudioTests" runstate="Runnable" seed="443997220" result="Passed" start-time="2026-10-22 02:02:15Z" end-time="2026-10-22 02:02:15Z" duration="0.036647" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1033" name="TheLobbyBedIsTheSameEveryTime" fullname="LustHouse.Tests.AudioTests.TheLobbyBedIsTheSameEveryTime" methodname="TheLobbyBedIsTheSameEveryTime" classname="LustHouse.Tests.AudioTests" runstate="Runnable" seed="2075948729" result="Passed" start-time="2026-10-22 02:02:15Z" end-time="2026-10-22 02:02:15Z" duration="0.532376" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1031" name="TheLobbyHasAMusicBed" fullname="LustHouse.Tests.AudioTests.TheLobbyHasAMusicBed" methodname="TheLobbyHasAMusicBed" classname="LustHouse.Tests.AudioTests" runstate="Runnable" seed="1633840648" result="Passed" start-time="2026-10-22 02:02:15Z" end-time="2026-10-22 02:02:15Z" duration="0.000508" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1015" name="TheReelLoopHasNoSeam" fullname="LustHouse.Tests.AudioTests.TheReelLoopHasNoSeam" methodname="TheReelLoopHasNoSeam" classname="LustHouse.Tests.AudioTests" runstate="Runnable" seed="987421646" result="Passed" start-time="2026-10-22 02:02:15Z" end-time="2026-10-22 02:02:15Z" duration="0.065336" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1029" name="TheReelsFallInPitchAsTheyLand" fullname="LustHouse.Tests.AudioTests.TheReelsFallInPitchAsTheyLand" methodname="TheReelsFallInPitchAsTheyLand" classname="LustHouse.Tests.AudioTests" runstate="Runnable" seed="149700485" result="Passed" start-time="2026-10-22 02:02:15Z" end-time="2026-10-22 02:02:15Z" duration="0.000522" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1021" name="TheSaveRoundTripsTheVolumes" fullname="LustHouse.Tests.AudioTests.TheSaveRoundTripsTheVolumes" methodname="TheSaveRoundTripsTheVolumes" classname="LustHouse.Tests.AudioTests" runstate="Runnable" seed="2146269023" result="Passed" start-time="2026-10-22 02:02:15Z" end-time="2026-10-22 02:02:15Z" duration="0.010431" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1017" name="TheSoundsAreTheSameEveryTime" fullname="LustHouse.Tests.AudioTests.TheSoundsAreTheSameEveryTime" methodname="TheSoundsAreTheSameEveryTime" classname="LustHouse.Tests.AudioTests" runstate="Runnable" seed="298133729" result="Passed" start-time="2026-10-22 02:02:15Z" end-time="2026-10-22 02:02:15Z" duration="0.252572" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1030" name="TheSpinLoopStartsAndStops" fullname="LustHouse.Tests.AudioTests.TheSpinLoopStartsAndStops" methodname="TheSpinLoopStartsAndStops" classname="LustHouse.Tests.AudioTests" runstate="Runnable" seed="593353976" result="Passed" start-time="2026-10-22 02:02:15Z" end-time="2026-10-22 02:02:15Z" duration="0.000712" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1020" name="TheVolumesAreClamped" fullname="LustHouse.Tests.AudioTests.TheVolumesAreClamped" methodname="TheVolumesAreClamped" classname="LustHouse.Tests.AudioTests" runstate="Runnable" seed="844791881" result="Passed" start-time="2026-10-22 02:02:15Z" end-time="2026-10-22 02:02:15Z" duration="0.000225" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1018" name="TheVolumesCompose" fullname="LustHouse.Tests.AudioTests.TheVolumesCompose" methodname="TheVolumesCompose" classname="LustHouse.Tests.AudioTests" runstate="Runnable" seed="510128355" result="Passed" start-time="2026-10-22 02:02:15Z" end-time="2026-10-22 02:02:15Z" duration="0.000186" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1026" name="TheWinTierComesFromTheGame" fullname="LustHouse.Tests.AudioTests.TheWinTierComesFromTheGame" methodname="TheWinTierComesFromTheGame" classname="LustHouse.Tests.AudioTests" runstate="Runnable" seed="1604700268" result="Passed" start-time="2026-10-22 02:02:15Z" end-time="2026-10-22 02:02:15Z" duration="0.000988" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1038" name="VelvetRoomBringsItsOwnBed" fullname="LustHouse.Tests.AudioTests.VelvetRoomBringsItsOwnBed" methodname="VelvetRoomBringsItsOwnBed" classname="LustHouse.Tests.AudioTests" runstate="Runnable" seed="396485740" result="Passed" start-time="2026-10-22 02:02:15Z" end-time="2026-10-22 02:02:16Z" duration="0.119102" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+          </test-suite>
+          <test-suite type="TestFixture" id="1040" name="BetLimitsTests" fullname="LustHouse.Tests.BetLimitsTests" classname="LustHouse.Tests.BetLimitsTests" runstate="Runnable" testcasecount="9" result="Passed" start-time="2026-10-22 02:02:16Z" end-time="2026-10-22 02:02:16Z" duration="0.018431" total="9" passed="9" failed="0" inconclusive="0" skipped="0" asserts="0">
+            <properties />
+            <test-case id="1047" name="ALevelUnlocksMoreBetsAndNeverFewer" fullname="LustHouse.Tests.BetLimitsTests.ALevelUnlocksMoreBetsAndNeverFewer" methodname="ALevelUnlocksMoreBetsAndNeverFewer" classname="LustHouse.Tests.BetLimitsTests" runstate="Runnable" seed="335586245" result="Passed" start-time="2026-10-22 02:02:16Z" end-time="2026-10-22 02:02:16Z" duration="0.001676" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1046" name="EveryGame_OffersTheSameFloorAndTheSameCeiling" fullname="LustHouse.Tests.BetLimitsTests.EveryGame_OffersTheSameFloorAndTheSameCeiling" methodname="EveryGame_OffersTheSameFloorAndTheSameCeiling" classname="LustHouse.Tests.BetLimitsTests" runstate="Runnable" seed="243451736" result="Passed" start-time="2026-10-22 02:02:16Z" end-time="2026-10-22 02:02:16Z" duration="0.010389" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1042" name="LevelOne_CapsTheBetAtSeventyFiveThousand" fullname="LustHouse.Tests.BetLimitsTests.LevelOne_CapsTheBetAtSeventyFiveThousand" methodname="LevelOne_CapsTheBetAtSeventyFiveThousand" classname="LustHouse.Tests.BetLimitsTests" runstate="Runnable" seed="1422225242" result="Passed" start-time="2026-10-22 02:02:16Z" end-time="2026-10-22 02:02:16Z" duration="0.000175" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1043" name="TheCeiling_NeverDropsAsTheLevelRises" fullname="LustHouse.Tests.BetLimitsTests.TheCeiling_NeverDropsAsTheLevelRises" methodname="TheCeiling_NeverDropsAsTheLevelRises" classname="LustHouse.Tests.BetLimitsTests" runstate="Runnable" seed="1157311094" result="Passed" start-time="2026-10-22 02:02:16Z" end-time="2026-10-22 02:02:16Z" duration="0.000837" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1049" name="TheCeiling_ReachesTheLadderTheLevelUnlocked" fullname="LustHouse.Tests.BetLimitsTests.TheCeiling_ReachesTheLadderTheLevelUnlocked" methodname="TheCeiling_ReachesTheLadderTheLevelUnlocked" classname="LustHouse.Tests.BetLimitsTests" runstate="Runnable" seed="742273395" result="Passed" start-time="2026-10-22 02:02:16Z" end-time="2026-10-22 02:02:16Z" duration="0.000533" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1044" name="TheCeiling_TopsOutAtTheHouseMaximum" fullname="LustHouse.Tests.BetLimitsTests.TheCeiling_TopsOutAtTheHouseMaximum" methodname="TheCeiling_TopsOutAtTheHouseMaximum" classname="LustHouse.Tests.BetLimitsTests" runstate="Runnable" seed="499230668" result="Passed" start-time="2026-10-22 02:02:16Z" end-time="2026-10-22 02:02:16Z" duration="0.000145" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1048" name="TheFloor_NeverMovesWithLevel" fullname="LustHouse.Tests.BetLimitsTests.TheFloor_NeverMovesWithLevel" methodname="TheFloor_NeverMovesWithLevel" classname="LustHouse.Tests.BetLimitsTests" runstate="Runnable" seed="1204058199" result="Passed" start-time="2026-10-22 02:02:16Z" end-time="2026-10-22 02:02:16Z" duration="0.000266" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1045" name="TheHouseMaximum_IsTheTopOfTheLadder" fullname="LustHouse.Tests.BetLimitsTests.TheHouseMaximum_IsTheTopOfTheLadder" methodname="TheHouseMaximum_IsTheTopOfTheLadder" classname="LustHouse.Tests.BetLimitsTests" runstate="Runnable" seed="915479575" result="Passed" start-time="2026-10-22 02:02:16Z" end-time="2026-10-22 02:02:16Z" duration="0.000110" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1041" name="TheLadder_IsAscendingAndEveryStepIsRound" fullname="LustHouse.Tests.BetLimitsTests.TheLadder_IsAscendingAndEveryStepIsRound" methodname="TheLadder_IsAscendingAndEveryStepIsRound" classname="LustHouse.Tests.BetLimitsTests" runstate="Runnable" seed="101409876" result="Passed" start-time="2026-10-22 02:02:16Z" end-time="2026-10-22 02:02:16Z" duration="0.000234" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+          </test-suite>
+          <test-suite type="TestFixture" id="1050" name="BonusGameTests" fullname="LustHouse.Tests.BonusGameTests" classname="LustHouse.Tests.BonusGameTests" runstate="Runnable" testcasecount="8" result="Passed" start-time="2026-10-22 02:02:16Z" end-time="2026-10-22 02:02:16Z" duration="0.491677" total="8" passed="8" failed="0" inconclusive="0" skipped="0" asserts="0">
+            <properties />
+            <test-case id="1058" name="ExactBonusTerm_HoldsAgainstAMonteCarloRun" fullname="LustHouse.Tests.BonusGameTests.ExactBonusTerm_HoldsAgainstAMonteCarloRun" methodname="ExactBonusTerm_HoldsAgainstAMonteCarloRun" classname="LustHouse.Tests.BonusGameTests" runstate="Runnable" seed="366909843" result="Passed" start-time="2026-10-22 02:02:16Z" end-time="2026-10-22 02:02:16Z" duration="0.471129" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1057" name="ExactBonusTerm_MatchesWhatTheSpinPathPays" fullname="LustHouse.Tests.BonusGameTests.ExactBonusTerm_MatchesWhatTheSpinPathPays" methodname="ExactBonusTerm_MatchesWhatTheSpinPathPays" classname="LustHouse.Tests.BonusGameTests" runstate="Runnable" seed="41001098" result="Passed" start-time="2026-10-22 02:02:16Z" end-time="2026-10-22 02:02:16Z" duration="0.015135" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1056" name="Interactive_RoundAsksThePlayerAndUsesTheirAnswers" fullname="LustHouse.Tests.BonusGameTests.Interactive_RoundAsksThePlayerAndUsesTheirAnswers" methodname="Interactive_RoundAsksThePlayerAndUsesTheirAnswers" classname="LustHouse.Tests.BonusGameTests" runstate="Runnable" seed="1984425889" result="Passed" start-time="2026-10-22 02:02:16Z" end-time="2026-10-22 02:02:16Z" duration="0.000810" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1053" name="Round_EmitsPickAndRevealStepsForEveryPick" fullname="LustHouse.Tests.BonusGameTests.Round_EmitsPickAndRevealStepsForEveryPick" methodname="Round_EmitsPickAndRevealStepsForEveryPick" classname="LustHouse.Tests.BonusGameTests" runstate="Runnable" seed="2112702655" result="Passed" start-time="2026-10-22 02:02:16Z" end-time="2026-10-22 02:02:16Z" duration="0.000678" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1055" name="Round_IsReproducibleForTheSameSeed" fullname="LustHouse.Tests.BonusGameTests.Round_IsReproducibleForTheSameSeed" methodname="Round_IsReproducibleForTheSameSeed" classname="LustHouse.Tests.BonusGameTests" runstate="Runnable" seed="1630730226" result="Passed" start-time="2026-10-22 02:02:16Z" end-time="2026-10-22 02:02:16Z" duration="0.001104" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1052" name="Round_PaysTheSumOfThePicksInBetMultiples" fullname="LustHouse.Tests.BonusGameTests.Round_PaysTheSumOfThePicksInBetMultiples" methodname="Round_PaysTheSumOfThePicksInBetMultiples" classname="LustHouse.Tests.BonusGameTests" runstate="Runnable" seed="1177801448" result="Passed" start-time="2026-10-22 02:02:16Z" end-time="2026-10-22 02:02:16Z" duration="0.000312" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1054" name="Round_TakesDistinctOptions" fullname="LustHouse.Tests.BonusGameTests.Round_TakesDistinctOptions" methodname="Round_TakesDistinctOptions" classname="LustHouse.Tests.BonusGameTests" runstate="Runnable" seed="309850174" result="Passed" start-time="2026-10-22 02:02:16Z" end-time="2026-10-22 02:02:16Z" duration="0.000438" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1051" name="Trigger_CountsBonusSymbolsAnywhereOnTheGrid" fullname="LustHouse.Tests.BonusGameTests.Trigger_CountsBonusSymbolsAnywhereOnTheGrid" methodname="Trigger_CountsBonusSymbolsAnywhereOnTheGrid" classname="LustHouse.Tests.BonusGameTests" runstate="Runnable" seed="706379244" result="Passed" start-time="2026-10-22 02:02:16Z" end-time="2026-10-22 02:02:16Z" duration="0.000360" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+          </test-suite>
+          <test-suite type="TestFixture" id="1059" name="FeatureRunnerTests" fullname="LustHouse.Tests.FeatureRunnerTests" classname="LustHouse.Tests.FeatureRunnerTests" runstate="Runnable" testcasecount="11" result="Passed" start-time="2026-10-22 02:02:16Z" end-time="2026-10-22 02:02:16Z" duration="0.011587" total="11" passed="11" failed="0" inconclusive="0" skipped="0" asserts="0">
+            <properties />
+            <test-case id="1070" name="BaseSpin_DoesNotRunFeatures" fullname="LustHouse.Tests.FeatureRunnerTests.BaseSpin_DoesNotRunFeatures" methodname="BaseSpin_DoesNotRunFeatures" classname="LustHouse.Tests.FeatureRunnerTests" runstate="Runnable" seed="2069063588" result="Passed" start-time="2026-10-22 02:02:16Z" end-time="2026-10-22 02:02:16Z" duration="0.002067" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1065" name="ExplicitFeatures_WinOverLegacyFlags" fullname="LustHouse.Tests.FeatureRunnerTests.ExplicitFeatures_WinOverLegacyFlags" methodname="ExplicitFeatures_WinOverLegacyFlags" classname="LustHouse.Tests.FeatureRunnerTests" runstate="Runnable" seed="1010817577" result="Passed" start-time="2026-10-22 02:02:16Z" end-time="2026-10-22 02:02:16Z" duration="0.000711" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1063" name="FreeSpins_RetriggerAddsSpins" fullname="LustHouse.Tests.FeatureRunnerTests.FreeSpins_RetriggerAddsSpins" methodname="FreeSpins_RetriggerAddsSpins" classname="LustHouse.Tests.FeatureRunnerTests" runstate="Runnable" seed="1453613344" result="Passed" start-time="2026-10-22 02:02:16Z" end-time="2026-10-22 02:02:16Z" duration="0.001137" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1062" name="FreeSpinsFeature_PlaysTheAwardedSpins" fullname="LustHouse.Tests.FeatureRunnerTests.FreeSpinsFeature_PlaysTheAwardedSpins" methodname="FreeSpinsFeature_PlaysTheAwardedSpins" classname="LustHouse.Tests.FeatureRunnerTests" runstate="Runnable" seed="506299941" result="Passed" start-time="2026-10-22 02:02:16Z" end-time="2026-10-22 02:02:16Z" duration="0.000551" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1069" name="HoldAndSpin_FullTriggerGridAwardsTheTopJackpot" fullname="LustHouse.Tests.FeatureRunnerTests.HoldAndSpin_FullTriggerGridAwardsTheTopJackpot" methodname="HoldAndSpin_FullTriggerGridAwardsTheTopJackpot" classname="LustHouse.Tests.FeatureRunnerTests" runstate="Runnable" seed="190471650" result="Passed" start-time="2026-10-22 02:02:16Z" end-time="2026-10-22 02:02:16Z" duration="0.002251" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1068" name="HoldAndSpin_LocksEachCellOnceAndFullGridEndsTheRound" fullname="LustHouse.Tests.FeatureRunnerTests.HoldAndSpin_LocksEachCellOnceAndFullGridEndsTheRound" methodname="HoldAndSpin_LocksEachCellOnceAndFullGridEndsTheRound" classname="LustHouse.Tests.FeatureRunnerTests" runstate="Runnable" seed="224599171" result="Passed" start-time="2026-10-22 02:02:16Z" end-time="2026-10-22 02:02:16Z" duration="0.000672" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1066" name="HoldAndSpin_NeedsTheInitialLockedCount" fullname="LustHouse.Tests.FeatureRunnerTests.HoldAndSpin_NeedsTheInitialLockedCount" methodname="HoldAndSpin_NeedsTheInitialLockedCount" classname="LustHouse.Tests.FeatureRunnerTests" runstate="Runnable" seed="271762050" result="Passed" start-time="2026-10-22 02:02:16Z" end-time="2026-10-22 02:02:16Z" duration="0.000491" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1067" name="HoldAndSpin_PlaysRespinsAndPaysOnlyLockedPrizes" fullname="LustHouse.Tests.FeatureRunnerTests.HoldAndSpin_PlaysRespinsAndPaysOnlyLockedPrizes" methodname="HoldAndSpin_PlaysRespinsAndPaysOnlyLockedPrizes" classname="LustHouse.Tests.FeatureRunnerTests" runstate="Runnable" seed="1024473736" result="Passed" start-time="2026-10-22 02:02:16Z" end-time="2026-10-22 02:02:16Z" duration="0.000685" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1064" name="LegacyFlags_AreStillHonouredUntilMigrated" fullname="LustHouse.Tests.FeatureRunnerTests.LegacyFlags_AreStillHonouredUntilMigrated" methodname="LegacyFlags_AreStillHonouredUntilMigrated" classname="LustHouse.Tests.FeatureRunnerTests" runstate="Runnable" seed="177414764" result="Passed" start-time="2026-10-22 02:02:16Z" end-time="2026-10-22 02:02:16Z" duration="0.000324" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1061" name="NoFeatures_RunsOnlyTheBaseSpin" fullname="LustHouse.Tests.FeatureRunnerTests.NoFeatures_RunsOnlyTheBaseSpin" methodname="NoFeatures_RunsOnlyTheBaseSpin" classname="LustHouse.Tests.FeatureRunnerTests" runstate="Runnable" seed="1756368953" result="Passed" start-time="2026-10-22 02:02:16Z" end-time="2026-10-22 02:02:16Z" duration="0.000288" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1060" name="Registry_ResolvesShippedHandlersOnly" fullname="LustHouse.Tests.FeatureRunnerTests.Registry_ResolvesShippedHandlersOnly" methodname="Registry_ResolvesShippedHandlersOnly" classname="LustHouse.Tests.FeatureRunnerTests" runstate="Runnable" seed="1778055957" result="Passed" start-time="2026-10-22 02:02:16Z" end-time="2026-10-22 02:02:16Z" duration="0.000339" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+          </test-suite>
+          <test-suite type="TestFixture" id="1071" name="GuardrailTests" fullname="LustHouse.Tests.GuardrailTests" classname="LustHouse.Tests.GuardrailTests" runstate="Runnable" testcasecount="12" result="Passed" start-time="2026-10-22 02:02:16Z" end-time="2026-10-22 02:02:16Z" duration="0.007810" total="12" passed="12" failed="0" inconclusive="0" skipped="0" asserts="0">
+            <properties />
+            <test-case id="1075" name="Balance_IsDerivedFromTheLedger" fullname="LustHouse.Tests.GuardrailTests.Balance_IsDerivedFromTheLedger" methodname="Balance_IsDerivedFromTheLedger" classname="LustHouse.Tests.GuardrailTests" runstate="Runnable" seed="740338723" result="Passed" start-time="2026-10-22 02:02:16Z" end-time="2026-10-22 02:02:16Z" duration="0.000982" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1080" name="ContainsEntry_DistinguishesReasonAndNote" fullname="LustHouse.Tests.GuardrailTests.ContainsEntry_DistinguishesReasonAndNote" methodname="ContainsEntry_DistinguishesReasonAndNote" classname="LustHouse.Tests.GuardrailTests" runstate="Runnable" seed="1979737651" result="Passed" start-time="2026-10-22 02:02:16Z" end-time="2026-10-22 02:02:16Z" duration="0.000312" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1078" name="Conversion_IsOneDirectional_AndCapped" fullname="LustHouse.Tests.GuardrailTests.Conversion_IsOneDirectional_AndCapped" methodname="Conversion_IsOneDirectional_AndCapped" classname="LustHouse.Tests.GuardrailTests" runstate="Runnable" seed="1092793773" result="Passed" start-time="2026-10-22 02:02:16Z" end-time="2026-10-22 02:02:16Z" duration="0.000444" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1082" name="CosmeticModel_ExposesNoCoinPriceField" fullname="LustHouse.Tests.GuardrailTests.CosmeticModel_ExposesNoCoinPriceField" methodname="CosmeticModel_ExposesNoCoinPriceField" classname="LustHouse.Tests.GuardrailTests" runstate="Runnable" seed="1557808288" result="Passed" start-time="2026-10-22 02:02:16Z" end-time="2026-10-22 02:02:16Z" duration="0.000285" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1083" name="CosmeticModel_ExposesNoGameplayModifiers" fullname="LustHouse.Tests.GuardrailTests.CosmeticModel_ExposesNoGameplayModifiers" methodname="CosmeticModel_ExposesNoGameplayModifiers" classname="LustHouse.Tests.GuardrailTests" runstate="Runnable" seed="797096413" result="Passed" start-time="2026-10-22 02:02:16Z" end-time="2026-10-22 02:02:16Z" duration="0.000334" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1073" name="CurrencyAccount_RefusesDebitWhenNotSpendable" fullname="LustHouse.Tests.GuardrailTests.CurrencyAccount_RefusesDebitWhenNotSpendable" methodname="CurrencyAccount_RefusesDebitWhenNotSpendable" classname="LustHouse.Tests.GuardrailTests" runstate="Runnable" seed="1384100800" result="Passed" start-time="2026-10-22 02:02:16Z" end-time="2026-10-22 02:02:16Z" duration="0.000254" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1074" name="CurrencyAccount_RefusesToOverdraw" fullname="LustHouse.Tests.GuardrailTests.CurrencyAccount_RefusesToOverdraw" methodname="CurrencyAccount_RefusesToOverdraw" classname="LustHouse.Tests.GuardrailTests" runstate="Runnable" seed="772498980" result="Passed" start-time="2026-10-22 02:02:16Z" end-time="2026-10-22 02:02:16Z" duration="0.000192" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1081" name="EveryCurrencyAccount_RespectsItsSpendableFlag" fullname="LustHouse.Tests.GuardrailTests.EveryCurrencyAccount_RespectsItsSpendableFlag" methodname="EveryCurrencyAccount_RespectsItsSpendableFlag" classname="LustHouse.Tests.GuardrailTests" runstate="Runnable" seed="1357413498" result="Passed" start-time="2026-10-22 02:02:16Z" end-time="2026-10-22 02:02:16Z" duration="0.001039" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1079" name="FirstRunPack_IsDerivedFromTheLedgerNotAnInMemoryFlag" fullname="LustHouse.Tests.GuardrailTests.FirstRunPack_IsDerivedFromTheLedgerNotAnInMemoryFlag" methodname="FirstRunPack_IsDerivedFromTheLedgerNotAnInMemoryFlag" classname="LustHouse.Tests.GuardrailTests" runstate="Runnable" seed="432441078" result="Passed" start-time="2026-10-22 02:02:16Z" end-time="2026-10-22 02:02:16Z" duration="0.000301" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1076" name="Ledger_TrimsButNeverRewritesHistory" fullname="LustHouse.Tests.GuardrailTests.Ledger_TrimsButNeverRewritesHistory" methodname="Ledger_TrimsButNeverRewritesHistory" classname="LustHouse.Tests.GuardrailTests" runstate="Runnable" seed="1498462966" result="Passed" start-time="2026-10-22 02:02:16Z" end-time="2026-10-22 02:02:16Z" duration="0.000940" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1072" name="LustPoints_IsStructurallyNonSpendable" fullname="LustHouse.Tests.GuardrailTests.LustPoints_IsStructurallyNonSpendable" methodname="LustPoints_IsStructurallyNonSpendable" classname="LustHouse.Tests.GuardrailTests" runstate="Runnable" seed="677667940" result="Passed" start-time="2026-10-22 02:02:16Z" end-time="2026-10-22 02:02:16Z" duration="0.000185" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1077" name="OnlyGems_ArePremiumCurrency" fullname="LustHouse.Tests.GuardrailTests.OnlyGems_ArePremiumCurrency" methodname="OnlyGems_ArePremiumCurrency" classname="LustHouse.Tests.GuardrailTests" runstate="Runnable" seed="1959508524" result="Passed" start-time="2026-10-22 02:02:16Z" end-time="2026-10-22 02:02:16Z" duration="0.000141" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+          </test-suite>
+          <test-suite type="TestFixture" id="1084" name="LobbyLayoutTests" fullname="LustHouse.Tests.LobbyLayoutTests" classname="LustHouse.Tests.LobbyLayoutTests" runstate="Runnable" testcasecount="11" result="Passed" start-time="2026-10-22 02:02:16Z" end-time="2026-10-22 02:02:16Z" duration="0.008486" total="11" passed="11" failed="0" inconclusive="0" skipped="0" asserts="0">
+            <properties />
+            <test-case id="1092" name="BottomNav_FiveDestinationsFitTheWidth" fullname="LustHouse.Tests.LobbyLayoutTests.BottomNav_FiveDestinationsFitTheWidth" methodname="BottomNav_FiveDestinationsFitTheWidth" classname="LustHouse.Tests.LobbyLayoutTests" runstate="Runnable" seed="881208266" result="Passed" start-time="2026-10-22 02:02:16Z" end-time="2026-10-22 02:02:16Z" duration="0.000471" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1093" name="BottomNav_UnderlineSitsBelowItsLabel" fullname="LustHouse.Tests.LobbyLayoutTests.BottomNav_UnderlineSitsBelowItsLabel" methodname="BottomNav_UnderlineSitsBelowItsLabel" classname="LustHouse.Tests.LobbyLayoutTests" runstate="Runnable" seed="716618934" result="Passed" start-time="2026-10-22 02:02:16Z" end-time="2026-10-22 02:02:16Z" duration="0.000130" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1095" name="CurrencyRules_ExposeTheNamesTheLobbyRenders" fullname="LustHouse.Tests.LobbyLayoutTests.CurrencyRules_ExposeTheNamesTheLobbyRenders" methodname="CurrencyRules_ExposeTheNamesTheLobbyRenders" classname="LustHouse.Tests.LobbyLayoutTests" runstate="Runnable" seed="103667810" result="Passed" start-time="2026-10-22 02:02:16Z" end-time="2026-10-22 02:02:16Z" duration="0.000177" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1087" name="FeaturedRow_FourTilesFitInsideTheMargin" fullname="LustHouse.Tests.LobbyLayoutTests.FeaturedRow_FourTilesFitInsideTheMargin" methodname="FeaturedRow_FourTilesFitInsideTheMargin" classname="LustHouse.Tests.LobbyLayoutTests" runstate="Runnable" seed="1582442934" result="Passed" start-time="2026-10-22 02:02:16Z" end-time="2026-10-22 02:02:16Z" duration="0.000213" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1088" name="FeaturedRow_LeavesTheLeftMarginIntact" fullname="LustHouse.Tests.LobbyLayoutTests.FeaturedRow_LeavesTheLeftMarginIntact" methodname="FeaturedRow_LeavesTheLeftMarginIntact" classname="LustHouse.Tests.LobbyLayoutTests" runstate="Runnable" seed="680024855" result="Passed" start-time="2026-10-22 02:02:16Z" end-time="2026-10-22 02:02:16Z" duration="0.000129" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1094" name="FormatAmount_AbbreviatesOnlyPastAThousand" fullname="LustHouse.Tests.LobbyLayoutTests.FormatAmount_AbbreviatesOnlyPastAThousand" methodname="FormatAmount_AbbreviatesOnlyPastAThousand" classname="LustHouse.Tests.LobbyLayoutTests" runstate="Runnable" seed="671133266" result="Passed" start-time="2026-10-22 02:02:16Z" end-time="2026-10-22 02:02:16Z" duration="0.003989" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1089" name="Grid_IsCentredInsideItsArea" fullname="LustHouse.Tests.LobbyLayoutTests.Grid_IsCentredInsideItsArea" methodname="Grid_IsCentredInsideItsArea" classname="LustHouse.Tests.LobbyLayoutTests" runstate="Runnable" seed="524751977" result="Passed" start-time="2026-10-22 02:02:16Z" end-time="2026-10-22 02:02:16Z" duration="0.000362" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1090" name="TabBar_FitsEveryCategoryLabel" fullname="LustHouse.Tests.LobbyLayoutTests.TabBar_FitsEveryCategoryLabel" methodname="TabBar_FitsEveryCategoryLabel" classname="LustHouse.Tests.LobbyLayoutTests" runstate="Runnable" seed="1689256863" result="Passed" start-time="2026-10-22 02:02:16Z" end-time="2026-10-22 02:02:16Z" duration="0.000346" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1086" name="TopBar_StaysInsideTheScreen" fullname="LustHouse.Tests.LobbyLayoutTests.TopBar_StaysInsideTheScreen" methodname="TopBar_StaysInsideTheScreen" classname="LustHouse.Tests.LobbyLayoutTests" runstate="Runnable" seed="1859601941" result="Passed" start-time="2026-10-22 02:02:16Z" end-time="2026-10-22 02:02:16Z" duration="0.000151" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1091" name="Underline_LandsUnderTheActiveTab" fullname="LustHouse.Tests.LobbyLayoutTests.Underline_LandsUnderTheActiveTab" methodname="Underline_LandsUnderTheActiveTab" classname="LustHouse.Tests.LobbyLayoutTests" runstate="Runnable" seed="1912289273" result="Passed" start-time="2026-10-22 02:02:16Z" end-time="2026-10-22 02:02:16Z" duration="0.000174" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1085" name="VerticalBands_DoNotOverlap" fullname="LustHouse.Tests.LobbyLayoutTests.VerticalBands_DoNotOverlap" methodname="VerticalBands_DoNotOverlap" classname="LustHouse.Tests.LobbyLayoutTests" runstate="Runnable" seed="165760273" result="Passed" start-time="2026-10-22 02:02:16Z" end-time="2026-10-22 02:02:16Z" duration="0.000230" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+          </test-suite>
+          <test-suite type="TestFixture" id="1096" name="MathSimulatorTests" fullname="LustHouse.Tests.MathSimulatorTests" classname="LustHouse.Tests.MathSimulatorTests" runstate="Runnable" testcasecount="6" result="Passed" start-time="2026-10-22 02:02:16Z" end-time="2026-10-22 02:02:16Z" duration="0.119766" total="6" passed="6" failed="0" inconclusive="0" skipped="0" asserts="0">
+            <properties />
+            <test-case id="1101" name="AllBetLevels_AggregateCleanly" fullname="LustHouse.Tests.MathSimulatorTests.AllBetLevels_AggregateCleanly" methodname="AllBetLevels_AggregateCleanly" classname="LustHouse.Tests.MathSimulatorTests" runstate="Runnable" seed="1398231268" result="Passed" start-time="2026-10-22 02:02:16Z" end-time="2026-10-22 02:02:16Z" duration="0.013857" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1102" name="NullOrEmptyInputs_DoNotThrow" fullname="LustHouse.Tests.MathSimulatorTests.NullOrEmptyInputs_DoNotThrow" methodname="NullOrEmptyInputs_DoNotThrow" classname="LustHouse.Tests.MathSimulatorTests" runstate="Runnable" seed="869933753" result="Passed" start-time="2026-10-22 02:02:16Z" end-time="2026-10-22 02:02:16Z" duration="0.000876" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1099" name="Simulation_DifferentSeedsConvergeOnTheSameRtp" fullname="LustHouse.Tests.MathSimulatorTests.Simulation_DifferentSeedsConvergeOnTheSameRtp" methodname="Simulation_DifferentSeedsConvergeOnTheSameRtp" classname="LustHouse.Tests.MathSimulatorTests" runstate="Runnable" seed="1416223911" result="Passed" start-time="2026-10-22 02:02:16Z" end-time="2026-10-22 02:02:16Z" duration="0.058658" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1098" name="Simulation_IsReproducibleFromItsSeed" fullname="LustHouse.Tests.MathSimulatorTests.Simulation_IsReproducibleFromItsSeed" methodname="Simulation_IsReproducibleFromItsSeed" classname="LustHouse.Tests.MathSimulatorTests" runstate="Runnable" seed="1116783413" result="Passed" start-time="2026-10-22 02:02:16Z" end-time="2026-10-22 02:02:16Z" duration="0.014536" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1097" name="Simulation_RunsAndReportsCoherentNumbers" fullname="LustHouse.Tests.MathSimulatorTests.Simulation_RunsAndReportsCoherentNumbers" methodname="Simulation_RunsAndReportsCoherentNumbers" classname="LustHouse.Tests.MathSimulatorTests" runstate="Runnable" seed="1955210917" result="Passed" start-time="2026-10-22 02:02:16Z" end-time="2026-10-22 02:02:16Z" duration="0.014781" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1100" name="WithinTolerance_MatchesThePlanGate" fullname="LustHouse.Tests.MathSimulatorTests.WithinTolerance_MatchesThePlanGate" methodname="WithinTolerance_MatchesThePlanGate" classname="LustHouse.Tests.MathSimulatorTests" runstate="Runnable" seed="1246807916" result="Passed" start-time="2026-10-22 02:02:16Z" end-time="2026-10-22 02:02:16Z" duration="0.015241" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+              <output><![CDATA[[MathSimulatorTests] fixture RTP = 352.640 % (target 95.500 %, drift 257.140 %)
+]]></output>
+            </test-case>
+          </test-suite>
+          <test-suite type="TestFixture" id="1103" name="MegaBlockTests" fullname="LustHouse.Tests.MegaBlockTests" classname="LustHouse.Tests.MegaBlockTests" runstate="Runnable" testcasecount="9" result="Passed" start-time="2026-10-22 02:02:16Z" end-time="2026-10-22 02:02:16Z" duration="0.099905" total="9" passed="9" failed="0" inconclusive="0" skipped="0" asserts="0">
+            <properties />
+            <test-case id="1105" name="Block_PaysOnTopOfTheLineWins" fullname="LustHouse.Tests.MegaBlockTests.Block_PaysOnTopOfTheLineWins" methodname="Block_PaysOnTopOfTheLineWins" classname="LustHouse.Tests.MegaBlockTests" runstate="Runnable" seed="1681993497" result="Passed" start-time="2026-10-22 02:02:16Z" end-time="2026-10-22 02:02:16Z" duration="0.002498" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1112" name="BlockRtp_IsZeroWhenNothingOptsIn" fullname="LustHouse.Tests.MegaBlockTests.BlockRtp_IsZeroWhenNothingOptsIn" methodname="BlockRtp_IsZeroWhenNothingOptsIn" classname="LustHouse.Tests.MegaBlockTests" runstate="Runnable" seed="1013084031" result="Passed" start-time="2026-10-22 02:02:16Z" end-time="2026-10-22 02:02:16Z" duration="0.000423" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1110" name="ClosedForm_MatchesTheEvaluatorUnderSimulation" fullname="LustHouse.Tests.MegaBlockTests.ClosedForm_MatchesTheEvaluatorUnderSimulation" methodname="ClosedForm_MatchesTheEvaluatorUnderSimulation" classname="LustHouse.Tests.MegaBlockTests" runstate="Runnable" seed="1732767074" result="Passed" start-time="2026-10-22 02:02:16Z" end-time="2026-10-22 02:02:16Z" duration="0.089377" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1104" name="Exact2x2_PaysFourOfAKindTimesMultiplier" fullname="LustHouse.Tests.MegaBlockTests.Exact2x2_PaysFourOfAKindTimesMultiplier" methodname="Exact2x2_PaysFourOfAKindTimesMultiplier" classname="LustHouse.Tests.MegaBlockTests" runstate="Runnable" seed="891229878" result="Passed" start-time="2026-10-22 02:02:16Z" end-time="2026-10-22 02:02:16Z" duration="0.000736" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1111" name="ExactRtp_IncludesTheBlockTerm" fullname="LustHouse.Tests.MegaBlockTests.ExactRtp_IncludesTheBlockTerm" methodname="ExactRtp_IncludesTheBlockTerm" classname="LustHouse.Tests.MegaBlockTests" runstate="Runnable" seed="1516928027" result="Passed" start-time="2026-10-22 02:02:16Z" end-time="2026-10-22 02:02:16Z" duration="0.003364" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1108" name="Nine_NeverBlocks_EvenInASquare" fullname="LustHouse.Tests.MegaBlockTests.Nine_NeverBlocks_EvenInASquare" methodname="Nine_NeverBlocks_EvenInASquare" classname="LustHouse.Tests.MegaBlockTests" runstate="Runnable" seed="948932918" result="Passed" start-time="2026-10-22 02:02:16Z" end-time="2026-10-22 02:02:16Z" duration="0.000275" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1109" name="Spin_IncludesBlockWinsInTheTotal" fullname="LustHouse.Tests.MegaBlockTests.Spin_IncludesBlockWinsInTheTotal" methodname="Spin_IncludesBlockWinsInTheTotal" classname="LustHouse.Tests.MegaBlockTests" runstate="Runnable" seed="1379353082" result="Passed" start-time="2026-10-22 02:02:16Z" end-time="2026-10-22 02:02:16Z" duration="0.000696" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1107" name="SymbolWithoutMultiplier_NeverBlocks" fullname="LustHouse.Tests.MegaBlockTests.SymbolWithoutMultiplier_NeverBlocks" methodname="SymbolWithoutMultiplier_NeverBlocks" classname="LustHouse.Tests.MegaBlockTests" runstate="Runnable" seed="1993921490" result="Passed" start-time="2026-10-22 02:02:16Z" end-time="2026-10-22 02:02:16Z" duration="0.000253" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1106" name="WildInTheQuad_BreaksTheBlock" fullname="LustHouse.Tests.MegaBlockTests.WildInTheQuad_BreaksTheBlock" methodname="WildInTheQuad_BreaksTheBlock" classname="LustHouse.Tests.MegaBlockTests" runstate="Runnable" seed="1005053769" result="Passed" start-time="2026-10-22 02:02:16Z" end-time="2026-10-22 02:02:16Z" duration="0.000316" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+          </test-suite>
+          <test-suite type="TestFixture" id="1113" name="PromoConfigTests" fullname="LustHouse.Tests.PromoConfigTests" classname="LustHouse.Tests.PromoConfigTests" runstate="Runnable" testcasecount="13" result="Passed" start-time="2026-10-22 02:02:16Z" end-time="2026-10-22 02:02:16Z" duration="0.029486" total="13" passed="13" failed="0" inconclusive="0" skipped="0" asserts="0">
+            <properties />
+            <test-case id="1119" name="AbsentFields_LeaveLocalValuesUntouched" fullname="LustHouse.Tests.PromoConfigTests.AbsentFields_LeaveLocalValuesUntouched" methodname="AbsentFields_LeaveLocalValuesUntouched" classname="LustHouse.Tests.PromoConfigTests" runstate="Runnable" seed="157167209" result="Passed" start-time="2026-10-22 02:02:16Z" end-time="2026-10-22 02:02:16Z" duration="0.003723" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1117" name="AllEntriesUnknown_LeavesTheLocalListAlone" fullname="LustHouse.Tests.PromoConfigTests.AllEntriesUnknown_LeavesTheLocalListAlone" methodname="AllEntriesUnknown_LeavesTheLocalListAlone" classname="LustHouse.Tests.PromoConfigTests" runstate="Runnable" seed="626304179" result="Passed" start-time="2026-10-22 02:02:16Z" end-time="2026-10-22 02:02:16Z" duration="0.000304" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1123" name="Clone_DoesNotShareStateWithTheShippedAsset" fullname="LustHouse.Tests.PromoConfigTests.Clone_DoesNotShareStateWithTheShippedAsset" methodname="Clone_DoesNotShareStateWithTheShippedAsset" classname="LustHouse.Tests.PromoConfigTests" runstate="Runnable" seed="153432089" result="Passed" start-time="2026-10-22 02:02:16Z" end-time="2026-10-22 02:02:16Z" duration="0.000800" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1118" name="EmptyArrays_DoNotBlankTheLobby" fullname="LustHouse.Tests.PromoConfigTests.EmptyArrays_DoNotBlankTheLobby" methodname="EmptyArrays_DoNotBlankTheLobby" classname="LustHouse.Tests.PromoConfigTests" runstate="Runnable" seed="1201322815" result="Passed" start-time="2026-10-22 02:02:16Z" end-time="2026-10-22 02:02:16Z" duration="0.000237" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1124" name="FeaturedInOrder_SortsByOrder" fullname="LustHouse.Tests.PromoConfigTests.FeaturedInOrder_SortsByOrder" methodname="FeaturedInOrder_SortsByOrder" classname="LustHouse.Tests.PromoConfigTests" runstate="Runnable" seed="325857620" result="Passed" start-time="2026-10-22 02:02:16Z" end-time="2026-10-22 02:02:16Z" duration="0.000628" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1115" name="MalformedJson_ChangesNothing" fullname="LustHouse.Tests.PromoConfigTests.MalformedJson_ChangesNothing" methodname="MalformedJson_ChangesNothing" classname="LustHouse.Tests.PromoConfigTests" runstate="Runnable" seed="275109016" result="Passed" start-time="2026-10-22 02:02:16Z" end-time="2026-10-22 02:02:16Z" duration="0.001456" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1125" name="NewReleaseWindow_RespectsTheConfiguredDays" fullname="LustHouse.Tests.PromoConfigTests.NewReleaseWindow_RespectsTheConfiguredDays" methodname="NewReleaseWindow_RespectsTheConfiguredDays" classname="LustHouse.Tests.PromoConfigTests" runstate="Runnable" seed="1559014576" result="Passed" start-time="2026-10-22 02:02:16Z" end-time="2026-10-22 02:02:16Z" duration="0.015533" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1122" name="NullAndEmptyPayloads_AreRejectedSafely" fullname="LustHouse.Tests.PromoConfigTests.NullAndEmptyPayloads_AreRejectedSafely" methodname="NullAndEmptyPayloads_AreRejectedSafely" classname="LustHouse.Tests.PromoConfigTests" runstate="Runnable" seed="570552910" result="Passed" start-time="2026-10-22 02:02:16Z" end-time="2026-10-22 02:02:16Z" duration="0.000463" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1120" name="OutOfRangeScalars_AreClampedNotRejected" fullname="LustHouse.Tests.PromoConfigTests.OutOfRangeScalars_AreClampedNotRejected" methodname="OutOfRangeScalars_AreClampedNotRejected" classname="LustHouse.Tests.PromoConfigTests" runstate="Runnable" seed="1924029886" result="Passed" start-time="2026-10-22 02:02:16Z" end-time="2026-10-22 02:02:16Z" duration="0.001721" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1126" name="ReleasedUtc_IsDefaultForGarbage" fullname="LustHouse.Tests.PromoConfigTests.ReleasedUtc_IsDefaultForGarbage" methodname="ReleasedUtc_IsDefaultForGarbage" classname="LustHouse.Tests.PromoConfigTests" runstate="Runnable" seed="2141374458" result="Passed" start-time="2026-10-22 02:02:16Z" end-time="2026-10-22 02:02:16Z" duration="0.001032" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1116" name="UnknownGameIds_AreDroppedButTheRestApplies" fullname="LustHouse.Tests.PromoConfigTests.UnknownGameIds_AreDroppedButTheRestApplies" methodname="UnknownGameIds_AreDroppedButTheRestApplies" classname="LustHouse.Tests.PromoConfigTests" runstate="Runnable" seed="985809414" result="Passed" start-time="2026-10-22 02:02:16Z" end-time="2026-10-22 02:02:16Z" duration="0.000450" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1121" name="UnknownSlideKind_IsDropped" fullname="LustHouse.Tests.PromoConfigTests.UnknownSlideKind_IsDropped" methodname="UnknownSlideKind_IsDropped" classname="LustHouse.Tests.PromoConfigTests" runstate="Runnable" seed="1948272692" result="Passed" start-time="2026-10-22 02:02:16Z" end-time="2026-10-22 02:02:16Z" duration="0.000413" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1114" name="ValidPayload_OverridesFeaturedAndSlides" fullname="LustHouse.Tests.PromoConfigTests.ValidPayload_OverridesFeaturedAndSlides" methodname="ValidPayload_OverridesFeaturedAndSlides" classname="LustHouse.Tests.PromoConfigTests" runstate="Runnable" seed="1397813292" result="Passed" start-time="2026-10-22 02:02:16Z" end-time="2026-10-22 02:02:16Z" duration="0.000380" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+          </test-suite>
+          <test-suite type="TestFixture" id="1127" name="ReelEngineTests" fullname="LustHouse.Tests.ReelEngineTests" classname="LustHouse.Tests.ReelEngineTests" runstate="Runnable" testcasecount="12" result="Passed" start-time="2026-10-22 02:02:16Z" end-time="2026-10-22 02:02:16Z" duration="0.024403" total="12" passed="12" failed="0" inconclusive="0" skipped="0" asserts="0">
+            <properties />
+            <test-case id="1138" name="BetLadder_StaysWithinRangeAndIsMonotonic" fullname="LustHouse.Tests.ReelEngineTests.BetLadder_StaysWithinRangeAndIsMonotonic" methodname="BetLadder_StaysWithinRangeAndIsMonotonic" classname="LustHouse.Tests.ReelEngineTests" runstate="Runnable" seed="409029624" result="Passed" start-time="2026-10-22 02:02:16Z" end-time="2026-10-22 02:02:16Z" duration="0.003061" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1129" name="Definition_ValidationCatchesBrokenStrips" fullname="LustHouse.Tests.ReelEngineTests.Definition_ValidationCatchesBrokenStrips" methodname="Definition_ValidationCatchesBrokenStrips" classname="LustHouse.Tests.ReelEngineTests" runstate="Runnable" seed="62655482" result="Passed" start-time="2026-10-22 02:02:16Z" end-time="2026-10-22 02:02:16Z" duration="0.001430" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1130" name="Definition_ValidationCatchesUnknownSymbolIds" fullname="LustHouse.Tests.ReelEngineTests.Definition_ValidationCatchesUnknownSymbolIds" methodname="Definition_ValidationCatchesUnknownSymbolIds" classname="LustHouse.Tests.ReelEngineTests" runstate="Runnable" seed="264878624" result="Passed" start-time="2026-10-22 02:02:16Z" end-time="2026-10-22 02:02:16Z" duration="0.001015" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1131" name="Definition_ValidationRejectsNonRoundMinBet" fullname="LustHouse.Tests.ReelEngineTests.Definition_ValidationRejectsNonRoundMinBet" methodname="Definition_ValidationRejectsNonRoundMinBet" classname="LustHouse.Tests.ReelEngineTests" runstate="Runnable" seed="408242262" result="Passed" start-time="2026-10-22 02:02:16Z" end-time="2026-10-22 02:02:16Z" duration="0.000301" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1128" name="Fixture_IsValid" fullname="LustHouse.Tests.ReelEngineTests.Fixture_IsValid" methodname="Fixture_IsValid" classname="LustHouse.Tests.ReelEngineTests" runstate="Runnable" seed="1905126608" result="Passed" start-time="2026-10-22 02:02:16Z" end-time="2026-10-22 02:02:16Z" duration="0.000295" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1133" name="Grid_SymbolsComeFromTheCorrectReelStrips" fullname="LustHouse.Tests.ReelEngineTests.Grid_SymbolsComeFromTheCorrectReelStrips" methodname="Grid_SymbolsComeFromTheCorrectReelStrips" classname="LustHouse.Tests.ReelEngineTests" runstate="Runnable" seed="1495478277" result="Passed" start-time="2026-10-22 02:02:16Z" end-time="2026-10-22 02:02:16Z" duration="0.005166" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1139" name="Randomness_ProducesAWideSpreadOfOutcomes" fullname="LustHouse.Tests.ReelEngineTests.Randomness_ProducesAWideSpreadOfOutcomes" methodname="Randomness_ProducesAWideSpreadOfOutcomes" classname="LustHouse.Tests.ReelEngineTests" runstate="Runnable" seed="1003124036" result="Passed" start-time="2026-10-22 02:02:16Z" end-time="2026-10-22 02:02:16Z" duration="0.003323" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1132" name="SameSeed_ProducesIdenticalSpinSequence" fullname="LustHouse.Tests.ReelEngineTests.SameSeed_ProducesIdenticalSpinSequence" methodname="SameSeed_ProducesIdenticalSpinSequence" classname="LustHouse.Tests.ReelEngineTests" runstate="Runnable" seed="1808631185" result="Passed" start-time="2026-10-22 02:02:16Z" end-time="2026-10-22 02:02:16Z" duration="0.002097" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1134" name="ThreeOfAKind_PaysTheFirstPayoutTier" fullname="LustHouse.Tests.ReelEngineTests.ThreeOfAKind_PaysTheFirstPayoutTier" methodname="ThreeOfAKind_PaysTheFirstPayoutTier" classname="LustHouse.Tests.ReelEngineTests" runstate="Runnable" seed="635676818" result="Passed" start-time="2026-10-22 02:02:16Z" end-time="2026-10-22 02:02:16Z" duration="0.000951" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1137" name="TotalWin_IsASimpleMultipleOfBet" fullname="LustHouse.Tests.ReelEngineTests.TotalWin_IsASimpleMultipleOfBet" methodname="TotalWin_IsASimpleMultipleOfBet" classname="LustHouse.Tests.ReelEngineTests" runstate="Runnable" seed="1238688012" result="Passed" start-time="2026-10-22 02:02:16Z" end-time="2026-10-22 02:02:16Z" duration="0.001968" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1136" name="TwoOfAKind_DoesNotPay" fullname="LustHouse.Tests.ReelEngineTests.TwoOfAKind_DoesNotPay" methodname="TwoOfAKind_DoesNotPay" classname="LustHouse.Tests.ReelEngineTests" runstate="Runnable" seed="1490311302" result="Passed" start-time="2026-10-22 02:02:16Z" end-time="2026-10-22 02:02:16Z" duration="0.000737" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1135" name="Wild_SubstitutesForTheBaseSymbol" fullname="LustHouse.Tests.ReelEngineTests.Wild_SubstitutesForTheBaseSymbol" methodname="Wild_SubstitutesForTheBaseSymbol" classname="LustHouse.Tests.ReelEngineTests" runstate="Runnable" seed="845311772" result="Passed" start-time="2026-10-22 02:02:16Z" end-time="2026-10-22 02:02:16Z" duration="0.000634" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+          </test-suite>
+          <test-suite type="TestFixture" id="1140" name="ReelsViewTests" fullname="LustHouse.Tests.ReelsViewTests" classname="LustHouse.Tests.ReelsViewTests" runstate="Runnable" testcasecount="12" result="Passed" start-time="2026-10-22 02:02:16Z" end-time="2026-10-22 02:02:17Z" duration="0.137128" total="12" passed="12" failed="0" inconclusive="0" skipped="0" asserts="0">
+            <properties />
+            <test-case id="1141" name="AtRest_TheReelsMatchTheEngineGrid" fullname="LustHouse.Tests.ReelsViewTests.AtRest_TheReelsMatchTheEngineGrid" methodname="AtRest_TheReelsMatchTheEngineGrid" classname="LustHouse.Tests.ReelsViewTests" runstate="Runnable" seed="1315475159" result="Passed" start-time="2026-10-22 02:02:16Z" end-time="2026-10-22 02:02:16Z" duration="0.027987" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1142" name="AtRest_TheReelsMatchTheEngineGrid_AtEveryStopOnEveryReel" fullname="LustHouse.Tests.ReelsViewTests.AtRest_TheReelsMatchTheEngineGrid_AtEveryStopOnEveryReel" methodname="AtRest_TheReelsMatchTheEngineGrid_AtEveryStopOnEveryReel" classname="LustHouse.Tests.ReelsViewTests" runstate="Runnable" seed="1181335805" result="Passed" start-time="2026-10-22 02:02:16Z" end-time="2026-10-22 02:02:16Z" duration="0.009267" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1145" name="CellsCoverEveryVisibleRow" fullname="LustHouse.Tests.ReelsViewTests.CellsCoverEveryVisibleRow" methodname="CellsCoverEveryVisibleRow" classname="LustHouse.Tests.ReelsViewTests" runstate="Runnable" seed="2010664186" result="Passed" start-time="2026-10-22 02:02:16Z" end-time="2026-10-22 02:02:16Z" duration="0.008273" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1147" name="ConfiguringWithNoDefinitionClearsTheReels" fullname="LustHouse.Tests.ReelsViewTests.ConfiguringWithNoDefinitionClearsTheReels" methodname="ConfiguringWithNoDefinitionClearsTheReels" classname="LustHouse.Tests.ReelsViewTests" runstate="Runnable" seed="858041790" result="Passed" start-time="2026-10-22 02:02:16Z" end-time="2026-10-22 02:02:16Z" duration="0.008607" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1151" name="HeldCells_AreDrawnUntilTheNextRoundClearsThem" fullname="LustHouse.Tests.ReelsViewTests.HeldCells_AreDrawnUntilTheNextRoundClearsThem" methodname="HeldCells_AreDrawnUntilTheNextRoundClearsThem" classname="LustHouse.Tests.ReelsViewTests" runstate="Runnable" seed="959620031" result="Passed" start-time="2026-10-22 02:02:16Z" end-time="2026-10-22 02:02:16Z" duration="0.011117" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1150" name="LosingSpin_ClearsThePreviousWinningLine" fullname="LustHouse.Tests.ReelsViewTests.LosingSpin_ClearsThePreviousWinningLine" methodname="LosingSpin_ClearsThePreviousWinningLine" classname="LustHouse.Tests.ReelsViewTests" runstate="Runnable" seed="372296824" result="Passed" start-time="2026-10-22 02:02:16Z" end-time="2026-10-22 02:02:16Z" duration="0.016991" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1149" name="NonPaylineWins_DoNotDrawConnectors" fullname="LustHouse.Tests.ReelsViewTests.NonPaylineWins_DoNotDrawConnectors" methodname="NonPaylineWins_DoNotDrawConnectors" classname="LustHouse.Tests.ReelsViewTests" runstate="Runnable" seed="223354459" result="Passed" start-time="2026-10-22 02:02:16Z" end-time="2026-10-22 02:02:17Z" duration="0.008878" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1152" name="ReconfiguringTheSameDefinitionKeepsTheReels" fullname="LustHouse.Tests.ReelsViewTests.ReconfiguringTheSameDefinitionKeepsTheReels" methodname="ReconfiguringTheSameDefinitionKeepsTheReels" classname="LustHouse.Tests.ReelsViewTests" runstate="Runnable" seed="254285958" result="Passed" start-time="2026-10-22 02:02:17Z" end-time="2026-10-22 02:02:17Z" duration="0.008507" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1144" name="Recycling_KeepsTheCellCountAndBoundsTheStripIndices" fullname="LustHouse.Tests.ReelsViewTests.Recycling_KeepsTheCellCountAndBoundsTheStripIndices" methodname="Recycling_KeepsTheCellCountAndBoundsTheStripIndices" classname="LustHouse.Tests.ReelsViewTests" runstate="Runnable" seed="2019500372" result="Passed" start-time="2026-10-22 02:02:17Z" end-time="2026-10-22 02:02:17Z" duration="0.008197" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1143" name="ScrollingPastTheWrap_KeepsShowingTheSameStrip" fullname="LustHouse.Tests.ReelsViewTests.ScrollingPastTheWrap_KeepsShowingTheSameStrip" methodname="ScrollingPastTheWrap_KeepsShowingTheSameStrip" classname="LustHouse.Tests.ReelsViewTests" runstate="Runnable" seed="170853238" result="Passed" start-time="2026-10-22 02:02:17Z" end-time="2026-10-22 02:02:17Z" duration="0.007908" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1146" name="SymbolsWithoutSpritesFallBackToAPlaceholderTile" fullname="LustHouse.Tests.ReelsViewTests.SymbolsWithoutSpritesFallBackToAPlaceholderTile" methodname="SymbolsWithoutSpritesFallBackToAPlaceholderTile" classname="LustHouse.Tests.ReelsViewTests" runstate="Runnable" seed="993602753" result="Passed" start-time="2026-10-22 02:02:17Z" end-time="2026-10-22 02:02:17Z" duration="0.008680" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1148" name="WinningPayline_DrawsAConnectingLineOverTheMatchedSymbols" fullname="LustHouse.Tests.ReelsViewTests.WinningPayline_DrawsAConnectingLineOverTheMatchedSymbols" methodname="WinningPayline_DrawsAConnectingLineOverTheMatchedSymbols" classname="LustHouse.Tests.ReelsViewTests" runstate="Runnable" seed="1001712033" result="Passed" start-time="2026-10-22 02:02:17Z" end-time="2026-10-22 02:02:17Z" duration="0.010107" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+          </test-suite>
+          <test-suite type="TestFixture" id="1153" name="RtpGateTests" fullname="LustHouse.Tests.RtpGateTests" classname="LustHouse.Tests.RtpGateTests" runstate="Runnable" testcasecount="2" result="Passed" start-time="2026-10-22 02:02:17Z" end-time="2026-10-22 02:02:17Z" duration="0.441382" total="2" passed="2" failed="0" inconclusive="0" skipped="0" asserts="0">
+            <properties />
+            <test-case id="1154" name="EveryDefinition_IsValidAndSaysWhetherItsMathsIsSignedOff" fullname="LustHouse.Tests.RtpGateTests.EveryDefinition_IsValidAndSaysWhetherItsMathsIsSignedOff" methodname="EveryDefinition_IsValidAndSaysWhetherItsMathsIsSignedOff" classname="LustHouse.Tests.RtpGateTests" runstate="Runnable" seed="1064321579" result="Passed" start-time="2026-10-22 02:02:17Z" end-time="2026-10-22 02:02:17Z" duration="0.003236" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+              <output><![CDATA[[RtpGateTests] measured: velvet_room; unmeasured: diamond_hold, house_edge, midnight_masquerade, neon_nights
+]]></output>
+            </test-case>
+            <test-case id="1155" name="EveryMeasuredGame_HitsItsDeclaredRtp" fullname="LustHouse.Tests.RtpGateTests.EveryMeasuredGame_HitsItsDeclaredRtp" methodname="EveryMeasuredGame_HitsItsDeclaredRtp" classname="LustHouse.Tests.RtpGateTests" runstate="Runnable" seed="1038498390" result="Passed" start-time="2026-10-22 02:02:17Z" end-time="2026-10-22 02:02:17Z" duration="0.436370" asserts="0">
+              <properties>
+                <property name="Category" value="RtpGate" />
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+              <output><![CDATA[[RtpGateTests] velvet_room: exact RTP 96.1955 % (target 96.2000 %, drift 0.0045 %)
+[RtpGateTests] velvet_room: 100,000 simulated spins -> RTP 97.254 %, hit 8.99 %, max 430x
+]]></output>
+            </test-case>
+          </test-suite>
+          <test-suite type="TestFixture" id="1156" name="SaveSystemTests" fullname="LustHouse.Tests.SaveSystemTests" classname="LustHouse.Tests.SaveSystemTests" runstate="Runnable" testcasecount="9" result="Passed" start-time="2026-10-22 02:02:17Z" end-time="2026-10-22 02:02:17Z" duration="0.111211" total="9" passed="9" failed="0" inconclusive="0" skipped="0" asserts="0">
+            <properties />
+            <test-case id="1159" name="CorruptSave_RecoversToDefaultsAndBacksUp" fullname="LustHouse.Tests.SaveSystemTests.CorruptSave_RecoversToDefaultsAndBacksUp" methodname="CorruptSave_RecoversToDefaultsAndBacksUp" classname="LustHouse.Tests.SaveSystemTests" runstate="Runnable" seed="929909301" result="Passed" start-time="2026-10-22 02:02:17Z" end-time="2026-10-22 02:02:17Z" duration="0.006526" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+              <output><![CDATA[[LustHouse] Corrupt save (Invalid character after parsing property name. Expected ':' but got: i. Path '', line 1, position 7.). Backed up to C:\Users\Hammy\AppData\Local\Temp\lusthouse_tests_73ab0683765f405bb51cea9e6173c820\save.json.bak
+]]></output>
+            </test-case>
+            <test-case id="1164" name="Delete_BacksUpBeforeRemoving" fullname="LustHouse.Tests.SaveSystemTests.Delete_BacksUpBeforeRemoving" methodname="Delete_BacksUpBeforeRemoving" classname="LustHouse.Tests.SaveSystemTests" runstate="Runnable" seed="1851572656" result="Passed" start-time="2026-10-22 02:02:17Z" end-time="2026-10-22 02:02:17Z" duration="0.005930" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1163" name="Migration_FromFutureSchema_DoesNotClobberTheFile" fullname="LustHouse.Tests.SaveSystemTests.Migration_FromFutureSchema_DoesNotClobberTheFile" methodname="Migration_FromFutureSchema_DoesNotClobberTheFile" classname="LustHouse.Tests.SaveSystemTests" runstate="Runnable" seed="972527262" result="Passed" start-time="2026-10-22 02:02:17Z" end-time="2026-10-22 02:02:17Z" duration="0.009831" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1162" name="Migration_PreSchemaFlatBalancesBecomeLedgerEntries" fullname="LustHouse.Tests.SaveSystemTests.Migration_PreSchemaFlatBalancesBecomeLedgerEntries" methodname="Migration_PreSchemaFlatBalancesBecomeLedgerEntries" classname="LustHouse.Tests.SaveSystemTests" runstate="Runnable" seed="1663171475" result="Passed" start-time="2026-10-22 02:02:17Z" end-time="2026-10-22 02:02:17Z" duration="0.014049" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1158" name="MissingSave_ReturnsFreshDocumentWithoutWarning" fullname="LustHouse.Tests.SaveSystemTests.MissingSave_ReturnsFreshDocumentWithoutWarning" methodname="MissingSave_ReturnsFreshDocumentWithoutWarning" classname="LustHouse.Tests.SaveSystemTests" runstate="Runnable" seed="722735657" result="Passed" start-time="2026-10-22 02:02:17Z" end-time="2026-10-22 02:02:17Z" duration="0.001023" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1161" name="Save_IsAtomic_NoTempFileLeftBehind" fullname="LustHouse.Tests.SaveSystemTests.Save_IsAtomic_NoTempFileLeftBehind" methodname="Save_IsAtomic_NoTempFileLeftBehind" classname="LustHouse.Tests.SaveSystemTests" runstate="Runnable" seed="341743307" result="Passed" start-time="2026-10-22 02:02:17Z" end-time="2026-10-22 02:02:17Z" duration="0.040445" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1165" name="SavedAtUtc_IsStampedOnEveryWrite" fullname="LustHouse.Tests.SaveSystemTests.SavedAtUtc_IsStampedOnEveryWrite" methodname="SavedAtUtc_IsStampedOnEveryWrite" classname="LustHouse.Tests.SaveSystemTests" runstate="Runnable" seed="206800729" result="Passed" start-time="2026-10-22 02:02:17Z" end-time="2026-10-22 02:02:17Z" duration="0.012200" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1157" name="SaveThenLoad_RoundTripsEveryField" fullname="LustHouse.Tests.SaveSystemTests.SaveThenLoad_RoundTripsEveryField" methodname="SaveThenLoad_RoundTripsEveryField" classname="LustHouse.Tests.SaveSystemTests" runstate="Runnable" seed="302479253" result="Passed" start-time="2026-10-22 02:02:17Z" end-time="2026-10-22 02:02:17Z" duration="0.009322" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1160" name="TruncatedSave_RecoversToDefaults" fullname="LustHouse.Tests.SaveSystemTests.TruncatedSave_RecoversToDefaults" methodname="TruncatedSave_RecoversToDefaults" classname="LustHouse.Tests.SaveSystemTests" runstate="Runnable" seed="459288413" result="Passed" start-time="2026-10-22 02:02:17Z" end-time="2026-10-22 02:02:17Z" duration="0.009655" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+              <output><![CDATA[[LustHouse] Corrupt save (Unterminated string. Expected delimiter: ". Path 'player', line 1, position 35.). Backed up to C:\Users\Hammy\AppData\Local\Temp\lusthouse_tests_f63dcaf180c24fca89d003b96b53c9c5\save.json.bak
+]]></output>
+            </test-case>
+          </test-suite>
+          <test-suite type="TestFixture" id="1166" name="SeededRngTests" fullname="LustHouse.Tests.SeededRngTests" classname="LustHouse.Tests.SeededRngTests" runstate="Runnable" testcasecount="8" result="Passed" start-time="2026-10-22 02:02:17Z" end-time="2026-10-22 02:02:17Z" duration="0.036259" total="8" passed="8" failed="0" inconclusive="0" skipped="0" asserts="0">
+            <properties />
+            <test-case id="1168" name="DifferentSeeds_ProduceDifferentStreams" fullname="LustHouse.Tests.SeededRngTests.DifferentSeeds_ProduceDifferentStreams" methodname="DifferentSeeds_ProduceDifferentStreams" classname="LustHouse.Tests.SeededRngTests" runstate="Runnable" seed="790747138" result="Passed" start-time="2026-10-22 02:02:17Z" end-time="2026-10-22 02:02:17Z" duration="0.000359" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1174" name="NextDouble_IsInUnitInterval" fullname="LustHouse.Tests.SeededRngTests.NextDouble_IsInUnitInterval" methodname="NextDouble_IsInUnitInterval" classname="LustHouse.Tests.SeededRngTests" runstate="Runnable" seed="1973094489" result="Passed" start-time="2026-10-22 02:02:17Z" end-time="2026-10-22 02:02:17Z" duration="0.011752" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1171" name="NextInt_CoversTheWholeRange" fullname="LustHouse.Tests.SeededRngTests.NextInt_CoversTheWholeRange" methodname="NextInt_CoversTheWholeRange" classname="LustHouse.Tests.SeededRngTests" runstate="Runnable" seed="907379155" result="Passed" start-time="2026-10-22 02:02:17Z" end-time="2026-10-22 02:02:17Z" duration="0.000538" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1173" name="NextInt_HandlesDegenerateBounds" fullname="LustHouse.Tests.SeededRngTests.NextInt_HandlesDegenerateBounds" methodname="NextInt_HandlesDegenerateBounds" classname="LustHouse.Tests.SeededRngTests" runstate="Runnable" seed="993288947" result="Passed" start-time="2026-10-22 02:02:17Z" end-time="2026-10-22 02:02:17Z" duration="0.000194" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1172" name="NextInt_IsReasonablyUniform" fullname="LustHouse.Tests.SeededRngTests.NextInt_IsReasonablyUniform" methodname="NextInt_IsReasonablyUniform" classname="LustHouse.Tests.SeededRngTests" runstate="Runnable" seed="981568670" result="Passed" start-time="2026-10-22 02:02:17Z" end-time="2026-10-22 02:02:17Z" duration="0.000572" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1170" name="NextInt_StaysInRange" fullname="LustHouse.Tests.SeededRngTests.NextInt_StaysInRange" methodname="NextInt_StaysInRange" classname="LustHouse.Tests.SeededRngTests" runstate="Runnable" seed="1787104040" result="Passed" start-time="2026-10-22 02:02:17Z" end-time="2026-10-22 02:02:17Z" duration="0.018101" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1167" name="SameSeed_ProducesIdenticalStream" fullname="LustHouse.Tests.SeededRngTests.SameSeed_ProducesIdenticalStream" methodname="SameSeed_ProducesIdenticalStream" classname="LustHouse.Tests.SeededRngTests" runstate="Runnable" seed="919254320" result="Passed" start-time="2026-10-22 02:02:17Z" end-time="2026-10-22 02:02:17Z" duration="0.002108" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1169" name="StateRoundTrip_ResumesTheExactStream" fullname="LustHouse.Tests.SeededRngTests.StateRoundTrip_ResumesTheExactStream" methodname="StateRoundTrip_ResumesTheExactStream" classname="LustHouse.Tests.SeededRngTests" runstate="Runnable" seed="1120596990" result="Passed" start-time="2026-10-22 02:02:17Z" end-time="2026-10-22 02:02:17Z" duration="0.000394" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+          </test-suite>
+          <test-suite type="TestFixture" id="1175" name="SlotContentTests" fullname="LustHouse.Tests.SlotContentTests" classname="LustHouse.Tests.SlotContentTests" runstate="Runnable" testcasecount="6" result="Passed" start-time="2026-10-22 02:02:17Z" end-time="2026-10-22 02:02:17Z" duration="0.011823" total="6" passed="6" failed="0" inconclusive="0" skipped="0" asserts="0">
+            <properties />
+            <test-case id="1177" name="EveryDefinition_DoesNotShareOneSpriteBetweenTwoSymbols" fullname="LustHouse.Tests.SlotContentTests.EveryDefinition_DoesNotShareOneSpriteBetweenTwoSymbols" methodname="EveryDefinition_DoesNotShareOneSpriteBetweenTwoSymbols" classname="LustHouse.Tests.SlotContentTests" runstate="Runnable" seed="739792534" result="Passed" start-time="2026-10-22 02:02:17Z" end-time="2026-10-22 02:02:17Z" duration="0.002616" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1178" name="EveryDefinition_HasNoSymbolTheReelsCanNeverReach" fullname="LustHouse.Tests.SlotContentTests.EveryDefinition_HasNoSymbolTheReelsCanNeverReach" methodname="EveryDefinition_HasNoSymbolTheReelsCanNeverReach" classname="LustHouse.Tests.SlotContentTests" runstate="Runnable" seed="1207033335" result="Passed" start-time="2026-10-22 02:02:17Z" end-time="2026-10-22 02:02:17Z" duration="0.001911" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1176" name="EveryDefinition_HasUniqueSymbolIds" fullname="LustHouse.Tests.SlotContentTests.EveryDefinition_HasUniqueSymbolIds" methodname="EveryDefinition_HasUniqueSymbolIds" classname="LustHouse.Tests.SlotContentTests" runstate="Runnable" seed="938919060" result="Passed" start-time="2026-10-22 02:02:17Z" end-time="2026-10-22 02:02:17Z" duration="0.001663" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1179" name="EverySymbol_HasAName" fullname="LustHouse.Tests.SlotContentTests.EverySymbol_HasAName" methodname="EverySymbol_HasAName" classname="LustHouse.Tests.SlotContentTests" runstate="Runnable" seed="1699608977" result="Passed" start-time="2026-10-22 02:02:17Z" end-time="2026-10-22 02:02:17Z" duration="0.001511" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1180" name="TheGatedGame_GivesEverySymbolOnAReelArtAndAName" fullname="LustHouse.Tests.SlotContentTests.TheGatedGame_GivesEverySymbolOnAReelArtAndAName" methodname="TheGatedGame_GivesEverySymbolOnAReelArtAndAName" classname="LustHouse.Tests.SlotContentTests" runstate="Runnable" seed="325608512" result="Passed" start-time="2026-10-22 02:02:17Z" end-time="2026-10-22 02:02:17Z" duration="0.000548" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1181" name="VelvetRoom_HasPerReelStripsBetween20And30Stops" fullname="LustHouse.Tests.SlotContentTests.VelvetRoom_HasPerReelStripsBetween20And30Stops" methodname="VelvetRoom_HasPerReelStripsBetween20And30Stops" classname="LustHouse.Tests.SlotContentTests" runstate="Runnable" seed="201438306" result="Passed" start-time="2026-10-22 02:02:17Z" end-time="2026-10-22 02:02:17Z" duration="0.002173" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+          </test-suite>
+          <test-suite type="TestFixture" id="1182" name="WaysClusterTests" fullname="LustHouse.Tests.WaysClusterTests" classname="LustHouse.Tests.WaysClusterTests" runstate="Runnable" testcasecount="12" result="Passed" start-time="2026-10-22 02:02:17Z" end-time="2026-10-22 02:02:18Z" duration="0.914078" total="12" passed="12" failed="0" inconclusive="0" skipped="0" asserts="0">
+            <properties />
+            <test-case id="1189" name="Cluster_AdjacentGroup_ClearsAndPays" fullname="LustHouse.Tests.WaysClusterTests.Cluster_AdjacentGroup_ClearsAndPays" methodname="Cluster_AdjacentGroup_ClearsAndPays" classname="LustHouse.Tests.WaysClusterTests" runstate="Runnable" seed="1484009076" result="Passed" start-time="2026-10-22 02:02:17Z" end-time="2026-10-22 02:02:17Z" duration="0.003846" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1192" name="Cluster_IsRefusedByExactRtp" fullname="LustHouse.Tests.WaysClusterTests.Cluster_IsRefusedByExactRtp" methodname="Cluster_IsRefusedByExactRtp" classname="LustHouse.Tests.WaysClusterTests" runstate="Runnable" seed="23321444" result="Passed" start-time="2026-10-22 02:02:17Z" end-time="2026-10-22 02:02:17Z" duration="0.000293" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1191" name="Cluster_Refill_DoesNotLeaveHoles" fullname="LustHouse.Tests.WaysClusterTests.Cluster_Refill_DoesNotLeaveHoles" methodname="Cluster_Refill_DoesNotLeaveHoles" classname="LustHouse.Tests.WaysClusterTests" runstate="Runnable" seed="868362054" result="Passed" start-time="2026-10-22 02:02:17Z" end-time="2026-10-22 02:02:17Z" duration="0.000262" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1190" name="Cluster_ScatteredSymbols_DoNotPay" fullname="LustHouse.Tests.WaysClusterTests.Cluster_ScatteredSymbols_DoNotPay" methodname="Cluster_ScatteredSymbols_DoNotPay" classname="LustHouse.Tests.WaysClusterTests" runstate="Runnable" seed="408195269" result="Passed" start-time="2026-10-22 02:02:17Z" end-time="2026-10-22 02:02:17Z" duration="0.001965" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1193" name="Cluster_WithPaylines_IsRejected" fullname="LustHouse.Tests.WaysClusterTests.Cluster_WithPaylines_IsRejected" methodname="Cluster_WithPaylines_IsRejected" classname="LustHouse.Tests.WaysClusterTests" runstate="Runnable" seed="1935513638" result="Passed" start-time="2026-10-22 02:02:17Z" end-time="2026-10-22 02:02:17Z" duration="0.000300" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1183" name="ElementarySymmetric_MatchesHandComputedValues" fullname="LustHouse.Tests.WaysClusterTests.ElementarySymmetric_MatchesHandComputedValues" methodname="ElementarySymmetric_MatchesHandComputedValues" classname="LustHouse.Tests.WaysClusterTests" runstate="Runnable" seed="1827270262" result="Passed" start-time="2026-10-22 02:02:17Z" end-time="2026-10-22 02:02:17Z" duration="0.000274" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1194" name="PaytableWithNothingPaying_IsRejected" fullname="LustHouse.Tests.WaysClusterTests.PaytableWithNothingPaying_IsRejected" methodname="PaytableWithNothingPaying_IsRejected" classname="LustHouse.Tests.WaysClusterTests" runstate="Runnable" seed="1344853819" result="Passed" start-time="2026-10-22 02:02:17Z" end-time="2026-10-22 02:02:17Z" duration="0.000825" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1187" name="Ways_ExactRtp_AgreesWithMonteCarlo" fullname="LustHouse.Tests.WaysClusterTests.Ways_ExactRtp_AgreesWithMonteCarlo" methodname="Ways_ExactRtp_AgreesWithMonteCarlo" classname="LustHouse.Tests.WaysClusterTests" runstate="Runnable" seed="695688798" result="Passed" start-time="2026-10-22 02:02:17Z" end-time="2026-10-22 02:02:18Z" duration="0.902708" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1188" name="Ways_ExactRtp_IsDeterministic" fullname="LustHouse.Tests.WaysClusterTests.Ways_ExactRtp_IsDeterministic" methodname="Ways_ExactRtp_IsDeterministic" classname="LustHouse.Tests.WaysClusterTests" runstate="Runnable" seed="1110866163" result="Passed" start-time="2026-10-22 02:02:18Z" end-time="2026-10-22 02:02:18Z" duration="0.000479" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1184" name="Ways_ThreeOfAKind_PaysAcrossAllReelCombinations" fullname="LustHouse.Tests.WaysClusterTests.Ways_ThreeOfAKind_PaysAcrossAllReelCombinations" methodname="Ways_ThreeOfAKind_PaysAcrossAllReelCombinations" classname="LustHouse.Tests.WaysClusterTests" runstate="Runnable" seed="1963440428" result="Passed" start-time="2026-10-22 02:02:18Z" end-time="2026-10-22 02:02:18Z" duration="0.000490" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1186" name="Ways_TwoOfAKind_DoesNotPay" fullname="LustHouse.Tests.WaysClusterTests.Ways_TwoOfAKind_DoesNotPay" methodname="Ways_TwoOfAKind_DoesNotPay" classname="LustHouse.Tests.WaysClusterTests" runstate="Runnable" seed="89938011" result="Passed" start-time="2026-10-22 02:02:18Z" end-time="2026-10-22 02:02:18Z" duration="0.000413" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1185" name="Ways_WildSubstitutesForTheBaseSymbol" fullname="LustHouse.Tests.WaysClusterTests.Ways_WildSubstitutesForTheBaseSymbol" methodname="Ways_WildSubstitutesForTheBaseSymbol" classname="LustHouse.Tests.WaysClusterTests" runstate="Runnable" seed="469183238" result="Passed" start-time="2026-10-22 02:02:18Z" end-time="2026-10-22 02:02:18Z" duration="0.000418" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+          </test-suite>
+          <test-suite type="TestFixture" id="1195" name="WinPresentationTests" fullname="LustHouse.Tests.WinPresentationTests" classname="LustHouse.Tests.WinPresentationTests" runstate="Runnable" testcasecount="8" result="Passed" start-time="2026-10-22 02:02:18Z" end-time="2026-10-22 02:02:18Z" duration="0.076924" total="8" passed="8" failed="0" inconclusive="0" skipped="0" asserts="0">
+            <properties />
+            <test-case id="1197" name="ASymbolThatAnimates_Animates" fullname="LustHouse.Tests.WinPresentationTests.ASymbolThatAnimates_Animates" methodname="ASymbolThatAnimates_Animates" classname="LustHouse.Tests.WinPresentationTests" runstate="Runnable" seed="1503371473" result="Passed" start-time="2026-10-22 02:02:18Z" end-time="2026-10-22 02:02:18Z" duration="0.010799" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1198" name="ASymbolThatOptsOut_DoesNotAnimate" fullname="LustHouse.Tests.WinPresentationTests.ASymbolThatOptsOut_DoesNotAnimate" methodname="ASymbolThatOptsOut_DoesNotAnimate" classname="LustHouse.Tests.WinPresentationTests" runstate="Runnable" seed="1923117559" result="Passed" start-time="2026-10-22 02:02:18Z" end-time="2026-10-22 02:02:18Z" duration="0.008214" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1201" name="ASymbolWithFrames_PlaysThemOnAWin" fullname="LustHouse.Tests.WinPresentationTests.ASymbolWithFrames_PlaysThemOnAWin" methodname="ASymbolWithFrames_PlaysThemOnAWin" classname="LustHouse.Tests.WinPresentationTests" runstate="Runnable" seed="554499767" result="Passed" start-time="2026-10-22 02:02:18Z" end-time="2026-10-22 02:02:18Z" duration="0.009290" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1202" name="ASymbolWithNoFramesAndNoClip_JustPulses" fullname="LustHouse.Tests.WinPresentationTests.ASymbolWithNoFramesAndNoClip_JustPulses" methodname="ASymbolWithNoFramesAndNoClip_JustPulses" classname="LustHouse.Tests.WinPresentationTests" runstate="Runnable" seed="1416884097" result="Passed" start-time="2026-10-22 02:02:18Z" end-time="2026-10-22 02:02:18Z" duration="0.009558" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1200" name="ClearingTheHighlights_StopsTheWinAnimation" fullname="LustHouse.Tests.WinPresentationTests.ClearingTheHighlights_StopsTheWinAnimation" methodname="ClearingTheHighlights_StopsTheWinAnimation" classname="LustHouse.Tests.WinPresentationTests" runstate="Runnable" seed="1990367747" result="Passed" start-time="2026-10-22 02:02:18Z" end-time="2026-10-22 02:02:18Z" duration="0.018787" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+              <output><![CDATA[Default clip could not be found in attached animations list.
+]]></output>
+            </test-case>
+            <test-case id="1199" name="Symbols_DefaultToAnimating" fullname="LustHouse.Tests.WinPresentationTests.Symbols_DefaultToAnimating" methodname="Symbols_DefaultToAnimating" classname="LustHouse.Tests.WinPresentationTests" runstate="Runnable" seed="359827516" result="Passed" start-time="2026-10-22 02:02:18Z" end-time="2026-10-22 02:02:18Z" duration="0.000385" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1203" name="TheRimSprite_ActuallyHasAFrame" fullname="LustHouse.Tests.WinPresentationTests.TheRimSprite_ActuallyHasAFrame" methodname="TheRimSprite_ActuallyHasAFrame" classname="LustHouse.Tests.WinPresentationTests" runstate="Runnable" seed="554095495" result="Passed" start-time="2026-10-22 02:02:18Z" end-time="2026-10-22 02:02:18Z" duration="0.002221" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1196" name="TheWinMarkerIsAFrame_NotAFill" fullname="LustHouse.Tests.WinPresentationTests.TheWinMarkerIsAFrame_NotAFill" methodname="TheWinMarkerIsAFrame_NotAFill" classname="LustHouse.Tests.WinPresentationTests" runstate="Runnable" seed="1917319307" result="Passed" start-time="2026-10-22 02:02:18Z" end-time="2026-10-22 02:02:18Z" duration="0.015115" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+          </test-suite>
+        </test-suite>
+      </test-suite>
+    </test-suite>
+    <test-suite type="Assembly" id="1209" name="Unity.Addressables.DocExampleCode.Editor.Tests.dll" fullname="C:/Users/Hammy/Documents/projects/lusthouse/Library/ScriptAssemblies/Unity.Addressables.DocExampleCode.Editor.Tests.dll" runstate="Runnable" testcasecount="1" result="Passed" start-time="2026-10-22 02:02:18Z" end-time="2026-10-22 02:02:18Z" duration="0.003217" total="1" passed="1" failed="0" inconclusive="0" skipped="0" asserts="0">
+      <properties>
+        <property name="_PID" value="25548" />
+        <property name="_APPDOMAIN" value="Unity Child Domain" />
+        <property name="platform" value="EditMode" />
+        <property name="EditorOnly" value="True" />
+      </properties>
+      <test-suite type="TestSuite" id="1210" name="AddressableAssets" fullname="AddressableAssets" runstate="Runnable" testcasecount="1" result="Passed" start-time="2026-10-22 02:02:18Z" end-time="2026-10-22 02:02:18Z" duration="0.001644" total="1" passed="1" failed="0" inconclusive="0" skipped="0" asserts="0">
+        <properties />
+        <test-suite type="TestSuite" id="1211" name="DocExampleCode" fullname="AddressableAssets.DocExampleCode" runstate="Runnable" testcasecount="1" result="Passed" start-time="2026-10-22 02:02:18Z" end-time="2026-10-22 02:02:18Z" duration="0.001249" total="1" passed="1" failed="0" inconclusive="0" skipped="0" asserts="0">
+          <properties />
+          <test-suite type="TestFixture" id="1207" name="TestStub" fullname="AddressableAssets.DocExampleCode.TestStub" classname="AddressableAssets.DocExampleCode.TestStub" runstate="Runnable" testcasecount="1" result="Passed" start-time="2026-10-22 02:02:18Z" end-time="2026-10-22 02:02:18Z" duration="0.000905" total="1" passed="1" failed="0" inconclusive="0" skipped="0" asserts="0">
+            <properties />
+            <test-case id="1208" name="RequiredTest" fullname="AddressableAssets.DocExampleCode.TestStub.RequiredTest" methodname="RequiredTest" classname="AddressableAssets.DocExampleCode.TestStub" runstate="Runnable" seed="998938248" result="Passed" start-time="2026-10-22 02:02:18Z" end-time="2026-10-22 02:02:18Z" duration="0.000153" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+              <output><![CDATA[Saving results to: C:/Users/Hammy/AppData/LocalLow/Lust House/Lust House\TestResults.xml
+]]></output>
+            </test-case>
+          </test-suite>
+        </test-suite>
+      </test-suite>
+    </test-suite>
+  </test-suite>
+</test-run>

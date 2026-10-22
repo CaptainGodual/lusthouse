@@ -468,6 +468,44 @@ namespace LustHouse.Tests
         }
 
         [Test]
+        public void VelvetRoomBringsItsOwnBed()
+        {
+            // The content wiring, which nothing in the code would report on. A title
+            // that owns a music file holds a bank, and the bank's bed entry is that
+            // file. A definition with no bank plays the house bed for the whole game,
+            // and the game looks and sounds right all the way through.
+            var definition = UnityEditor.AssetDatabase.LoadAssetAtPath<SlotMachineDefinition>(
+                "Assets/Data/Slots/Slot_VelvetRoom.asset");
+            Assert.IsNotNull(definition, "There is no Velvet Room definition.");
+
+            Assert.IsNotNull(definition.audioBank,
+                "Velvet Room holds no music bank, so it plays the house bed instead of " +
+                "its own.");
+
+            var entry = definition.audioBank.Find(AudioCue.SlotMusic);
+            Assert.IsNotNull(entry, "Velvet Room's bank has no bed on it.");
+            Assert.IsNotNull(entry.clip,
+                "Velvet Room's bank bed has no clip, so the house bed plays instead.");
+
+            Assert.AreEqual("Velvet", entry.clip.name,
+                "Velvet Room is playing a bed that is not Velvet.wav.");
+
+            // And the audio system resolves to it, rather than to the synthesised bed.
+            var host = new GameObject("AudioServiceTest");
+            try
+            {
+                var service = host.AddComponent<AudioService>();
+                service.SetBank(definition.audioBank);
+                Assert.AreSame(entry.clip, service.ClipFor(AudioCue.SlotMusic),
+                    "The service did not resolve Velvet Room's bed from the game's bank.");
+            }
+            finally
+            {
+                UnityEngine.Object.DestroyImmediate(host);
+            }
+        }
+
+        [Test]
         public void TheBankOutranksTheSynthesiser()
         {
             // A recorded clip on a bank entry replaces the synthesised sound without

@@ -20,8 +20,8 @@ MonoBehaviour:
   themeTint: {r: 0.9098039, g: 0.7647059, b: 0.41960785, a: 1}
   keyArt: {fileID: 0}
   addressableKey: Slots/velvet_room
-  audioBankId: 
-  audioBank: {fileID: 0}
+  audioBankId: velvet_room
+  audioBank: {fileID: 11400000, guid: b1787b3e5484eda49a50b076afac2361, type: 2}
   reelCount: 5
   rowCount: 3
   symbols:

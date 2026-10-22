@@ -197,6 +197,50 @@ namespace LustHouse.Tests
             }
         }
 
+        [UnityTest]
+        public IEnumerator TheBedTakesUpTheGamesOwnThemeWhenTheBankArrives()
+        {
+            var service = LiveService();
+            var music = MusicSource(service);
+            Assert.IsNotNull(music, "The audio service has no music channel.");
+
+            // The room is built and asks for its bed before the definition has been
+            // read, so what comes up first is the house's bed.
+            service.SetBank(null);
+            service.PlayMusic(AudioCue.SlotMusic);
+            yield return null;
+
+            Assert.IsNotNull(music.clip, "The bed did not start.");
+
+            // The definition arrives, and with it the game's own theme.
+            var theme = AudioClip.Create("theme", 64, 1, 44100, false);
+            var bank = ScriptableObject.CreateInstance<AudioBank>();
+            bank.entries.Add(new AudioBank.Entry
+            {
+                cue = AudioCue.SlotMusic,
+                clip = theme,
+                volume = 0.5f
+            });
+
+            try
+            {
+                service.SetBank(bank);
+                yield return null;
+
+                Assert.AreSame(theme, music.clip,
+                    "The game's own theme was not taken up. The room asks for its music " +
+                    "before the game says what its music is, so the bed has to be " +
+                    "resolved again when the bank arrives — otherwise a title that " +
+                    "brings its own theme plays the house bed for the whole game.");
+            }
+            finally
+            {
+                service.SetBank(null);
+                Object.Destroy(theme);
+                Object.Destroy(bank);
+            }
+        }
+
         // ---- helpers ------------------------------------------------------------
 
         private static IEnumerator LoadSlot()
