@@ -101,7 +101,7 @@ namespace LustHouse.Core
             // The progressive service rides here too: the pots have to survive a scene
             // load the way the wallet does, and the drip has to keep growing while the
             // player is in the lobby between spins.
-            _progressive = _root.Add<ProgressiveJackpotService>();
+            _progressive = _root.AddComponent<ProgressiveJackpotService>();
             _responsiblePlay = _root.AddComponent<ResponsiblePlayService>();
 
 
@@ -132,7 +132,7 @@ namespace LustHouse.Core
             // only what has been won away from the seed.
             if (_progressive != null && catalog != null)
                 for (int i = 0; i < catalog.games.Count; i++)
-                    _progressive.RegisterGame(catalog.games[i]?.game);
+                    _progressive.RegisterGame(catalog.games[i]?.definition);
 
 
             avatar.SetCatalog(cosmeticCatalog, fallbackBaseId);

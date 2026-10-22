@@ -95,13 +95,13 @@ namespace LustHouse.Slots
                 result.steps.Add(new FeatureStep
                 {
                     kind = FeatureStepKind.Award,
-                    amount = (long)Mathf.Round((double)award / Math.Max(1, ctx.bet)),
+                    amount = (long)Mathf.Round((float)award / Math.Max(1f, ctx.bet)),
                     symbolId = tier.symbolId
                 });
                 result.steps.Add(new FeatureStep
                 {
                     kind = FeatureStepKind.Meter,
-                    amount = (long)Mathf.Round((double)award / Math.Max(1, ctx.bet)),
+                    amount = (long)Mathf.Round((float)award / Math.Max(1f, ctx.bet)),
                     symbolId = tier.symbolId
                 });
             }

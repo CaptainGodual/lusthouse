@@ -1,7 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
+using UnityEngine;
 
 namespace LustHouse.Slots
 {
@@ -37,8 +37,7 @@ namespace LustHouse.Slots
             [Tooltip("The pot starts here. In currency units at the game's minimum bet.")]
             public long seedValue = 0;
 
-            [Tooltip("How much of every bet drips into this pot, in millionths. 1000 = 0.1%.",
-                    )]
+[Tooltip("How much of every bet drips into this pot, in millionths. 1000 = 0.1%.")]
             public int dripPerMillion = 1000;
 
             [Tooltip("How many of the trigger symbol must be on the grid to fire.")]

@@ -39,11 +39,11 @@ namespace LustHouse.Core
 
         /// <summary>The persisted pots. Owned by <see cref="ServicesBootstrap.ProgressivePots"/>
         /// so the load/save round-trip in <c>ServicesBootstrap</c> carries them.</summary>
-        public Dictionary<string, long> Pots => ServicesBootstrap.ProgressivePots;
+        public Dictionary<string, long> Pots => ServicesBootstrap.Instance?.ProgressivePots;
 
         private void Awake()
         {
-            if (Instance != null && Instance != this) { DestroyImmediate (); return; }
+            if (Instance != null && Instance != this) { DestroyImmediate(this); return; }
             Instance = this;
             DontDestroyOnLoad(transform.root);
         }
@@ -68,8 +68,8 @@ namespace LustHouse.Core
             if (!_tiers.TryGetValue(gameId, out var tiers) || tiers.Length == 0) return;
             if (bet <= 0) return;
 
-            var doc = SaveSystem.Current;
-            if (doc == null) return;
+            var pots = Pots;
+            if (pots == null) return;
 
             for (int i = 0; i < tiers.Length; i++)
             {
@@ -80,8 +80,8 @@ namespace LustHouse.Core
                 if (drip <= 0) continue;
 
                 string key = PotKey(gameId, tier.tierName);
-                long current = doc.progressive.ContainsKey(key) ? doc.progressive[key] : tier.seedValue;
-                doc.progressive[key] = current + drip;
+                long current = pots.ContainsKey(key) ? pots[key] : tier.seedValue;
+                pots[key] = current + drip;
             }
         }
 
@@ -92,9 +92,9 @@ namespace LustHouse.Core
             var tier = FindTier(tiers, tierName);
             if (tier == null) return 0;
 
-            var doc = SaveSystem.Current;
-            if (doc != null && doc.progressive.ContainsKey(PotKey(gameId, tierName)))
-                return doc.progressive[PotKey(gameId, tierName)];
+            var pots = Pots;
+            if (pots != null && pots.ContainsKey(PotKey(gameId, tierName)))
+                return pots[PotKey(gameId, tierName)];
 
             return tier.seedValue;
         }
@@ -102,9 +102,9 @@ namespace LustHouse.Core
         /// <summary>Back to the seed. Called by the runner after a tier pays out.</summary>
         public void ResetPot(string gameId, string tierName, long seedValue)
         {
-            var doc = SaveSystem.Current;
-            if (doc == null) return;
-            doc.progressive[PotKey(gameId, tierName)] = seedValue;
+            var pots = Pots;
+            if (pots == null) return;
+            pots[PotKey(gameId, tierName)] = seedValue;
         }
 
         // ---- IProgressivePotSource ----
@@ -132,7 +132,7 @@ namespace LustHouse.Core
 
         private void LoadFromSave()
         {
-            var doc = SaveSystem.Current;
+            var doc = SaveSystem.Default;
             if (doc == null) return;
             // The save carries only what has been won away from the seed; keys that are
             // missing fall back to the tier's seedValue on the next PotValue call, so there

@@ -324,7 +324,7 @@ namespace LustHouse.Slots
             if (feature == null || feature.tiers == null || feature.tiers.Count == 0) return 0.0;
 
             double total = 0.0;
-            long minBet = (def.betOptions != null && def.betOptions.Count > 0) ? def.betOptions[0] : 1;
+            long minBet = def.minBet;
             if (minBet <= 0) minBet = 1;
 
             foreach (var tier in feature.tiers)
