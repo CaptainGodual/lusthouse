@@ -701,7 +701,8 @@ namespace LustHouse.EditorTools
             // line game alone has to land on target minus that constant. A negative result
             // means the feature alone promises more than the game's declared RTP.
             double bonusTerm = SimulationEngine.BonusRtp(def);
-            double lineTarget = target - bonusTerm;
+            double progressiveTerm = SimulationEngine.ProgressiveRtp(def);
+            double lineTarget = target - bonusTerm - progressiveTerm;
 
             if (lineTarget <= 0)
             {
@@ -776,7 +777,7 @@ namespace LustHouse.EditorTools
             bool ok = drift <= TightTolerance;
 
             report += $"measured {baseline:P4} -> scaled x{scale:F3} -> " +
-                      $"line {exact - bonusTerm:P4} + bonus {bonusTerm:P4} = {exact:P4} " +
+                      $"line {exact - bonusTerm - progressiveTerm:P4} + bonus {bonusTerm:P4} + progressive {progressiveTerm:P4} = {exact:P4} " +
                       $"against target {target:P4} (drift {drift:P4}, " +
                       $"{(ok ? "inside" : "OUTSIDE")} ±0.5%).";
 

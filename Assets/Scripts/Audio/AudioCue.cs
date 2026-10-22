@@ -41,6 +41,9 @@ namespace LustHouse.Audio
         /// <summary>A big payout.</summary>
         WinBig,
 
+        /// <summary>A progressive jackpot has been won.</summary>
+        JackpotWin,
+
         /// <summary>A feature round has been triggered.</summary>
         BonusTrigger,
 

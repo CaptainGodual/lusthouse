@@ -19,6 +19,8 @@ namespace LustHouse.Slots
         public double stdDevWin;         // volatility proxy
         public int freeSpinTriggers;
         public double freeSpinRate;
+        public long progressiveHits;
+        public long progressivePaid;
         public double maxWinBreaches;    // spins exceeding maxWinMultiplier
         public double secondsElapsed;
 
@@ -59,6 +61,8 @@ namespace LustHouse.Slots
             long biggest = 0;
             int freeSpins = 0;
             long maxWinBreaches = 0;
+            long progressiveHits = 0;
+            long progressivePaid = 0;
             double sumOfSquares = 0.0;
 
             var started = DateTime.UtcNow;
@@ -68,12 +72,14 @@ namespace LustHouse.Slots
                 var result = ReelEngine.SpinStatic(def, ref rng, bet);
 
                 totalBet += bet;
-                totalWin += result.totalWin;
+                totalWin += result.totalWin - result.progressiveWin;
                 sumOfSquares += (double)result.totalWin * result.totalWin;
 
                 if (result.IsWin) hits++;
                 if (result.totalWin > biggest) biggest = result.totalWin;
                 if (result.triggeredFreeSpins) freeSpins++;
+
+                if (result.progressiveWin > 0) { progressiveHits++; progressivePaid += result.progressiveWin; }
 
                 if (result.totalWin > bet * def.maxWinMultiplier) maxWinBreaches++;
             }
@@ -92,6 +98,8 @@ namespace LustHouse.Slots
             report.stdDevWin = Math.Sqrt(Math.Max(0.0, variance));
             report.freeSpinTriggers = freeSpins;
             report.freeSpinRate = freeSpins / (double)spins;
+            report.progressiveHits = progressiveHits;
+            report.progressivePaid = progressivePaid;
             report.maxWinBreaches = maxWinBreaches;
             report.secondsElapsed = (DateTime.UtcNow - started).TotalSeconds;
 
@@ -168,7 +176,7 @@ namespace LustHouse.Slots
         {
             double line = LineRtp(def);
             if (double.IsNaN(line)) return double.NaN;
-            return line + BonusRtp(def);
+            return line + BonusRtp(def) + ProgressiveRtp(def);
         }
 
         /// <summary>
@@ -302,6 +310,77 @@ namespace LustHouse.Slots
             if (mean <= 0.0) return 0.0;
 
             return TriggerChance(def, bonus) * bonus.picks * mean;
+        }
+
+        /// <summary>
+        /// Exact RTP contribution of the progressive jackpot, in bet-multiples per spin.
+        /// Each tier's pot is treated at its seed value (the simulator passes null pot
+        /// source, so pots never grow during a measured run); the drip is budgeted
+        /// separately. Returns 0 when the game declares no progressive feature.
+        /// </summary>
+        public static double ProgressiveRtp(SlotMachineDefinition def)
+        {
+            var feature = def?.Find<ProgressiveJackpotFeature>();
+            if (feature == null || feature.tiers == null || feature.tiers.Count == 0) return 0.0;
+
+            double total = 0.0;
+            long minBet = (def.betOptions != null && def.betOptions.Count > 0) ? def.betOptions[0] : 1;
+            if (minBet <= 0) minBet = 1;
+
+            foreach (var tier in feature.tiers)
+            {
+                if (tier == null || tier.triggerCount <= 0) continue;
+                double chance = TriggerChanceForSymbol(def, tier.symbolId, tier.triggerCount);
+                if (chance <= 0.0) continue;
+                double potInBets = (double)tier.seedValue / minBet;
+                total += chance * potInBets;
+            }
+            return total;
+        }
+
+        /// <summary>P(at least <paramref name="triggerCount"/> of <paramref name="symbolId"/> on the grid).</summary>
+        private static double TriggerChanceForSymbol(SlotMachineDefinition def, int symbolId, int triggerCount)
+        {
+            if (def?.reelStrips == null || def.reelStrips.Count != def.reelCount) return 0.0;
+            if (triggerCount <= 0) return 0.0;
+
+            var distribution = new double[1];
+            distribution[0] = 1.0;
+
+            for (int r = 0; r < def.reelCount; r++)
+            {
+                var strip = def.reelStrips[r]?.symbols;
+                if (strip == null || strip.Count == 0) return 0.0;
+
+                int length = strip.Count;
+                int window = Math.Max(1, def.rowCount);
+
+                var histogram = new double[window + 1];
+                for (int stop = 0; stop < length; stop++)
+                {
+                    int count = 0;
+                    for (int row = 0; row < window; row++)
+                        if (strip[(stop + row) % length] == symbolId) count++;
+
+                    if (count > window) count = window;
+                    histogram[count] += 1.0 / length;
+                }
+
+                var convolved = new double[distribution.Length + window];
+                for (int a = 0; a < distribution.Length; a++)
+                {
+                    if (distribution[a] == 0.0) continue;
+                    for (int b = 0; b < histogram.Length; b++)
+                        convolved[a + b] += distribution[a] * histogram[b];
+                }
+                distribution = convolved;
+            }
+
+            double chance = 0.0;
+            for (int n = triggerCount; n < distribution.Length; n++)
+                chance += distribution[n];
+
+            return chance > 1.0 ? 1.0 : chance;
         }
 
         /// <summary>Expected prize per pick, in bet-multiples, from the weighted prize list.</summary>
