@@ -280,12 +280,102 @@ MonoBehaviour:
     winAnimationFrames: []
     winAnimationFramesPerSecond: 12
     winAnimationSeconds: 0.9
+  - id: 30
+    symbolName: Mini
+    sprite: {fileID: 21300000, guid: 6a7d26a88d8c6b14b8ebc2661d844796, type: 3}
+    payoutsByMatch: 000000000000000000000000000000000000000000000000
+    clusterPayouts: 
+    megaBlockMultiplier: 0
+    isWild: 0
+    isScatter: 0
+    isSpecial: 0
+    holdSpinValue: 0
+    animatesOnWin: 1
+    winAnimation: {fileID: 0}
+    winAnimationFrames: []
+    winAnimationFramesPerSecond: 12
+    winAnimationSeconds: 0.9
+  - id: 31
+    symbolName: Minor
+    sprite: {fileID: 21300000, guid: 75ac82c4d68ee314b9f19bedd4f9756c, type: 3}
+    payoutsByMatch: 000000000000000000000000000000000000000000000000
+    clusterPayouts: 
+    megaBlockMultiplier: 0
+    isWild: 0
+    isScatter: 0
+    isSpecial: 0
+    holdSpinValue: 0
+    animatesOnWin: 1
+    winAnimation: {fileID: 0}
+    winAnimationFrames: []
+    winAnimationFramesPerSecond: 12
+    winAnimationSeconds: 0.9
+  - id: 32
+    symbolName: Major
+    sprite: {fileID: 21300000, guid: 06e6ea56958c0374f8602e21f267172c, type: 3}
+    payoutsByMatch: 000000000000000000000000000000000000000000000000
+    clusterPayouts: 
+    megaBlockMultiplier: 0
+    isWild: 0
+    isScatter: 0
+    isSpecial: 0
+    holdSpinValue: 0
+    animatesOnWin: 1
+    winAnimation: {fileID: 0}
+    winAnimationFrames: []
+    winAnimationFramesPerSecond: 12
+    winAnimationSeconds: 0.9
+  - id: 30
+    symbolName: Mini
+    sprite: {fileID: 21300000, guid: 6a7d26a88d8c6b14b8ebc2661d844796, type: 3}
+    payoutsByMatch: 000000000000000000000000000000000000000000000000
+    clusterPayouts: 
+    megaBlockMultiplier: 0
+    isWild: 0
+    isScatter: 0
+    isSpecial: 0
+    holdSpinValue: 0
+    animatesOnWin: 1
+    winAnimation: {fileID: 0}
+    winAnimationFrames: []
+    winAnimationFramesPerSecond: 12
+    winAnimationSeconds: 0.9
+  - id: 31
+    symbolName: Minor
+    sprite: {fileID: 21300000, guid: 75ac82c4d68ee314b9f19bedd4f9756c, type: 3}
+    payoutsByMatch: 000000000000000000000000000000000000000000000000
+    clusterPayouts: 
+    megaBlockMultiplier: 0
+    isWild: 0
+    isScatter: 0
+    isSpecial: 0
+    holdSpinValue: 0
+    animatesOnWin: 1
+    winAnimation: {fileID: 0}
+    winAnimationFrames: []
+    winAnimationFramesPerSecond: 12
+    winAnimationSeconds: 0.9
+  - id: 32
+    symbolName: Major
+    sprite: {fileID: 21300000, guid: 06e6ea56958c0374f8602e21f267172c, type: 3}
+    payoutsByMatch: 000000000000000000000000000000000000000000000000
+    clusterPayouts: 
+    megaBlockMultiplier: 0
+    isWild: 0
+    isScatter: 0
+    isSpecial: 0
+    holdSpinValue: 0
+    animatesOnWin: 1
+    winAnimation: {fileID: 0}
+    winAnimationFrames: []
+    winAnimationFramesPerSecond: 12
+    winAnimationSeconds: 0.9
   reelStrips:
-  - symbols: 000000000000000001000000010000000a0000000a0000000b0000000b0000000c0000000c0000000d0000000d0000000d0000000e0000000e0000000f0000000f00000010000000120000001300000014000000150000001600000017000000
-  - symbols: 000000000000000001000000010000000a0000000a0000000b0000000b0000000c0000000c000000020000000d0000000d0000000e0000000e0000000e0000000f0000000f00000010000000120000001300000014000000150000001600000017000000
-  - symbols: 000000000000000001000000010000000a0000000a0000000b0000000b0000000c0000000c000000020000000d0000000d0000000e0000000e0000000e0000000f0000000f0000001000000010000000120000001300000014000000150000001600000017000000
-  - symbols: 00000000000000000100000001000000020000000a0000000a0000000b0000000b0000000c0000000c0000000d0000000d0000000d0000000e0000000e0000000e0000000f0000000f0000001000000010000000120000001300000014000000150000001600000017000000
-  - symbols: 000000000100000001000000020000000a0000000a0000000b0000000b0000000b0000000c0000000c0000000d0000000d0000000d0000000e0000000e0000000e0000000f0000000f0000000f0000001000000010000000120000001300000014000000150000001600000017000000
+  - symbols: 000000000000000001000000010000000a0000000a0000000b0000000b0000000c0000000c0000000d0000000d0000000d0000000e0000000e0000000f0000000f000000100000001200000013000000140000001500000016000000170000001e0000001f00000020000000
+  - symbols: 000000000000000001000000010000000a0000000a0000000b0000000b0000000c0000000c000000020000000d0000000d0000000e0000000e0000000e0000000f0000000f000000100000001200000013000000140000001500000016000000170000001e0000001f00000020000000
+  - symbols: 000000000000000001000000010000000a0000000a0000000b0000000b0000000c0000000c000000020000000d0000000d0000000e0000000e0000000e0000000f0000000f00000010000000100000001200000013000000140000001500000016000000170000001e0000001f00000020000000
+  - symbols: 00000000000000000100000001000000020000000a0000000a0000000b0000000b0000000c0000000c0000000d0000000d0000000d0000000e0000000e0000000e0000000f0000000f00000010000000100000001200000013000000140000001500000016000000170000001e0000001f00000020000000
+  - symbols: 000000000100000001000000020000000a0000000a0000000b0000000b0000000b0000000c0000000c0000000d0000000d0000000d0000000e0000000e0000000e0000000f0000000f0000000f00000010000000100000001200000013000000140000001500000016000000170000001e0000001f00000020000000
   payType: 0
   paylines:
   - lineName: Middle
@@ -335,6 +425,28 @@ MonoBehaviour:
   references:
     version: 2
     RefIds:
+    - rid: 1234567890123456789
+      type: {class: ProgressiveJackpotFeature, ns: LustHouse.Slots, asm: LustHouse.Scripts}
+      data:
+        id: progressive_jackpot
+        displayName: Progressive Jackpot
+        kind: 99
+        tiers:
+        - symbolId: 30
+          tierName: Mini
+          seedValue: 250000
+          dripPerMillion: 1000
+          triggerCount: 1
+        - symbolId: 31
+          tierName: Minor
+          seedValue: 1000000
+          dripPerMillion: 1500
+          triggerCount: 1
+        - symbolId: 32
+          tierName: Major
+          seedValue: 10000000
+          dripPerMillion: 2000
+          triggerCount: 1
     - rid: 8387632629979807744
       type: {class: BonusGameFeature, ns: LustHouse.Slots, asm: LustHouse.Scripts}
       data:
