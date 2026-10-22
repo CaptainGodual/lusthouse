@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: AudioBank_VelvetRoom
   m_EditorClassIdentifier: 
   entries:
-  - cue: 11
+  - cue: 12
     clip: {fileID: 8300000, guid: 71786cf2d83141240b0d421cd9e9fed8, type: 3}
     volume: 0.5
     pitch: 1
