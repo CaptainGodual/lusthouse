@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using LustHouse.Avatar;
 using LustHouse.Audio;
@@ -79,6 +79,7 @@ namespace LustHouse.Core
         private GameObject _root;
         private AudioService _audio;
         private ResponsiblePlayService _responsiblePlay;
+        private ProgressiveJackpotService _progressive;
         private float _dirtyTimer = float.MaxValue;
         private bool _dirty;
 
@@ -96,6 +97,11 @@ namespace LustHouse.Core
             // The responsible-play service rides here too: the session timer has to
             // keep counting across scene changes, and the self-exclusion has to be
             // checked by every screen that can open a game.
+
+            // The progressive service rides here too: the pots have to survive a scene
+            // load the way the wallet does, and the drip has to keep growing while the
+            // player is in the lobby between spins.
+            _progressive = _root.Add<ProgressiveJackpotService>();
             _responsiblePlay = _root.AddComponent<ResponsiblePlayService>();
 
 
@@ -119,6 +125,14 @@ namespace LustHouse.Core
             if (catalog == null)
                 LustLog.Warn("[LustHouse] No game catalogue; the probability disclosure has " +
                              "nothing to publish.");
+
+            // The progressive service needs each game's tier definitions so it can drip and
+            // pay. Registering them here — after the catalogue is loaded and before the
+            // first spin — means the pots are seeded from the content and the save carries
+            // only what has been won away from the seed.
+            if (_progressive != null && catalog != null)
+                for (int i = 0; i < catalog.games.Count; i++)
+                    _progressive.RegisterGame(catalog.games[i]?.game);
 
 
             avatar.SetCatalog(cosmeticCatalog, fallbackBaseId);

@@ -109,6 +109,7 @@ namespace LustHouse.Slots
             Register<FreeSpinsFeature, FreeSpinsHandler>();
             Register<HoldAndSpinFeature, HoldAndSpinHandler>();
             Register<BonusGameFeature, BonusGameHandler>();
+            Register<ProgressiveJackpotFeature, ProgressiveJackpotHandler>();
         }
     }
 
@@ -136,7 +137,8 @@ namespace LustHouse.Slots
     public static class FeatureRunner
     {
         public static FeatureRunResult Run(SlotMachineDefinition game, SpinResult baseResult,
-                                           long bet, ref SeededRng rng, IFeatureChoice choice)
+                                           long bet, ref SeededRng rng, IFeatureChoice choice,
+                                           IProgressivePotSource potSource = null)
         {
             var result = new FeatureRunResult();
             if (game == null) return result;
@@ -165,6 +167,12 @@ namespace LustHouse.Slots
 
                 handler.Definition = feature;
                 ctx.feature = feature;
+
+                // The progressive feature reads its pots through the context's source.
+                // Passing null here keeps the simulator and headless tests deterministic:
+                // every pot starts at its seed.
+                if (feature is ProgressiveJackpotFeature progressive)
+                    progressive.potSource = potSource;
 
                 if (!handler.CanTrigger(game, baseResult)) continue;
 

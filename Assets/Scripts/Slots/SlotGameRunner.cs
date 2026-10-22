@@ -77,10 +77,44 @@ namespace LustHouse.Slots
 
                 result = reelEngine.Spin(definition, bet);
 
-                if (result.totalWin > 0)
+                // The progressive service drips the house's share into every pot on every
+                // completed spin, before anything is credited. The drip is a fraction of
+                // the wager, so a pot nobody has won grows with the volume that could have
+                // won it. Pots that were won on this spin reset to their seed afterwards.
+                var progressive = ProgressiveJackpotService.Instance;
+                if (progressive != null) progressive.ApplyDrip(definition.id, bet);
+
+                // The base win and the progressive award are credited as separate ledger
+                // lines. The base win is SpinPayout as before; the jackpot is its own
+                // Jackpot entry so the player can tell them apart and the RTP gate can
+                // measure the base game without the progressive term.
+                long baseWin = result.totalWin - result.progressiveWin;
+                if (baseWin > 0)
                 {
-                    WalletService.Instance.TryGrant(Currency.Coins, result.totalWin,
+                    WalletService.Instance.TryGrant(Currency.Coins, baseWin,
                         LedgerReason.SpinPayout, definition.id);
+                }
+                if (result.progressiveWin > 0)
+                {
+                    WalletService.Instance.TryGrant(Currency.Coins, result.progressiveWin,
+                        LedgerReason.Jackpot, definition.id);
+
+                    // The pot is gone. Back to the seed, so the next player starts from the
+                    // same place this one did.
+                    if (progressive != null && !string.IsNullOrEmpty(result.progressiveTier))
+                    {
+                        var feature = definition.Find<ProgressiveJackpotFeature>();
+                        var tier = feature?.TierForSymbol(0);
+                        // Reset by tier name: look the seed up from the feature's tiers.
+                        var tiers = feature?.tiers;
+                        long seed = 0;
+                        if (tiers != null)
+                            for (int i = 0; i < tiers.Count; i++)
+                                if (string.Equals(tiers[i]?.tierName, result.progressiveTier,
+                                                  StringComparison.Ordinal))
+                                { seed = tiers[i].seedValue; break; }
+                        progressive.ResetPot(definition.id, result.progressiveTier, seed);
+                    }
                 }
 
                 // Lust is non-spendable and accrues purely from volume.

@@ -26,6 +26,16 @@ namespace LustHouse.Slots
 
         public int freeSpinsAwarded;
 
+        /// <summary>Which jackpot tier paid on this spin, or "" when none. Set by the
+        /// progressive handler; the presenter reads it to highlight the winning cell.</summary>
+        public string progressiveTier;
+
+        /// <summary>The progressive pot awarded, in currency units. Excluded from
+        /// <see cref="totalWin"/> for RTP purposes: the ship gate measures the base game and
+        /// the jackpot is paid out of the drip, not the paytable budget. The runner adds it
+        /// to the wallet as a separate <see cref="LedgerReason.Jackpot"/> entry.</summary>
+        public long progressiveWin;
+
         /// <summary>Spins that actually ran: 1 for the base game plus any feature spins.</summary>
         public int spinsRun;
 
@@ -132,6 +142,22 @@ namespace LustHouse.Slots
         }
 
         /// <summary>
+        /// Headless spin used by the game. The extra <paramref name="potSource"/> feeds the
+        /// progressive feature its live pots; pass null from the simulator and tests so every
+        /// pot starts at its seed and the RTP gate stays reproducible.
+        /// </summary>
+        public static SpinResult SpinStatic(SlotMachineDefinition def, ref SeededRng rng, long bet,
+                                            IProgressivePotSource potSource)
+        {
+            if (def == null) return default;
+
+            var result = SpinBaseStatic(def, ref rng, bet);
+            var features = FeatureRunner.Run(def, result, bet, ref rng, null, potSource);
+            FeatureRunner.Apply(ref result, features);
+            return result;
+        }
+
+        /// <summary>
         /// One base-game spin with no feature run. Feature handlers use this for their own
         /// spins: a free spin must not recursively trigger another free-spin round, and a
         /// hold &amp; spin respin must not trigger anything but locks. The caller still owns
@@ -153,7 +179,7 @@ namespace LustHouse.Slots
         {
             EnsureSeeded();
             if (def == null) return default;
-            return SpinStatic(def, ref _rng, bet);
+            return SpinStatic(def, ref _rng, bet, ProgressiveJackpotService.Instance);
         }
 
         /// <summary>One uniform stop per reel, drawn from that reel's own strip.</summary>

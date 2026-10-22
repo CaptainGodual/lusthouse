@@ -21,6 +21,12 @@ namespace LustHouse.Core
         VipReward,
         LevelReward,
         ConversionRefund,
+        /// <summary>
+        /// A progressive jackpot paid out of the house drip, not the paytable. Written as its
+        /// own line so a player can tell a base win from a jackpot in the ledger, and so the
+        /// RTP gate can measure the base game without the progressive term.
+        /// </summary>
+        Jackpot,
         Admin
     }
 
