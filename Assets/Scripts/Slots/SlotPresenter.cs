@@ -1,4 +1,5 @@
 using System.Collections;
+using System.Collections.Generic;
 using LustHouse.Audio;
 using LustHouse.Core;
 using LustHouse.Economy;
@@ -61,6 +62,9 @@ namespace LustHouse.Slots
         private Text _result;
         private Text _lifetime;
         private Text _levelBanner;
+        private Text _jackpotBanner;
+        private Image _jackpotFlash;
+        private JackpotMeter _jackpotMeter;
         private ReelsView _reels;
         private Button _spinButton;
         private Button _betDownButton;
@@ -170,6 +174,12 @@ namespace LustHouse.Slots
             background.transform.SetAsFirstSibling();
             background.raycastTarget = false;
 
+            // ---- full-screen jackpot flash (hidden until a hit) ----
+            _jackpotFlash = UiFactory.NewImage("JackpotFlash", root, UiFactory.GoldGlow);
+            _jackpotFlash.raycastTarget = false;
+            UiFactory.Stretch(_jackpotFlash.rectTransform);
+            _jackpotFlash.gameObject.SetActive(false);
+
             // ---- slots frame UI (drawn on top of the reels) ----
             // Loaded here so it can be parented after the reels are created below; the actual
             // GameObject is built once the reels exist so the layering reads background ->
@@ -201,6 +211,59 @@ namespace LustHouse.Slots
             balanceRect.pivot = new Vector2(1f, 0.5f);
             balanceRect.anchoredPosition = new Vector2(-28f, 0f);
             balanceRect.sizeDelta = new Vector2(420f, 72f);
+
+            // ---- jackpot meter strip (right side of header) ----
+            var meterRoot = new GameObject("JackpotMeter", typeof(RectTransform));
+            meterRoot.transform.SetParent(header.transform, false);
+            var meterRect = meterRoot.GetComponent<RectTransform>();
+            meterRect.anchorMin = new Vector2(1f, 0.5f);
+            meterRect.anchorMax = new Vector2(1f, 0.5f);
+            meterRect.pivot = new Vector2(1f, 0.5f);
+            meterRect.sizeDelta = new Vector2(340f, 72f);
+            meterRect.anchoredPosition = new Vector2(-460f, 0f);
+
+            _jackpotMeter = meterRoot.AddComponent<JackpotMeter>();
+            _jackpotMeter.gameId = controller?.Definition?.id ?? "";
+
+            float rowY = 0f;
+            foreach (var tier in controller?.Definition?.Find<ProgressiveJackpotFeature>()?.tiers ?? new List<ProgressiveJackpotFeature.Tier>())
+            {
+                var rowGo = new GameObject($"Tier_{tier.tierName}", typeof(RectTransform));
+                rowGo.transform.SetParent(meterRoot.transform, false);
+                var rowRect = rowGo.GetComponent<RectTransform>();
+                rowRect.anchorMin = new Vector2(0f, 0.5f);
+                rowRect.anchorMax = new Vector2(0f, 0.5f);
+                rowRect.pivot = new Vector2(0f, 0.5f);
+                rowRect.sizeDelta = new Vector2(320f, 24f);
+                rowRect.anchoredPosition = new Vector2(0f, rowY - 12f);
+
+                var tierLabel = UiFactory.NewText("Label", rowGo.transform, tier.tierName.ToUpperInvariant(), 13,
+                    FontStyle.Bold, UiFactory.TextSecondary, TextAnchor.MiddleLeft);
+                UiFactory.PlaceTopLeft(tierLabel.rectTransform, 0f, 0f, 90f, 24f);
+
+                var tierValue = UiFactory.NewText("Value", rowGo.transform, "", 15,
+                    FontStyle.Bold, UiFactory.GoldGlow, TextAnchor.MiddleLeft);
+                UiFactory.PlaceTopLeft(tierValue.rectTransform, 96f, 0f, 220f, 24f);
+
+                _jackpotMeter.rows.Add(new JackpotMeter.TierRow
+                {
+                    tierName = tier.tierName,
+                    label = tierLabel,
+                    value = tierValue
+                });
+
+                rowY += 26f;
+            }
+
+            // Jackpot banner (centered above the header, hidden until a hit).
+            _jackpotBanner = UiFactory.NewText("JackpotBanner", header.transform, "", 20,
+                FontStyle.Bold, UiFactory.GoldGlow, TextAnchor.MiddleCenter);
+            _jackpotBanner.rectTransform.anchorMin = new Vector2(0.5f, 1f);
+            _jackpotBanner.rectTransform.anchorMax = new Vector2(0.5f, 1f);
+            _jackpotBanner.rectTransform.pivot = new Vector2(0.5f, 1f);
+            _jackpotBanner.rectTransform.sizeDelta = new Vector2(600f, 32f);
+            _jackpotBanner.rectTransform.anchoredPosition = new Vector2(0f, -8f);
+            _jackpotBanner.gameObject.SetActive(false);
 
             // ---- slots frame UI (drawn behind the reels so they stay visible) ----
             var uiFrame = UiFactory.NewImage("UiFrame", root, UiFactory.VelvetBase);
@@ -691,6 +754,30 @@ namespace LustHouse.Slots
                 _totalWin.color = UiFactory.StateWarn;
                 _result.color = UiFactory.StateWarn;
                 _result.text = "NOT ENOUGH COINS";
+            }
+
+            // A progressive hit: flash the meter, show the banner, and frame the
+            // cells that carried the trigger symbol so the player sees why the pot paid.
+            if (result.progressiveWin > 0 && _jackpotMeter != null)
+            {
+                _jackpotMeter.OnHit(result.progressiveTier, result.progressiveWin);
+                if (_reels != null && result.grid != null)
+                {
+                    var feature = controller != null ? controller.Definition?.Find<ProgressiveJackpotFeature>() : null;
+                    if (feature != null)
+                    {
+                        for (int r = 0; r < result.grid.Length && r < _reels.ReelCount; r++)
+                        {
+                            var reel = result.grid[r];
+                            if (reel == null) continue;
+                            for (int row = 0; row < reel.Length; row++)
+                            {
+                                if (feature.TierForSymbol(reel[row]) != null)
+                                    _reels.HighlightCell(r, row);
+                            }
+                        }
+                    }
+                }
             }
 
             // The payout is announced once the round has resolved and the numbers on

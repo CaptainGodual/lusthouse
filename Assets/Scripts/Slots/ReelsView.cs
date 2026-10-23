@@ -541,7 +541,7 @@ namespace LustHouse.Slots
             image.raycastTarget = false;
         }
 
-        private void HighlightCell(int reelIndex, int row)
+        public void HighlightCell(int reelIndex, int row)
         {
             if (reelIndex < 0 || reelIndex >= _reels.Count) return;
             var reel = _reels[reelIndex];

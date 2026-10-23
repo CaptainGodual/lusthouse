@@ -425,6 +425,39 @@ namespace LustHouse.EditorTools
                               "Its maths is not signed off until that is fixed.");
         }
 
+        /// <summary>
+        /// Retunes Velvet Room's paytable against its declared target WITHOUT resetting
+        /// authored baselines — safe to run after the reel strips have been hand-edited
+        /// (e.g. to add the progressive tier symbols). The retune already subtracts the
+        /// progressive affine term before scaling, so the pot stays outside the paytable
+        /// budget.
+        /// </summary>
+        [MenuItem("LustHouse/Content/Retune Velvet Room to declared target", priority = 52)]
+        public static void RetuneVelvetRoom()
+        {
+            var def = AssetDatabase.LoadAssetAtPath<SlotMachineDefinition>(
+                ContentBootstrap.VelvetRoomPath);
+            if (def == null)
+            {
+                LustLog.Error($"[LustHouse] Velvet Room not found at {ContentBootstrap.VelvetRoomPath}.");
+                return;
+            }
+
+            string report;
+            bool tuned = RetuneToDeclaredTarget(def, out report);
+            if (tuned) ReconcileMaxWin(def);
+
+            EditorUtility.SetDirty(def);
+            AssetDatabase.SaveAssets();
+
+            string status = def.IsValid(out var error) ? "valid" : $"INVALID ({error})";
+            LustLog.Info($"[LustHouse] Velvet Room retuned: max win {def.maxWinMultiplier}x, {status}. {report}");
+
+            if (!tuned)
+                LustLog.Error("[LustHouse] Velvet Room did not land on its declared target " +
+                              "RTP — it is no longer ship-gated. " + report);
+        }
+
         private static List<SlotMachineDefinition> SelectedDefinitions()
         {
             var found = new List<SlotMachineDefinition>();

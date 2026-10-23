@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using LustHouse.Audio;
 using LustHouse.Catalog;
 using LustHouse.Core;
 using LustHouse.Economy;
@@ -442,6 +443,57 @@ namespace LustHouse.Lobby
                     ? UiFactory.NeonMagenta
                     : UiFactory.GoldPrimary);
             UiFactory.Stretch(rim.rectTransform, 2f);
+
+            // Live corner meter for progressive games: shows the current pot per tier.
+            if (entry.definition != null && entry.definition.progressive)
+            {
+                var feature = entry.definition.Find<ProgressiveJackpotFeature>();
+                if (feature != null && feature.tiers != null)
+                {
+                    var meterGo = new GameObject("JackpotMeter", typeof(RectTransform));
+                    meterGo.transform.SetParent(tile.transform, false);
+                    var meterRect = meterGo.GetComponent<RectTransform>();
+                    meterRect.anchorMin = new Vector2(1f, 1f);
+                    meterRect.anchorMax = new Vector2(1f, 1f);
+                    meterRect.pivot = new Vector2(1f, 1f);
+                    meterRect.sizeDelta = new Vector2(216f, 52f);
+                    meterRect.anchoredPosition = new Vector2(-10f, -10f);
+
+                    var meter = meterGo.AddComponent<JackpotMeter>();
+                    meter.gameId = entry.id;
+
+                    float y = 0f;
+                    foreach (var tier in feature.tiers)
+                    {
+                        if (tier == null) continue;
+                        var rowGo = new GameObject($"Row_{tier.tierName}", typeof(RectTransform));
+                        rowGo.transform.SetParent(meterGo.transform, false);
+                        var rowRect = rowGo.GetComponent<RectTransform>();
+                        rowRect.anchorMin = new Vector2(0f, 1f);
+                        rowRect.anchorMax = new Vector2(0f, 1f);
+                        rowRect.pivot = new Vector2(0f, 1f);
+                        rowRect.sizeDelta = new Vector2(200f, 16f);
+                        rowRect.anchoredPosition = new Vector2(0f, -y);
+
+                        var tierLabel = UiFactory.NewText("Label", rowGo.transform, tier.tierName.Substring(0, 1).ToUpperInvariant(), 10,
+                            FontStyle.Bold, UiFactory.TextSecondary, TextAnchor.MiddleLeft);
+                        UiFactory.PlaceTopLeft(tierLabel.rectTransform, 0f, 0f, 16f, 16f);
+
+                        var tierValue = UiFactory.NewText("Value", rowGo.transform, "", 10,
+                            FontStyle.Bold, UiFactory.GoldGlow, TextAnchor.MiddleLeft);
+                        UiFactory.PlaceTopLeft(tierValue.rectTransform, 20f, 0f, 180f, 16f);
+
+                        meter.rows.Add(new JackpotMeter.TierRow
+                        {
+                            tierName = tier.tierName,
+                            label = tierLabel,
+                            value = tierValue
+                        });
+
+                        y += 17f;
+                    }
+                }
+            }
 
             // Title lockup in the bottom band.
             var title = UiFactory.NewText("Title", tile.transform, entry.Title, 18,
