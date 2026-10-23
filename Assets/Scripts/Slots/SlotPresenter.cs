@@ -212,7 +212,7 @@ namespace LustHouse.Slots
             balanceRect.anchoredPosition = new Vector2(-28f, 0f);
             balanceRect.sizeDelta = new Vector2(420f, 72f);
 
-            // ---- jackpot meter strip (right side of header) ----
+            // ---- jackpot meter shell (rows fill in when the definition arrives) ----
             var meterRoot = new GameObject("JackpotMeter", typeof(RectTransform));
             meterRoot.transform.SetParent(header.transform, false);
             var meterRect = meterRoot.GetComponent<RectTransform>();
@@ -224,36 +224,6 @@ namespace LustHouse.Slots
 
             _jackpotMeter = meterRoot.AddComponent<JackpotMeter>();
             _jackpotMeter.gameId = controller?.Definition?.id ?? "";
-
-            float rowY = 0f;
-            foreach (var tier in controller?.Definition?.Find<ProgressiveJackpotFeature>()?.tiers ?? new List<ProgressiveJackpotFeature.Tier>())
-            {
-                var rowGo = new GameObject($"Tier_{tier.tierName}", typeof(RectTransform));
-                rowGo.transform.SetParent(meterRoot.transform, false);
-                var rowRect = rowGo.GetComponent<RectTransform>();
-                rowRect.anchorMin = new Vector2(0f, 0.5f);
-                rowRect.anchorMax = new Vector2(0f, 0.5f);
-                rowRect.pivot = new Vector2(0f, 0.5f);
-                rowRect.sizeDelta = new Vector2(320f, 24f);
-                rowRect.anchoredPosition = new Vector2(0f, rowY - 12f);
-
-                var tierLabel = UiFactory.NewText("Label", rowGo.transform, tier.tierName.ToUpperInvariant(), 13,
-                    FontStyle.Bold, UiFactory.TextSecondary, TextAnchor.MiddleLeft);
-                UiFactory.PlaceTopLeft(tierLabel.rectTransform, 0f, 0f, 90f, 24f);
-
-                var tierValue = UiFactory.NewText("Value", rowGo.transform, "", 15,
-                    FontStyle.Bold, UiFactory.GoldGlow, TextAnchor.MiddleLeft);
-                UiFactory.PlaceTopLeft(tierValue.rectTransform, 96f, 0f, 220f, 24f);
-
-                _jackpotMeter.rows.Add(new JackpotMeter.TierRow
-                {
-                    tierName = tier.tierName,
-                    label = tierLabel,
-                    value = tierValue
-                });
-
-                rowY += 26f;
-            }
 
             // Jackpot banner (centered above the header, hidden until a hit).
             _jackpotBanner = UiFactory.NewText("JackpotBanner", header.transform, "", 20,
@@ -918,6 +888,43 @@ namespace LustHouse.Slots
                 SetInteractable(_betDownButton, false);
                 SetInteractable(_betUpButton, false);
                 SetInteractable(_maxBetButton, false);
+            }
+
+            // The jackpot meter rows are built here rather than in Build(): OnEnable runs
+            // before SlotSceneController hands over the definition, so the tiers are
+            // unknown until Refresh() sees it.
+            if (def != null && _jackpotMeter != null && _jackpotMeter.rows.Count == 0)
+            {
+                _jackpotMeter.gameId = def.id;
+                float rowY = 0f;
+                foreach (var tier in def.Find<ProgressiveJackpotFeature>()?.tiers ?? new List<ProgressiveJackpotFeature.Tier>())
+                {
+                    var rowGo = new GameObject($"Tier_{tier.tierName}", typeof(RectTransform));
+                    rowGo.transform.SetParent(_jackpotMeter.transform, false);
+                    var rowRect = rowGo.GetComponent<RectTransform>();
+                    rowRect.anchorMin = new Vector2(0f, 0.5f);
+                    rowRect.anchorMax = new Vector2(0f, 0.5f);
+                    rowRect.pivot = new Vector2(0f, 0.5f);
+                    rowRect.sizeDelta = new Vector2(320f, 24f);
+                    rowRect.anchoredPosition = new Vector2(0f, rowY - 12f);
+
+                    var tierLabel = UiFactory.NewText("Label", rowGo.transform, tier.tierName.ToUpperInvariant(), 13,
+                        FontStyle.Bold, UiFactory.TextSecondary, TextAnchor.MiddleLeft);
+                    UiFactory.PlaceTopLeft(tierLabel.rectTransform, 0f, 0f, 90f, 24f);
+
+                    var tierValue = UiFactory.NewText("Value", rowGo.transform, "", 15,
+                        FontStyle.Bold, UiFactory.GoldGlow, TextAnchor.MiddleLeft);
+                    UiFactory.PlaceTopLeft(tierValue.rectTransform, 96f, 0f, 220f, 24f);
+
+                    _jackpotMeter.rows.Add(new JackpotMeter.TierRow
+                    {
+                        tierName = tier.tierName,
+                        label = tierLabel,
+                        value = tierValue
+                    });
+
+                    rowY += 26f;
+                }
             }
 
             SetInteractable(_spinButton, !_spinning && def != null);
